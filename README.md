@@ -1,6 +1,8 @@
-# SAP Repository Template
+# rootstock :seedling:
 
-Default templates for SAP open source repositories, including LICENSE, .reuse/dep5, Code of Conduct, etc... All repositories on github.com/SAP will be created based on this template.
+In botany, a rootstock is the root system onto which a graft is made - the hidden foundation that feeds everything growing above it.
+
+**rootstock** follows the same logic. The root is the data center: the physical foundation where power originates (PDUs, racks, and GPUs). The stock is the pipeline that carries energy and carbon telemetry upward, out of the hardware layer and into the systems that need it. The leaves are the higher-level workloads that consume that data to visualise energy consumption and carbon footprint. **rootstock** is the open source collector that makes that flow possible: it scrapes telemetry from data center hardware and delivers it upstream to Greenhouse, ready for dashboards and carbon accounting tools.
 
 ## To-Do
 
