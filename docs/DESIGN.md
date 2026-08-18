@@ -98,11 +98,11 @@ TBD
                          Monitoring Network
 ┌──────────────────────────────────────────────────────────────────────┐
 │                                                                      │
-│   ┌─────────────────────┐                                            │
-│   │    Prometheus       │                                            │
-│   │    (or other vedors)│                                            │
-│   │  Scrape /metrics    │                                            │
-│   └────────┬────────────┘                                            │
+│   ┌───────────────────────┐                                          │
+│   │    Prometheus         │                                          │
+│   │    (or other vendors) │                                          │
+│   │  Scrape /metrics      │                                          │
+│   └────────┬──────────────┘                                          │
 │            │ HTTP                                                    │
 │            │ GET /metrics                                            │
 │            ▼                                                         │
