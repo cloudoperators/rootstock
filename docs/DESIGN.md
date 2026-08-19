@@ -234,6 +234,8 @@ GET /redfish/v1/PowerEquipment
 GET /redfish/v1/PowerEquipment/RackPDUs
 ```
 
+For more information about redfish client, check out docs/REDFISH.md
+
 #### 5.2.2 Authentication
 **Supported Authentication Methods:**
 TBD
