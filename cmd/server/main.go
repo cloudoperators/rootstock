@@ -5,15 +5,22 @@ package main
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 
-	"github.com/SAP/rootstock/internal/config"
-	"github.com/SAP/rootstock/internal/globals"
-	"github.com/SAP/rootstock/internal/log"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+
+	"github.com/SAP/rootstock/internal/config"
+)
+
+const (
+	metricsEndpoint = "/metrics"
+	healthEndpoint  = "/healthz"
+	readyEndpoint   = "/ready"
+	probeEndpoint   = "/probe"
 )
 
 func main() {
@@ -23,16 +30,33 @@ func main() {
 		os.Exit(1)
 	}
 
-	logger := log.NewLogger(cfg.ServiceName, cfg.Env)
-	logger.Info("rootstock starting up")
+	if cfg.Env == "LOCAL" {
+		slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug})))
+	} else {
+		slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})))
+	}
+
+	slog.Info("rootstock starting up", "port", cfg.Port, "env", cfg.Env)
 
 	r := chi.NewRouter()
-	r.Use(middleware.Heartbeat(globals.HealthEndpoint))
+	r.Use(middleware.Heartbeat(healthEndpoint))
 
-	r.Handle(globals.MetricsEndpoint, promhttp.Handler())
+	r.Handle(metricsEndpoint, promhttp.Handler())
 
-	r.Get(globals.ReadyEndpoint, func(w http.ResponseWriter, req *http.Request) {
+	r.Get(readyEndpoint, func(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
 
+	r.Get(probeEndpoint, func(w http.ResponseWriter, req *http.Request) {
+		// PDU scraping can be implemented here
+		w.WriteHeader(http.StatusNotImplemented)
+	})
+
+	addr := fmt.Sprintf(":%d", cfg.Port)
+	slog.Info("server listening", "addr", addr)
+
+	if err := http.ListenAndServe(addr, r); err != nil {
+		slog.Error("server failed", "error", err)
+		os.Exit(1)
+	}
 }
