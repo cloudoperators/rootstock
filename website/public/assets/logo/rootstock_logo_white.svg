@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 80" width="240" height="80" role="img" aria-label="rootstock logo">
+  <title>rootstock</title>
+  <!--
+    vexjoy-design: macro=logo theme=monochrome-white contrast=pass nav=none footer=none mobile=pass
+
+    ANTI-CLICHE PASS:
+    Rejected: stroke-based lines (thalamus style is fill-only).
+    Rejected: leaf, sprout, tree silhouette, circuit traces, hexagon, bolt.
+    Fill-only paths: tapered bars for branches, filled circles for nodes.
+    White variant — intended for dark backgrounds.
+  -->
+
+  <g transform="translate(8,4)" fill="#ffffff">
+
+    <circle cx="24" cy="5.5" r="2.5"/>
+    <polygon points="25.60,22.50 22.40,22.50 22.90,8.00 25.10,8.00"/>
+    <circle cx="24" cy="26" r="4"/>
+
+    <polygon points="22.47,28.55 25.53,30.45 10.85,52.53 9.15,51.47"/>
+    <circle cx="10" cy="52" r="2.2"/>
+
+    <polygon points="22.22,29.22 25.78,29.78 20.99,55.15 19.01,54.85"/>
+    <circle cx="20" cy="55" r="2.2"/>
+
+    <polygon points="22.47,30.45 25.53,28.55 38.85,51.47 37.15,52.53"/>
+    <circle cx="38" cy="52" r="2.2"/>
+
+    <polygon points="14.48,42.27 15.52,43.73 8.52,48.73 7.48,47.27" opacity="0.5"/>
+    <circle cx="8" cy="48" r="1.6" opacity="0.5"/>
+
+    <polygon points="32.55,43.78 33.45,42.22 40.45,46.22 39.55,47.78" opacity="0.5"/>
+    <circle cx="40" cy="47" r="1.6" opacity="0.5"/>
+
+  </g>
+
+  <text
+    x="68"
+    y="44"
+    font-family="'DM Sans','Barlow Condensed','Montserrat','Work Sans',sans-serif"
+    font-size="22"
+    font-weight="300"
+    letter-spacing="0.04em"
+    fill="#ffffff"
+    dominant-baseline="middle"
+  >rootstock</text>
+
+</svg>
