@@ -22,7 +22,7 @@ import (
 // Log out and close the connection cleanly
 
 type Client struct {
-	baseURL    *url.URL     // Base URL of the PDU Redfish API (e.g., https://pdu01.example.com)
+	baseURL    *url.URL     // Base URL of the PDU Redfish API
 	httpClient *http.Client // HTTP client with timeout and TLS configuration
 
 	username string // Authentication username
@@ -67,10 +67,12 @@ func (c *Client) Login(ctx context.Context) error {
 		return fmt.Errorf("marshal login request: %w", err)
 	}
 
+	loginURL := c.baseURL.ResolveReference(&url.URL{Path: "/redfish/v1/SessionService/Sessions"}).String()
+
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
-		"/redfish/v1/SessionService/Sessions",
+		loginURL,
 		bytes.NewReader(body),
 	)
 	if err != nil {
@@ -81,9 +83,13 @@ func (c *Client) Login(ctx context.Context) error {
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("create Redfish session: %w", err)
+		return fmt.Errorf("send login request: %w", err)
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return fmt.Errorf("login returned unexpected status %d", resp.StatusCode)
+	}
 
 	token := resp.Header.Get("X-Auth-Token")
 	if token == "" {
@@ -109,10 +115,16 @@ func (c *Client) Close(ctx context.Context) error {
 		return nil // No session to clean up
 	}
 
+	sessionURL, err := url.Parse(c.sessionURL)
+	if err != nil {
+		return fmt.Errorf("parse session URL: %w", err)
+	}
+	fullSessionURL := c.baseURL.ResolveReference(sessionURL).String()
+
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodDelete,
-		c.sessionURL,
+		fullSessionURL,
 		nil,
 	)
 	if err != nil {
@@ -133,10 +145,12 @@ func (c *Client) Close(ctx context.Context) error {
 }
 
 func (c *Client) Get(ctx context.Context, path string, result any) error {
+	fullURL := c.baseURL.ResolveReference(&url.URL{Path: path}).String()
+
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodGet,
-		path,
+		fullURL,
 		nil,
 	)
 	if err != nil {
@@ -146,11 +160,16 @@ func (c *Client) Get(ctx context.Context, path string, result any) error {
 	if c.authToken != "" {
 		req.Header.Set("X-Auth-Token", c.authToken)
 	}
+
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("GET %s: %w", path, err)
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("GET %s returned unexpected status %d", path, resp.StatusCode)
+	}
 
 	if err := json.NewDecoder(resp.Body).Decode(result); err != nil {
 		return fmt.Errorf("decode GET %s response: %w", path, err)
