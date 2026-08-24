@@ -41,9 +41,9 @@ Using `pmetric.Metrics` as the internal format means:
 
 ---
 
-## Two Approaches Considered
+## Two Approaches can be considered
 
-### Approach A — OTel Collector builder SDK
+### Approach A : OTel Collector builder SDK
 
 Use `go.opentelemetry.io/collector/component` and `consumer.Metrics` to implement the pipeline stages as formal OTel Collector components. `main.go` would use `otelcol.NewCommand()` or `service.New()` to start a pipeline engine that manages component lifecycle (Start/Shutdown) and wires stages together.
 
@@ -69,7 +69,7 @@ engine.Start()
 - Session renewal required in the background loop (Redfish sessions expire)
 - Significant additional code before anything works end-to-end
 
-### Approach B — Per-request pipeline (chosen for v1)
+### Approach B : Per-request pipeline
 
 Use `pmetric.Metrics` as the internal format but implement the pipeline stages as plain Go functions. The HTTP handler drives the pipeline per scrape request — no engine, no background goroutines.
 
@@ -87,11 +87,11 @@ GET /probe?target=pdu01
 - Always-live data — fetched at the moment of the scrape
 - No cache layer, no thread safety issues, no session renewal in background
 - Simpler to implement and reason about
-- `receiver.Receive()` is reusable — same function can be called from a background goroutine in v2
+- `receiver.Receive()` is reusable — same function can be called from a background goroutine
 
 **Disadvantages:**
 - Does not support continuous push to other backends on its own
-- Background collection for non-Prometheus backends requires additional work in v2
+- Background collection for non-Prometheus backends requires additional work
 
 ---
 
