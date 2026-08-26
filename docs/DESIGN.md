@@ -80,7 +80,10 @@ TBD
 
 ## 4. System Architecture
 ### 4.1 High-Level Architecture
-- System overview diagram
+
+**System overview diagram:**
+
+```
 ┌────────────────────┐         ┌──────────────────┐         ┌──────────────────┐
 │                    │         │                  │         │                  │
 │   PROMETHEUS       │ ──────► │  ROOTSTOCK       │ ──────► │   PDU/HARDWARE   │
@@ -92,9 +95,11 @@ TBD
   Stores time-series            Converts formats            Physical servers
                                 Routes to targets           Panduit (eventually other vendors)
                                 Handles security            Redfish API
+```
 
-- Major components and their relationships
+**Major components and their relationships:**
 
+```
                          Monitoring Network
 ┌──────────────────────────────────────────────────────────────────────┐
 │                                                                      │
@@ -113,8 +118,8 @@ TBD
 │   │  │ HTTP Server    │      │ OTEL Collector               │    │   │
 │   │  │                │─────▶│                              │    │   │
 │   │  │ /metrics       │      │ - Receiver -> Processor      │    │   │
-│   │  │ /power         │      │  ->  Exporter                |    |   |
-|   |  |                |      | - Metric collection          │    │   │
+│   │  │ /power         │      │  ->  Exporter                │    │   │
+│   │  │                │      │ - Metric collection          │    │   │
 │   │  │                │      │ - Metric normalization       │    │   │
 │   │  └────────────────┘      └──────────────┬───────────────┘    │   │
 │   │                                         │                    │   │
@@ -142,6 +147,7 @@ TBD
                 │  Redfish    │       │  Redfish    │       │  Redfish    │
                 │     API     │       │     API     │       │     API     │
                 └─────────────┘       └─────────────┘       └─────────────┘
+```
 
 ### 4.2 Component Design
 #### 4.2.1. HTTP Server 
