@@ -28,7 +28,7 @@ Scrape meaningful energy and sustainability metrics including:
 #### 2.1.2 Multi-Vendor Support
 Eventually we want to support various vendors starting with Panduit. Handling vendor-specific Redfish requirements.
 
-#### 2.1.3 Security and production Readiness
+#### 2.1.3 Security and Production Readiness
 ##### SSRF Protection (C-1 Control):
 - Prevent cloud metadata attacks (169.254.169.254)
 - Hostname whitelist enforcement
@@ -239,6 +239,8 @@ GET /redfish/v1/PowerEquipment
 ```
 GET /redfish/v1/PowerEquipment/RackPDUs
 ```
+
+For more information about redfish client, check out docs/REDFISH.md
 
 #### 5.2.2 Authentication
 **Supported Authentication Methods:**
