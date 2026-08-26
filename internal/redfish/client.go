@@ -158,3 +158,19 @@ func (c *Client) Get(ctx context.Context, path string, result any) error {
 
 	return nil
 }
+
+// GetPowerEquipment retrieves the Power Equipment collection
+func (c *Client) GetPowerEquipment(ctx context.Context, result any) error {
+	return c.Get(ctx, "/redfish/v1/PowerEquipment", result)
+}
+
+// GetRackPDUs retrieves the Rack PDUs collection
+func (c *Client) GetRackPDUs(ctx context.Context, result any) error {
+	return c.Get(ctx, "/redfish/v1/PowerEquipment/RackPDUs", result)
+}
+
+// GetPDU retrieves details for a specific PDU
+func (c *Client) GetPDU(ctx context.Context, pduID string, result any) error {
+	endpoint := fmt.Sprintf("/redfish/v1/PowerEquipment/RackPDUs/%s", pduID)
+	return c.Get(ctx, endpoint, result)
+}
