@@ -76,7 +76,7 @@ func (c *Client) Login(ctx context.Context) error {
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("close Redfish session: %w", err)
+		return fmt.Errorf("create Redfish session: %w", err)
 	}
 	defer resp.Body.Close()
 
