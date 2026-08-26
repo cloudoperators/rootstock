@@ -36,6 +36,10 @@ type Client struct {
 }
 
 func NewClient(baseURL *url.URL, logger *slog.Logger, username, password string, timeout time.Duration) *Client {
+	if logger == nil {
+		logger = slog.Default()
+	}
+
 	return &Client{
 		httpClient: &http.Client{
 			Timeout: timeout,
@@ -45,6 +49,7 @@ func NewClient(baseURL *url.URL, logger *slog.Logger, username, password string,
 		},
 		baseURL:  baseURL,
 		logger:   logger,
+		timeout:  timeout,
 		username: username,
 		password: password,
 	}
