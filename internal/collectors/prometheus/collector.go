@@ -9,6 +9,7 @@ import (
 
 	"github.com/SAP/rootstock/internal/redfish"
 
+	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/pmetric"
 )
 
@@ -90,24 +91,40 @@ func (c *Collector) Collect(
 	powerMetric.SetName("pdu_power_watts")
 	powerMetric.SetDescription("PDU power consumption in watts")
 	powerMetric.SetUnit("W")
+	powerGauge := powerMetric.SetEmptyGauge()
+	powerDataPoint := powerGauge.DataPoints().AppendEmpty()
+	powerDataPoint.SetTimestamp(pcommon.NewTimestampFromTime(time.Now()))
+	powerDataPoint.SetDoubleValue(pduMetrics.PowerWatts.Reading)
 
 	// Add apparent power metric (VA)
 	apparentMetric := sm.Metrics().AppendEmpty()
-	apparentMetric.SetName("pdu_apparent_power_va")
+	apparentMetric.SetName("pdu_power_watts_apparent_va")
 	apparentMetric.SetDescription("PDU apparent power in volt-amperes")
 	apparentMetric.SetUnit("VA")
+	apparentGauge := apparentMetric.SetEmptyGauge()
+	apparentDataPoint := apparentGauge.DataPoints().AppendEmpty()
+	apparentDataPoint.SetTimestamp(pcommon.NewTimestampFromTime(time.Now()))
+	apparentDataPoint.SetDoubleValue(pduMetrics.PowerWatts.ApparentVA)
 
 	// Add reactive power metric (VAR)
 	reactiveMetric := sm.Metrics().AppendEmpty()
-	reactiveMetric.SetName("pdu_reactive_power_var")
+	reactiveMetric.SetName("pdu_power_watts_reactive_power_var")
 	reactiveMetric.SetDescription("PDU reactive power in volt-amperes reactive")
 	reactiveMetric.SetUnit("VAR")
+	reactiveGauge := reactiveMetric.SetEmptyGauge()
+	reactiveDataPoint := reactiveGauge.DataPoints().AppendEmpty()
+	reactiveDataPoint.SetTimestamp(pcommon.NewTimestampFromTime(time.Now()))
+	reactiveDataPoint.SetDoubleValue(pduMetrics.PowerWatts.ReactiveVAR)
 
 	// Add power factor metric (ratio)
 	pfMetric := sm.Metrics().AppendEmpty()
-	pfMetric.SetName("pdu_power_factor")
+	pfMetric.SetName("pdu_power_watts_power_factor")
 	pfMetric.SetDescription("PDU power factor (ratio of real power to apparent power)")
 	pfMetric.SetUnit("1")
+	pfGauge := pfMetric.SetEmptyGauge()
+	pfDataPoint := pfGauge.DataPoints().AppendEmpty()
+	pfDataPoint.SetTimestamp(pcommon.NewTimestampFromTime(time.Now()))
+	pfDataPoint.SetDoubleValue(pduMetrics.PowerWatts.PowerFactor)
 
 	return metrics, nil
 }
