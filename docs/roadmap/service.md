@@ -11,15 +11,19 @@
   - pkg for packages that can be consumed by other projects
   - internal for remaining packages
   - top-level docs folder
+- package design
+  -
 
 ## chart structure
 
 - dynamic config loading?
+- ensure extensability by templating "everything"?
+-
 
 ## features
 
 - list of features ordered from highest to lowest priority.
 - priority is a non-linear combination of
+  - urgency
   - usefulness
   - complexity
-  -
