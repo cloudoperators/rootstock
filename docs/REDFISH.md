@@ -2,23 +2,29 @@
 
 ## Overview
 
-This document describes the Redfish client implementation for Rootstock, which is used to communicate with PDU (Power Distribution Unit) devices to collect energy and sustainability metrics.
+This document describes the Redfish client implementation for Rootstock, which
+is used to communicate with PDU (Power Distribution Unit) devices to collect
+energy and sustainability metrics.
 
 ## Implementation Approach
 
 There are two possible ways to implement the Redfish client:
 
-1. **Use Go library (gofish)**: Leverage the existing `gofish` library, with raw Redfish API calls for endpoints not implemented in the library
-2. **Implement raw Redfish only**: Direct HTTP/HTTPS calls to Redfish API endpoints
+1. **Use Go library (gofish)**: Leverage the existing `gofish` library, with raw
+   Redfish API calls for endpoints not implemented in the library
+2. **Implement raw Redfish only**: Direct HTTP/HTTPS calls to Redfish API
+   endpoints
 
 ### Decision: Raw Redfish Implementation
 
 We decided to implement **raw Redfish** for the following reasons:
-- Uncertainty about gofish compatibility with Panduit PDUs (our initial target device)
+
+- Uncertainty about gofish compatibility with Panduit PDUs (our initial target
+  device)
 - Full control over API calls and response handling
 - Simpler dependency management
 - Flexibility to handle vendor-specific Redfish implementations
-- Easier to extend for multiple PDU vendors 
+- Easier to extend for multiple PDU vendors
 
 ## Client Structure
 
@@ -69,9 +75,10 @@ func NewClient(baseURL, username, password string) (*Client, error) {
 
 ### Session-Based Authentication
 
-The Redfish client uses session-based authentication for better security and performance:
+The Redfish client uses session-based authentication for better security and
+performance:
 
-```
+```txt
 ┌─────────────────────────────────────────────────────────────────┐
 │                    Redfish Client Lifecycle                      │
 └─────────────────────────────────────────────────────────────────┘
@@ -80,7 +87,7 @@ The Redfish client uses session-based authentication for better security and per
      │
      │  • Parse and validate base URL
      │  • Initialize HTTP client with timeout and TLS config
-     │  
+     │
      │
      ▼
 2. Login()
