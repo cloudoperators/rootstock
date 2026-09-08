@@ -162,7 +162,10 @@ TBD
 #### 4.2.2. OTEL Collector
 - transport, process, enrich, filter, batch, route, export
 
-#### 4.2.3. Redfish Client
+#### 4.2.3. Prometheus Collector
+For the Prometheus probing route, we implement a Prometheus collector that is compatible with Prometheus's pull-based scraping mechanism. More detailed design in [PROMETHEUS.md](PROMETHEUS.md).
+
+#### 4.2.4. Redfish Client
 The Redfish client is the core HTTP communication layer for interacting with PDU devices using the Redfish API.
 
 **Responsibilities:**
@@ -176,7 +179,7 @@ The Redfish client is the core HTTP communication layer for interacting with PDU
 - Panduit (primary target)
 - Extensible for other Redfish-compliant PDUs
 
-#### 4.2.4. PDU Discovery and Configuration
+#### 4.2.5. PDU Discovery and Configuration
 
 **Overview:**
 For the initial implementation, we use static configuration with validation.
@@ -187,15 +190,28 @@ For the initial implementation, we use static configuration with validation.
 
 ### 4.3 Data Flow
 
+#### 4.3.1 Prometheus Probing Flow
+
 **Complete Flow:**
-1. **Prometheus → Rootstock**: Prometheus scrapes `/metrics?target=xyz
-2. **HTTP Server**: Receives request, validates target parameter
-3. **Redfish Client**: Establishes HTTPS connection to PDU, authenticates
-4. **Redfish API Call**: Queries
-5. **Response Processing**: Parse JSON response
-6. **OTEL Collector** (optional): Process, enrich, transform metrics
-7. **Metric Conversion**: Convert Redfish data to Prometheus format
-8. **HTTP Response**: Return Prometheus metrics to Prometheus server
+1. **Prometheus → Rootstock**: Prometheus scrapes `/metrics?target=<pdu-host>`
+2. **HTTP Server**: Receives request and validates target parameter
+3. **Prometheus Collector**: Queries Redfish client for energy metrics
+4. **Redfish Client**: Establishes HTTPS connection to PDU and handles authentication
+5. **Redfish API Call**: The Redfish client queries the appropriate Redfish endpoints to retrieve PDU metrics
+6. **Response Processing**: The Redfish client parses the JSON response and returns the relevant data to the collector
+7. **Metric Conversion**: Converts Redfish data to Prometheus format in Prometheus Collector
+8. **HTTP Response**: Returns Prometheus metrics to Prometheus server
+
+#### 4.3.2 OTLP Compatible Vendor Flow
+
+**Complete Flow:**
+1. **OTLP Collector**: Initiates collection of power and energy metrics
+2. **Redfish Client**: Establishes HTTPS connection to PDU and handles authentication
+3. **Redfish API Call**: The Redfish client queries the appropriate Redfish endpoints to retrieve PDU metrics
+4. **Response Processing**: The Redfish client parses the JSON response and returns the relevant data to the collector
+5. **Metric Conversion**: The OTLP Collector converts the Redfish data into OpenTelemetry pmetric format
+6. **OTLP Push**: The OTEL Collector exports the metrics using OTLP to the compatible telemetry vendor
+
 
 ## 5. API Design
 
