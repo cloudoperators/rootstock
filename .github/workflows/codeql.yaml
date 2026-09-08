@@ -15,7 +15,7 @@ jobs:
       contents: read
     runs-on: 'ubuntu-slim'
     steps:
-      - name: Set kubeconfig
+      - name: TODO enable CodeQL
         shell: bash
         run: |
           echo "TODO: reanable CodeQL when the repository is open-source"
