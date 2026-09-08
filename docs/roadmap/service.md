@@ -1,6 +1,6 @@
 # Rootstock service roadmap
 
-## service structure
+## repository structure
 
 - cli?
   - [cobra](https://github.com/spf13/cobra) +
@@ -11,8 +11,8 @@
   - pkg for packages that can be consumed by other projects
   - internal for remaining packages
   - top-level docs folder
+  - top-level hack folder
 - package design
-  -
 
 ## chart structure
 
