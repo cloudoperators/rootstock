@@ -11,7 +11,7 @@ The integration follows an **active probing model** where Prometheus triggers on
 ```
 ┌─────────────┐         ┌──────────────┐         ┌───────────────┐         ┌─────────┐
 │  Prometheus │──scrape→│   Rootstock  │──probe─→│ Redfish Client│──HTTP──→│   PDU   │
-│   Server    │←────────│  /metrics    │←───────│   (on-demand) │←────────│  Device │
+│   Server    │←────────│  /metrics    │←────────│   (on-demand) │←────────│  Device │
 └─────────────┘         └──────────────┘         └───────────────┘         └─────────┘
                             ↓
                       Custom Collector
