@@ -103,7 +103,7 @@ r.Handle(metricsEndpoint, promhttp.Handler())
 
 Additional endpoints will be added as new features are implemented.
 
-## 4. Usage Example
+## 3. Usage Example
 
 ### Collector Initialization
 
