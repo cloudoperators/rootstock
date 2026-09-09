@@ -20,7 +20,7 @@ The integration follows an **active probing model** where Prometheus triggers on
 
 ### Design Principles
 
-- **Active Probing**: Metrics are fetched from PDU **only when** Prometheus scrapes (no background collection)
+- **Active Probing**: Metrics are fetched from PDU Prometheus scrapes (for the POC we won't implement background collection)
 - **Custom Collector**: Implements `prometheus.Collector` interface for dynamic, on-demand metric generation
 - **Redfish Integration**: Uses Redfish session-based authentication to query PDU power metrics
 - **OpenTelemetry Future**: While this implementation focuses on Prometheus native exposition, OpenTelemetry Collector integration is planned for broader telemetry vendor support
@@ -44,9 +44,9 @@ Probes the PDU via Redfish API and sends fresh metrics to Prometheus. Called on 
 1. Prometheus scrapes the /metrics HTTP endpoint
 2. Prometheus registry triggers collector.Collect()
 3. Mutex lock acquired (ensures thread-safe probing)
-4. redfishClient.GetPDUMetrics(ctx, pduID) executes HTTP request to PDU
+4. redfishClient.GetPDUMetrics(ctx, pduID) executes HTTP request to PDU - eventually cache will be added to the probing flow
    (Additional Redfish client calls will be added in the future)
-5. Redfish JSON response parsed into structured data
+5. Redfish JSON response parsed into structured data - eventually saving cache will be added to the flow
 6. Prometheus metrics created with MustNewConstMetric()
 7. Metrics sent to Prometheus via channel
 8. Mutex released
@@ -68,12 +68,6 @@ The collector exposes the following **gauge metrics** for power monitoring (all 
 | `pdu_apparent_va` | Gauge | Apparent power | Volt-Amperes (VA) | `pdu_id` |
 | `pdu_reactive_var` | Gauge | Reactive power | Volt-Amperes Reactive (VAR) | `pdu_id` |
 | `pdu_power_factor` | Gauge | Power factor (efficiency ratio) | Dimensionless (0-1) | `pdu_id` |
-
-**Power Metrics Explained**:
-- **Real Power (Watts)**: Actual power consumed and converted to work/heat
-- **Apparent Power (VA)**: Total power flowing through the system (includes reactive component)
-- **Reactive Power (VAR)**: Power oscillating between source and load (not performing useful work)
-- **Power Factor**: Ratio of real power to apparent power (higher = more efficient, ideal = 1.0)
 
 ### 2.3 Redfish Client Integration
 
@@ -105,36 +99,6 @@ Additional endpoints will be added as new features are implemented.
 
 ## 3. Usage Example
 
-### Collector Initialization
-
-```go
-import (
-    "context"
-    "net/url"
-    "time"
-    
-    "github.com/prometheus/client_golang/prometheus"
-
-    promcollector "github.com/SAP/rootstock/internal/collectors/prometheus"
-)
-
-// Parse PDU base URL
-baseURL, _ := url.Parse("https://pdu01.example.com")
-
-// Initialize Redfish client
-redfishClient := redfish.NewClient(baseURL, logger, "admin", "password", 30*time.Second)
-defer redfishClient.Close(context.Background())
-
-// Login to Redfish
-if err := redfishClient.Login(context.Background()); err != nil {
-    log.Fatalf("Login failed: %v", err)
-}
-
-// Create and register collector
-collector := promcollector.NewCollector(redfishClient, "1", logger)
-prometheus.MustRegister(collector)
-```
-
 ### Prometheus Configuration
 
 ```yaml
@@ -149,7 +113,7 @@ scrape_configs:
           datacenter: 'dc1'
 ```
 
-## 5. Future Enhancements
+## 4. Future Enhancements
 
 ### Dynamic Target Probing
 
@@ -170,6 +134,7 @@ scrape_configs:
 
 ### Performance Optimizations
 
-- **Caching**: Short-lived cache (5-30s TTL) to reduce API load
+- **Caching**: Which is part of the design, not in the POC
 - **Concurrent Collection**: Worker pool for multi-PDU deployments
 - **Context Timeouts**: Proper deadline management
+

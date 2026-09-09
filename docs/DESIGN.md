@@ -195,12 +195,20 @@ For the initial implementation, we use static configuration with validation.
 **Complete Flow:**
 1. **Prometheus → Rootstock**: Prometheus scrapes `/metrics?target=<pdu-host>`
 2. **HTTP Server**: Receives request and validates target parameter
-3. **Prometheus Collector**: Queries Redfish client for energy metrics
+3. **Prometheus Collector**: Checks cache for `<pdu-host>` metrics
+   - **Cache Hit**:
+     - Returns cached metrics immediately
+     - Skips to step 8
+   - **Cache Miss** (no cached data or expired):
+     - Proceeds to step 4
 4. **Redfish Client**: Establishes HTTPS connection to PDU and handles authentication
 5. **Redfish API Call**: The Redfish client queries the appropriate Redfish endpoints to retrieve PDU metrics
 6. **Response Processing**: The Redfish client parses the JSON response and returns the relevant data to the collector
-7. **Metric Conversion**: Converts Redfish data to Prometheus format in Prometheus Collector
-8. **HTTP Response**: Returns Prometheus metrics to Prometheus server
+7. **Cache Update**: Stores fetched metrics in cache with timestamp for future requests
+8. **Metric Conversion**: Converts Redfish data to Prometheus format in Prometheus Collector
+9. **HTTP Response**: Returns Prometheus metrics to Prometheus server
+
+For the POC we would leave out the Cache implementation
 
 #### 4.3.2 OTLP Compatible Vendor Flow
 
