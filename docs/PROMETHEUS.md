@@ -2,7 +2,7 @@
 
 ## 1. Overview
 
-Rootstock will provide multiple functionalities for data center power management in the future. One of these functionalities is acting as a **Prometheus exporter** that probes Power Distribution Units (PDUs) to expose power and energy metrics. Unlike passive exporters that continuously collect metrics in the background, Rootstock actively queries PDUs via the Redfish API only when Prometheus scrapes the metrics endpoint.
+Rootstock will provide multiple functionalities regarding data center power reporting in the future. One of these functionalities is acting as a **Prometheus exporter** that probes Power Distribution Units (PDUs) to expose power and energy metrics.
 
 ### Architecture
 
