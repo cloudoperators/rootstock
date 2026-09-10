@@ -1,0 +1,36 @@
+{
+  "@odata.type": "#Sensor.v1_5_0.Sensor",
+  "Id": "PowerD",
+  "Name": "Power Branch Circuit D",
+  "ReadingType": "Power",
+  "ElectricalContext": "Line1ToNeutral",
+  "Status": {
+    "State": "Enabled",
+    "Health": "OK"
+  },
+  "Reading": 481.9079895019531,
+  "ReadingUnits": "W",
+  "ReadingRangeMin": 0,
+  "ReadingRangeMax": 39000,
+  "ApparentVA": 484,
+  "ReactiveVAR": 53,
+  "PowerFactor": 0.9940000176429749,
+  "Accuracy": 0.0,
+  "Precision": 0,
+  "SensingInterval": "N/A",
+  "PhysicalContext": "Chassis",
+  "Thresholds": {
+    "UpperCritical": {
+      "Reading": 0,
+      "Activation": "NULL",
+      "DwellTime": "N/A"
+    },
+    "UpperCaution": {
+      "Reading": 0,
+      "DwellTime": "N/A"
+    }
+  },
+  "Oem": {},
+  "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/1/Sensors/PowerD",
+  "@Redfish.Copyright": "Copyright 2014-2021 DMTF. For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright."
+}

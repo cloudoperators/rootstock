@@ -1,0 +1,43 @@
+{
+  "@odata.type": "#Sensor.v1_5_0.Sensor",
+  "Id": "PowerMains1-6",
+  "Name": "Mains Power L3LN",
+  "ReadingType": "Power",
+  "ElectricalContext": "Line3ToNeutral",
+  "Status": {
+    "State": "Enabled",
+    "Health": "OK"
+  },
+  "Reading": 1342.93603515625,
+  "ReadingUnits": "W",
+  "ReadingRangeMin": 0,
+  "ReadingRangeMax": 39000,
+  "ApparentVA": 1351.6070556640625,
+  "ReactiveVAR": 153,
+  "PowerFactor": 0.9929999709129333,
+  "Accuracy": 0.0,
+  "Precision": 0,
+  "SensingInterval": "N/A",
+  "PhysicalContext": "Chassis",
+  "Oem": {},
+  "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/PowerMains1-6",
+  "@Redfish.Copyright": "Copyright 2014-2021 DMTF. For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright.",
+  "Thresholds": {
+    "UpperCritical": {
+      "Reading": 0,
+      "DwellTime": "N/A"
+    },
+    "UpperCaution": {
+      "Reading": 0,
+      "DwellTime": "N/A"
+    },
+    "LowerCaution": {
+      "Reading": 0,
+      "DwellTime": "N/A"
+    },
+    "LowerCritical": {
+      "Reading": 0,
+      "DwellTime": "N/A"
+    }
+  }
+}

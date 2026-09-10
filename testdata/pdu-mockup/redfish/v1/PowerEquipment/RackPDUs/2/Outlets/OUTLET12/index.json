@@ -1,0 +1,69 @@
+{
+  "@odata.type": "#Outlet.v1_4_0.Outlet",
+  "Id": "OUTLET12",
+  "Name": "Outlet OUTLET12, Branch Circuit B",
+  "Status": {
+    "Health": "OK",
+    "State": "Enabled"
+  },
+  "PhaseWiringType": "ThreePhase5Wire",
+  "VoltageType": "AC",
+  "OutletType": "IEC_60320_C19",
+  "RatedCurrentAmps": 16,
+  "NominalVoltage": "AC230V",
+  "IndicatorLED": "Lit",
+  "PowerOnDelaySeconds": 0,
+  "PowerOffDelaySeconds": 0,
+  "PowerState": "On",
+  "PowerEnabled": false,
+  "Voltage": {
+    "DataSourceUri": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/VoltageOUTLET12",
+    "Reading": 230.79299926757812
+  },
+  "PolyPhaseVoltage": {
+    "Line2ToNeutral": {
+      "DataSourceUri": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/VoltageOUTLET12",
+      "Reading": 230.79299926757812
+    }
+  },
+  "CurrentAmps": {
+    "DataSourceUri": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/CurrentOUTLET12",
+    "Reading": 1.9429999589920044
+  },
+  "PolyPhaseCurrentAmps": {
+    "Line2": {
+      "DataSourceUri": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/CurrentOUTLET12",
+      "Reading": 1.9429999589920044
+    }
+  },
+  "PowerWatts": {
+    "DataSourceUri": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/PowerOUTLET12",
+    "Reading": 444.0,
+    "ApparentVA": 448.0,
+    "ReactiveVAR": 0.0,
+    "PowerFactor": 0.0
+  },
+  "FrequencyHz": {
+    "DataSourceUri": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/FrequencyOUTLET12",
+    "Reading": 49
+  },
+  "EnergykWh": {
+    "DataSourceUri": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/EnergyOUTLET12",
+    "Reading": 3012.864013671875
+  },
+  "Actions": {
+    "#Outlet.PowerControl": {
+      "target": "/redfish/v1/PowerEquipment/RackPDUs/2/Outlets/OUTLET12/Outlet.PowerControl"
+    },
+    "#Outlet.ResetMetrics": {
+      "target": "/redfish/v1/PowerEquipment/RackPDUs/2/Outlets/OUTLET12/Outlet.ResetMetrics"
+    }
+  },
+  "Links": {
+    "BranchCircuit": {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Branches/B"
+    },
+    "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Outlets/OUTLET12",
+    "@Redfish.Copyright": "Copyright 2014-2021 DMTF. For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright."
+  }
+}

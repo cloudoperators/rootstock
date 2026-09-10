@@ -1,0 +1,36 @@
+{
+  "@odata.type": "#Sensor.v1_5_0.Sensor",
+  "Id": "PowerOUTLET7",
+  "Name": "Power reading for outlet OUTLET7",
+  "ReadingType": "Power",
+  "ElectricalContext": "Line2ToNeutral",
+  "Status": {
+    "State": "Enabled",
+    "Health": "OK"
+  },
+  "Reading": 80.37699890136719,
+  "ReadingUnits": "W",
+  "ReadingRangeMin": 0,
+  "ReadingRangeMax": 39000,
+  "ApparentVA": 93.53700256347656,
+  "ReactiveVAR": 47,
+  "PowerFactor": 0.8579999804496765,
+  "Accuracy": 0.0,
+  "Precision": 0,
+  "SensingInterval": "N/A",
+  "PhysicalContext": "Chassis",
+  "Thresholds": {
+    "UpperCritical": {
+      "Reading": 0,
+      "Activation": "Increasing",
+      "DwellTime": "N/A"
+    },
+    "UpperCaution": {
+      "Reading": 0,
+      "DwellTime": "N/A"
+    }
+  },
+  "Oem": {},
+  "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/1/Sensors/PowerOUTLET7",
+  "@Redfish.Copyright": "Copyright 2014-2021 DMTF. For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright."
+}

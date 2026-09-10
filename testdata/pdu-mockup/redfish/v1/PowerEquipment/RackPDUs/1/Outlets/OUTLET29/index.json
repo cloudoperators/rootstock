@@ -1,0 +1,69 @@
+{
+  "@odata.type": "#Outlet.v1_4_0.Outlet",
+  "Id": "OUTLET29",
+  "Name": "Outlet OUTLET29, Branch Circuit E",
+  "Status": {
+    "Health": "OK",
+    "State": "Enabled"
+  },
+  "PhaseWiringType": "ThreePhase5Wire",
+  "VoltageType": "AC",
+  "OutletType": "IEC_60320_C13",
+  "RatedCurrentAmps": 10,
+  "NominalVoltage": "AC230V",
+  "IndicatorLED": "Lit",
+  "PowerOnDelaySeconds": 0,
+  "PowerOffDelaySeconds": 0,
+  "PowerState": "On",
+  "PowerEnabled": false,
+  "Voltage": {
+    "DataSourceUri": "/redfish/v1/PowerEquipment/RackPDUs/1/Sensors/VoltageOUTLET29",
+    "Reading": 231.63800048828125
+  },
+  "PolyPhaseVoltage": {
+    "Line2ToNeutral": {
+      "DataSourceUri": "/redfish/v1/PowerEquipment/RackPDUs/1/Sensors/VoltageOUTLET29",
+      "Reading": 231.63800048828125
+    }
+  },
+  "CurrentAmps": {
+    "DataSourceUri": "/redfish/v1/PowerEquipment/RackPDUs/1/Sensors/CurrentOUTLET29",
+    "Reading": 0.0
+  },
+  "PolyPhaseCurrentAmps": {
+    "Line2": {
+      "DataSourceUri": "/redfish/v1/PowerEquipment/RackPDUs/1/Sensors/CurrentOUTLET29",
+      "Reading": 0.0
+    }
+  },
+  "PowerWatts": {
+    "DataSourceUri": "/redfish/v1/PowerEquipment/RackPDUs/1/Sensors/PowerOUTLET29",
+    "Reading": 0.0,
+    "ApparentVA": 0.0,
+    "ReactiveVAR": 0.0,
+    "PowerFactor": 0.0
+  },
+  "FrequencyHz": {
+    "DataSourceUri": "/redfish/v1/PowerEquipment/RackPDUs/1/Sensors/FrequencyOUTLET29",
+    "Reading": 49
+  },
+  "EnergykWh": {
+    "DataSourceUri": "/redfish/v1/PowerEquipment/RackPDUs/1/Sensors/EnergyOUTLET29",
+    "Reading": 0.0
+  },
+  "Actions": {
+    "#Outlet.PowerControl": {
+      "target": "/redfish/v1/PowerEquipment/RackPDUs/1/Outlets/OUTLET29/Outlet.PowerControl"
+    },
+    "#Outlet.ResetMetrics": {
+      "target": "/redfish/v1/PowerEquipment/RackPDUs/1/Outlets/OUTLET29/Outlet.ResetMetrics"
+    }
+  },
+  "Links": {
+    "BranchCircuit": {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/1/Branches/E"
+    },
+    "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/1/Outlets/OUTLET29",
+    "@Redfish.Copyright": "Copyright 2014-2021 DMTF. For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright."
+  }
+}
