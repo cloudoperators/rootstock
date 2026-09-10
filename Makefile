@@ -21,10 +21,10 @@ override LDFLAGS += \
 
 
 # Integration test mockup server
-# Requires the pdu-mockup repo cloned as a sibling directory next to rootstock.
+# Requires pdu-mockup data at testdata/pdu-mockup (already added to the repo).
 # Or override the path: make test-integration PDU_MOCKUP_PATH=/your/path/to/pdu-mockup
 
-PDU_MOCKUP_PATH  ?= $(CURDIR)/../pdu-mockup
+PDU_MOCKUP_PATH  ?= $(CURDIR)/testdata/pdu-mockup
 MOCKUP_PORT      ?= 8000
 MOCKUP_CONTAINER := redfish-mockup
 
@@ -76,28 +76,17 @@ test-performance: ## Run performance tests (TODO: not yet implemented)
 # ---------------------------------------------------------------------------
 
 mockup-start: ## Start the DMTF Redfish mockup server in Docker
-	@echo "Starting Redfish mockup server on port $(MOCKUP_PORT)..."
-	@docker run -d --rm \
-		--name $(MOCKUP_CONTAINER) \
-		-p $(MOCKUP_PORT):8000 \
-		-v $(abspath $(PDU_MOCKUP_PATH)):/usr/src/app/pdu-mockup \
-		dmtf/redfish-mockup-server:latest -D pdu-mockup
-	@echo "Waiting for mockup server to be ready..."
-	@for i in $$(seq 1 15); do \
-		curl -sf http://localhost:$(MOCKUP_PORT)/redfish/v1/ > /dev/null 2>&1 \
-			&& echo "Mockup server ready." && exit 0; \
-		sleep 1; \
-	done; \
-	echo "ERROR: mockup server did not start within 15s"; exit 1
+	@PDU_MOCKUP_PATH=$(PDU_MOCKUP_PATH) MOCKUP_PORT=$(MOCKUP_PORT) MOCKUP_CONTAINER=$(MOCKUP_CONTAINER) \
+		hack/mockup-start.sh
 
 mockup-stop: ## Stop the DMTF Redfish mockup server
-	@docker stop $(MOCKUP_CONTAINER) 2>/dev/null || true
+	@MOCKUP_CONTAINER=$(MOCKUP_CONTAINER) hack/mockup-stop.sh
 
 # Code quality
 lint: ## Run golangci-lint
 	golangci-lint run ./...
 
-conventions: ## Check formatting conventions — markdown, shell, go (TODO: prettier + shellcheck)
+conventions: ## Check formatting conventions - markdown, shell, go (TODO: prettier + shellcheck)
 	@echo "TODO: run prettier on markdown files"
 	@echo "TODO: run shellcheck on shell scripts"
 	$(MAKE) lint
