@@ -45,6 +45,11 @@ type mockLogger struct {
 }
 
 func (m *mockLogger) SortByType() {
+	m.debugMsg = nil
+	m.errorMsg = nil
+	m.infoMsg = nil
+	m.warnMsg = nil
+
 	for _, msg := range m.Read() {
 		switch {
 		case bytes.Contains(msg, []byte(zapcore.DebugLevel.CapitalString())):
