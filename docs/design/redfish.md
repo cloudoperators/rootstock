@@ -1,5 +1,16 @@
 # Redfish Client Implementation
 
+## Table of Contents
+- [Overview](#overview)
+- [Implementation Approach](#implementation-approach)
+  - [Decision: Raw Redfish Implementation](#decision-raw-redfish-implementation)
+- [Client Structure](#client-structure)
+  - [Client Constructor](#client-constructor)
+- [Authentication Flow](#authentication-flow)
+  - [Session-Based Authentication](#session-based-authentication)
+
+---
+
 ## Overview
 
 This document describes the Redfish client implementation for Rootstock, which is used to communicate with PDU (Power Distribution Unit) devices to collect energy and sustainability metrics.
