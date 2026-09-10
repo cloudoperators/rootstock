@@ -173,7 +173,7 @@ func (o *loggerOptions) DeepCopy() *loggerOptions {
 	r.addStacktrace = o.addStacktrace
 	r.infoTarget = o.infoTarget
 	r.errTarget = o.errTarget
-	r.addTarget = make([]zapcore.WriteSyncer, 0, len(o.addTarget))
+	r.addTarget = make([]zapcore.WriteSyncer, len(o.addTarget))
 	copy(r.addTarget, o.addTarget)
 
 	return &r
