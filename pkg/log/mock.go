@@ -97,7 +97,7 @@ type MockReaders interface {
 	Read() [][]byte
 	// ReadAllString returns all the data written to the logger as a string.
 	ReadAllString() string
-	// ReadEntriesString returns all the entries written to the logger as a slice of strings.
+	// ReadString returns all the entries written to the logger as a slice of strings.
 	ReadString() []string
 }
 
