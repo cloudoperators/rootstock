@@ -108,7 +108,7 @@ type PDUMetrics struct {
 
 // SensorReading represents a sensor reading with value and metadata
 type SensorReading struct {
-	DataSourceUri string  `json:"DataSourceUri"`
+	DataSourceURI string  `json:"DataSourceUri"`
 	Reading       float64 `json:"Reading"`
 	ApparentVA    float64 `json:"ApparentVA"`
 	ReactiveVAR   float64 `json:"ReactiveVAR"`
