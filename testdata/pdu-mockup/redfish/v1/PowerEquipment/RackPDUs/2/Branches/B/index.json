@@ -1,0 +1,84 @@
+{
+  "@odata.type": "#Circuit.v1_5_0.Circuit",
+  "Id": "2",
+  "Name": "Branch Circuit B",
+  "Status": {
+    "State": "Enabled",
+    "Health": "OK"
+  },
+  "CircuitType": "Branch",
+  "PhaseWiringType": "ThreePhase5Wire",
+  "NominalVoltage": "AC230V",
+  "RatedCurrentAmps": 20,
+  "BreakerState": "Normal",
+  "PolyPhaseVoltage": {
+    "Line2ToNeutral": {
+      "DataSourceUri": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/VoltageBL2N",
+      "Reading": 230.822998046875
+    }
+  },
+  "CurrentAmps": {
+    "DataSourceUri": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/CurrentB",
+    "Reading": 6.114999771118164
+  },
+  "PolyPhaseCurrentAmps": {
+    "Line2": {
+      "DataSourceUri": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/CurrentB",
+      "Reading": 6.114999771118164
+    },
+    "PowerWatts": {
+      "DataSourceUri": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/PowerB",
+      "Reading": 1399.47900390625,
+      "ApparentVA": 1411.6009521484375,
+      "ReactiveVAR": 183.6300048828125,
+      "PowerFactor": 0.9909999966621399
+    }
+  },
+  "PolyPhasePowerWatts": {
+    "Line2ToNeutral": {
+      "DataSourceUri": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/PowerB",
+      "Reading": 1399.47900390625,
+      "ApparentVA": 1411.6009521484375,
+      "ReactiveVAR": 183.6300048828125,
+      "PowerFactor": 0.9909999966621399
+    }
+  },
+  "FrequencyHz": {
+    "DataSourceUri": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/FrequencyB",
+    "Reading": 49.0
+  },
+  "EnergykWh": {
+    "DataSourceUri": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/EnergyB",
+    "Reading": 9500.4541015625
+  },
+  "Actions": {
+    "#Circuit.BreakerControl": {
+      "target": "/redfish/v1/PowerEquipment/RackPDUs/2/Branches/B/Circuit.BreakerControl"
+    },
+    "#Circuit.ResetMetrics": {
+      "target": "/redfish/v1/PowerEquipment/RackPDUs/2/Branches/B/Circuit.ResetMetrics"
+    }
+  },
+  "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Branches/B",
+  "@Redfish.Copyright": "Copyright 2014-2021 DMTF. For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright.",
+  "Outlets": [
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Outlets/OUTLET7"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Outlets/OUTLET8"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Outlets/OUTLET9"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Outlets/OUTLET10"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Outlets/OUTLET11"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Outlets/OUTLET12"
+    }
+  ]
+}

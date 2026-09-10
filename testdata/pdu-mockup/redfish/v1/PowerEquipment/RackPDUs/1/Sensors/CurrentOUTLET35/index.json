@@ -1,0 +1,34 @@
+{
+  "@odata.type": "#Sensor.v1_5_0.Sensor",
+  "Id": "CurrentOUTLET35",
+  "Name": "Current Outlet 35",
+  "ReadingType": "Current",
+  "ElectricalContext": "Line3",
+  "Status": {
+    "State": "Enabled",
+    "Health": "OK"
+  },
+  "Reading": 0.0,
+  "ReadingUnits": "A",
+  "ReadingRangeMin": 0,
+  "ReadingRangeMax": 10,
+  "Accuracy": 0.0,
+  "Precision": 0,
+  "SensingInterval": "N/A",
+  "PhysicalContext": "Chassis",
+  "Thresholds": {
+    "UpperCritical": {
+      "Reading": 0,
+      "Activation": "NULL",
+      "DwellTime": "N/A"
+    },
+    "UpperCaution": {
+      "Reading": 0,
+      "Activation": "NULL",
+      "DwellTime": "N/A"
+    }
+  },
+  "Oem": {},
+  "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/1/Sensors/CurrentOUTLET35",
+  "@Redfish.Copyright": "Copyright 2014-2021 DMTF. For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright."
+}
