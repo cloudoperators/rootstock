@@ -20,7 +20,7 @@ jobs:
             const priorityMap = {
               "(Low) Something is a little off": 'priority: low',
               "(Medium) I'm annoyed but I'll live": 'priority: medium',
-              "(Urgent) I can't use the rootstock without": 'priority: urgent',
+              "(Urgent) I can't use the rootstock without": 'priority: high',
             };
 
             const matched = Object.entries(priorityMap).find(([key]) =>
