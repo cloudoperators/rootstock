@@ -102,7 +102,7 @@ func newLogger(o *loggerOptions) *Logger {
 			slog.Any("lvl", o.level),
 			slog.String("timeFormat", o.timeFormat),
 			slog.Bool("jsonFormat", o.jsonFormat),
-			slog.Bool("strackTrace", o.addStacktrace),
+			slog.Bool("stacktrace", o.addStacktrace),
 		),
 	)
 
