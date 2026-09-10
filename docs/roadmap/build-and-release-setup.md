@@ -70,7 +70,7 @@ The following linters and configuration files are used:
 Additional conventions are:
 
 - file names: concatenated filenames use dashes, e.g.
-  (`my-concatenated-file-name.txt`)
+  `my-concatenated-file-name.*`
 - we follow the markdown style from
   [markdownlint](https://github.com/DavidAnson/markdownlint)
 - markdown headlines start with a capital letter
@@ -95,8 +95,8 @@ Additional conventions are:
 ### Tests
 
 For all tests, we use the standard go tooling. Unit tests come without a build
-tag and all other test types have the name as respective build tag
-test can be done by running
+tag and all other test types have the name as respective build tag test can be
+done by running
 
 ```shell
 # unit tests
