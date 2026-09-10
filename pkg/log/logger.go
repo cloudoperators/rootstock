@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Greenhouse contributors
+// SPDX-License-Identifier: Apache-2.0
+
 // obtained from https://gist.github.com/calam1/c2673b6b0a53918df033d71bbf958b56
 
 package log
