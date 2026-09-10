@@ -21,6 +21,14 @@ body:
         - (Medium) I'm annoyed but I'll live
         - (Urgent) I can't use the Greenhouse without
   - type: textarea
+    id: problem
+    attributes:
+      label: "Problem Statement"
+      description: "Briefly describe the problem the feature will solve"
+      placeholder: Short and explicit description of the problem you are facing. 
+    validations:
+      required: true
+  - type: textarea
     id: description
     attributes:
       label: "Description"
