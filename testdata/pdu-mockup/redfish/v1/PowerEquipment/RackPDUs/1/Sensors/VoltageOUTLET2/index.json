@@ -1,0 +1,41 @@
+{
+  "@odata.type": "#Sensor.v1_5_0.Sensor",
+  "Id": "VoltageOUTLET2",
+  "Name": "Voltage reading for outlet 2",
+  "ReadingType": "Voltage",
+  "Status": {
+    "State": "Enabled",
+    "Health": "OK"
+  },
+  "ElectricalContext": "Line1ToNeutral",
+  "Reading": 231.0,
+  "ReadingUnits": "V",
+  "ReadingRangeMin": 346,
+  "ReadingRangeMax": 415,
+  "Accuracy": 0.0,
+  "Precision": 0,
+  "SensingInterval": "N/A",
+  "PhysicalContext": "Chassis",
+  "Thresholds": {
+    "UpperCritical": {
+      "Reading": 0,
+      "Activation": "NULL",
+      "DwellTime": "N/A"
+    },
+    "UpperCaution": {
+      "Reading": 0,
+      "DwellTime": "N/A"
+    },
+    "LowerCaution": {
+      "Reading": 0,
+      "DwellTime": "N/A"
+    },
+    "LowerCritical": {
+      "Reading": 0,
+      "DwellTime": "N/A"
+    }
+  },
+  "Oem": {},
+  "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/1/Sensors/Voltage2",
+  "@Redfish.Copyright": "Copyright 2014-2021 DMTF. For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright."
+}

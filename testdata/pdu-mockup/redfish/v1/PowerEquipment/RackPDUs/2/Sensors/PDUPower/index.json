@@ -1,0 +1,38 @@
+{
+  "@odata.type": "#Sensor.v1_5_0.Sensor",
+  "Id": "PDUPower",
+  "Name": "Power reading for the PDU",
+  "ReadingType": "Power",
+  "ElectricalContext": "Total",
+  "Status": {
+    "State": "Enabled",
+    "Health": "OK"
+  },
+  "Reading": 4269.68798828125,
+  "ReadingUnits": "W",
+  "ReadingTime": "2010-12-15T03:13:16",
+  "ReadingRangeMin": 0,
+  "ReadingRangeMax": 22000,
+  "ApparentVA": 4297.60205078125,
+  "ReactiveVAR": 489.7770080566406,
+  "PowerFactor": 0.9929999709129333,
+  "LoadPercent": 19.407672882080078,
+  "Accuracy": 0.0,
+  "Precision": 0,
+  "SensingInterval": "N/A",
+  "PhysicalContext": "Chassis",
+  "Thresholds": {
+    "UpperCritical": {
+      "Reading": 0,
+      "Activation": "Increasing",
+      "DwellTime": "N/A"
+    },
+    "UpperCaution": {
+      "Reading": 0,
+      "DwellTime": "N/A"
+    }
+  },
+  "Oem": {},
+  "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/PDUPower",
+  "@Redfish.Copyright": "Copyright 2014-2021 DMTF. For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright."
+}

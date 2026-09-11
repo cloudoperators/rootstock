@@ -1,0 +1,15 @@
+{
+  "@odata.type": "#PowerEquipment.v1_2_0.PowerEquipment",
+  "Id": "PowerEquipment",
+  "Name": "DCIM Power Equipment",
+  "Status": {
+    "State": "Enabled",
+    "HealthRollup": "OK"
+  },
+  "Links": {},
+  "RackPDUs": {
+    "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs"
+  },
+  "@odata.id": "/redfish/v1/PowerEquipment",
+  "@Redfish.Copyright": "Copyright 2014-2021 DMTF. For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright."
+}
