@@ -75,17 +75,20 @@ func New(options ...Option) FullInterface {
 func newLogger(o *loggerOptions) *Logger {
 	zapLogger := o.zapLogger()
 
-	h := &CallerHandler{
-		&ContextHandler{zapslog.NewHandler(
-			zapLogger.Core(),
-			zapslog.WithName(o.name),
-			zapslog.WithCallerSkip(1),
-		)},
-		o.addCaller,
-		1,
-	}
-	l := Logger{slog.New(h), zapLogger, *o}
-	return &l
+	sLogger := slog.New(
+		&CallerHandler{
+			&ContextHandler{
+				zapslog.NewHandler(
+					zapLogger.Core(),
+					zapslog.WithName(o.name),
+					zapslog.WithCallerSkip(1),
+				),
+			},
+			o.addCaller,
+			0,
+		},
+	)
+	return &Logger{sLogger, zapLogger, *o}
 }
 
 type loggerOptions struct {

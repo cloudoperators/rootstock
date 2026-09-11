@@ -9,11 +9,6 @@ import (
 	"log/slog"
 )
 
-const (
-	// offset to skip the current function and the logger functions.
-	callstackFunctionOffset = 3
-)
-
 func DebugContext(ctx context.Context, msg string, args ...any) {
 	Default.DebugContext(ctx, msg, args...)
 }
@@ -55,6 +50,8 @@ func Errorf(msg string, args ...any) {
 }
 
 func AddCaller() slog.Attr {
+	// offset to skip the current function and the logger functions.
+	callstackFunctionOffset := 3
 	fileV, funcV := prepareCallerValues(callstackFunctionOffset)
 
 	return slog.Group(
