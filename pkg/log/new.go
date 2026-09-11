@@ -59,7 +59,17 @@ func New(options ...Option) FullInterface {
 		option(o)
 	}
 
-	return newLogger(o)
+	l := newLogger(o)
+
+	l.Debug("logger initialized",
+		slog.Group("options",
+			slog.Any("lvl", o.level),
+			slog.String("timeFormat", o.timeFormat),
+			slog.Bool("jsonFormat", o.jsonFormat),
+			slog.Bool("stacktrace", o.addStacktrace),
+		),
+	)
+	return l
 }
 
 func newLogger(o *loggerOptions) *Logger {
@@ -75,16 +85,6 @@ func newLogger(o *loggerOptions) *Logger {
 		1,
 	}
 	l := Logger{slog.New(h), zapLogger, *o}
-
-	l.Debug("logger initialized",
-		slog.Group("options",
-			slog.Any("lvl", o.level),
-			slog.String("timeFormat", o.timeFormat),
-			slog.Bool("jsonFormat", o.jsonFormat),
-			slog.Bool("stacktrace", o.addStacktrace),
-		),
-	)
-
 	return &l
 }
 

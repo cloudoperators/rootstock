@@ -14,9 +14,9 @@ import (
 type Config struct {
 	ServiceName string `envconfig:"SERVICE_NAME" default:"rootstock"`
 
-	Env string `envconfig:"SERVICE_ENV" default:"PROD"`
+	ServiceEnv string `envconfig:"SERVICE_ENV" default:"PROD"`
 
-	Port int `envconfig:"PORT" default:"9220"`
+	ServicePort int `envconfig:"SERVICE_PORT" default:"9220"`
 
 	// Redfish credentials used to authenticate against PDUs.
 	RedfishUsername string `envconfig:"REDFISH_USERNAME" required:"true"`

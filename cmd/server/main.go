@@ -40,7 +40,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if cfg.Env == "LOCAL" {
+	if cfg.ServiceEnv == "LOCAL" {
 		log.SetDefaultLogger(log.WithLevel(log.DebugLvl), log.WithTextFormat())
 	} else {
 		log.SetDefaultLogger(log.WithLevel(log.InfoLvl))
@@ -48,8 +48,8 @@ func main() {
 
 	log.Info(
 		"rootstock starting up",
-		"port", cfg.Port,
-		"env", cfg.Env,
+		"port", cfg.ServicePort,
+		"env", cfg.ServiceEnv,
 		"version", version,
 		"buildDate", buildDate,
 		"gitCommit", gitCommit,
@@ -71,7 +71,7 @@ func main() {
 		w.WriteHeader(http.StatusNotImplemented)
 	})
 
-	addr := fmt.Sprintf(":%d", cfg.Port)
+	addr := fmt.Sprintf(":%d", cfg.ServicePort)
 	log.Info("server listening", "addr", addr)
 
 	if err := http.ListenAndServe(addr, r); err != nil {

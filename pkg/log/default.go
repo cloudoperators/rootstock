@@ -32,7 +32,7 @@ var (
 
 // This package uses 1 init function to ensure the Default logger is present
 func init() {
-	SetDefaultLogger()
+	Default = newLogger(&defaultOptions)
 }
 
 func SetDefaultLogger(options ...Option) {
@@ -48,4 +48,12 @@ func SetDefaultLogger(options ...Option) {
 
 	Default = newLogger(o)
 	slog.SetDefault(Default.Logger)
+	Default.Debug("logger configured",
+		slog.Group("options",
+			slog.Any("lvl", o.level),
+			slog.String("timeFormat", o.timeFormat),
+			slog.Bool("jsonFormat", o.jsonFormat),
+			slog.Bool("stacktrace", o.addStacktrace),
+		),
+	)
 }
