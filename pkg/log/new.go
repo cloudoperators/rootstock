@@ -5,33 +5,12 @@ package log
 
 import (
 	"log/slog"
-	"os"
-	"sync"
-	"time"
 
-	"go.uber.org/zap"
 	"go.uber.org/zap/exp/zapslog"
 	"go.uber.org/zap/zapcore"
 )
 
 // use slog: https://betterstack.com/community/guides/logging/logging-in-go/
-
-var (
-	defaultLogger *Logger
-
-	defaultOptions = loggerOptions{
-		level:         zap.DebugLevel,
-		name:          "default",
-		timeFormat:    time.RFC3339,
-		jsonFormat:    true,
-		addCaller:     true,
-		addStacktrace: false,
-		infoTarget:    os.Stdout,
-		errTarget:     os.Stderr,
-		addTarget:     make([]zapcore.WriteSyncer, 0),
-	}
-	defaultLoggerMutex = sync.RWMutex{}
-)
 
 const (
 	DebugLvl Level = Level(zapcore.DebugLevel)
@@ -109,48 +88,6 @@ func newLogger(o *loggerOptions) *Logger {
 	return &l
 }
 
-func SetDefaultLogger(options ...Option) {
-	// Default configuration
-	o := defaultOptions.DeepCopy()
-	// Apply provided options
-	for _, option := range options {
-		option(o)
-	}
-
-	defaultLoggerMutex.Lock()
-	defer defaultLoggerMutex.Unlock()
-
-	defaultLogger = newLogger(o)
-	slog.SetDefault(defaultLogger.Logger)
-}
-
-// Default returns the default logger. If not set, it will create a new logger with
-// default options.
-func Default() *Logger {
-	defaultLoggerMutex.RLock()
-
-	if defaultLogger != nil {
-		defaultLoggerMutex.RUnlock()
-		return defaultLogger
-	}
-
-	defaultLoggerMutex.RUnlock()
-
-	defaultLoggerMutex.Lock()
-	defer defaultLoggerMutex.Unlock()
-
-	if defaultLogger == nil {
-		// Avoid rewriting the default logger on race condition
-		// Default options have remote audit disabled, so newLogger should not fail.
-		logger := newLogger(&defaultOptions)
-
-		defaultLogger = logger
-		defaultLogger.Error("default logger not initialized - using default values")
-	}
-
-	return defaultLogger
-}
-
 type loggerOptions struct {
 	level         zapcore.Level
 	name          string
@@ -173,7 +110,7 @@ func (o *loggerOptions) DeepCopy() *loggerOptions {
 	r.addStacktrace = o.addStacktrace
 	r.infoTarget = o.infoTarget
 	r.errTarget = o.errTarget
-	r.addTarget = make([]zapcore.WriteSyncer, 0, len(o.addTarget))
+	r.addTarget = make([]zapcore.WriteSyncer, len(o.addTarget))
 	copy(r.addTarget, o.addTarget)
 
 	return &r

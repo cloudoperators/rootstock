@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"os"
 	"syscall"
 
 	"go.uber.org/zap"
@@ -28,7 +29,7 @@ func (l *Logger) Sync() {
 	}
 
 	if err := l.core.Sync(); err != nil && !errors.Is(err, syscall.ENOTTY) && !errors.Is(err, syscall.EINVAL) {
-		fmt.Printf("failed to sync logger: %v\n", err)
+		fmt.Fprintf(os.Stderr, "failed to sync logger: %v\n", err)
 	}
 }
 

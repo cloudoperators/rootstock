@@ -48,7 +48,13 @@ func main() {
 
 	log.Info(
 		"rootstock starting up",
-		"port", cfg.Port, "env", cfg.Env,
+		"port", cfg.Port,
+		"env", cfg.Env,
+		"version", version,
+		"buildDate", buildDate,
+		"gitCommit", gitCommit,
+		"gitTag", gitTag,
+		"gitTreeState", gitTreeState,
 	)
 
 	r := chi.NewRouter()

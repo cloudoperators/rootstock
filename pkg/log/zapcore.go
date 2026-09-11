@@ -73,11 +73,7 @@ func (o *loggerOptions) zapLogger() *zap.Logger {
 	}
 
 	// From a zapcore.Core, it's easy to construct a Logger.
-	res := zap.New(
-		zapcore.NewTee(cores...),
-		zap.AddCaller(),
-		zap.AddCallerSkip(0),
-	)
+	res := zap.New(zapcore.NewTee(cores...), zap.AddCaller(), zap.AddCallerSkip(0))
 	zap.RedirectStdLog(res)
 
 	return res
