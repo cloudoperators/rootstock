@@ -1,0 +1,18 @@
+{
+  "@odata.id": "/redfish/v1",
+  "@odata.type": "#ServiceRoot.v1_11_0.ServiceRoot",
+  "Id": "RootService",
+  "Name": "Root Service",
+  "RedfishVersion": "1.11.0",
+  "PowerEquipment": {
+    "@odata.id": "/redfish/v1/PowerEquipment"
+  },
+  "SessionService": {
+    "@odata.id": "/redfish/v1/SessionService"
+  },
+  "Links": {
+    "Sessions": {
+      "@odata.id": "/redfish/v1/SessionService/Sessions"
+    }
+  }
+}

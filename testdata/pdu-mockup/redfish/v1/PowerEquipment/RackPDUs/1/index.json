@@ -1,6 +1,6 @@
 {
   "@odata.type": "#PowerDistribution.v1_0_0.PowerDistribution",
-  "Id": 1,
+  "Id": "1",
   "EquipmentType": "RackPDU",
   "Name": "TOK2-Cage1-01-02-Red-1",
   "FirmwareVersion": "5.2.6",
