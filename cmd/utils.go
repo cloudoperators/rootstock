@@ -181,20 +181,11 @@ func fatalOnError(err error, msg string) {
 		return
 	}
 
-	logger.Error("fatal error", "err", err)
+	logger.Error(msg, "err", err)
 	shutdown.StopNow()
 }
 
 // TODO: is needed?
-
-func checkDir(dir string) (bool, error) {
-	stat, err := os.Stat(dir)
-	if err != nil {
-		return false, err
-	}
-
-	return stat.IsDir(), nil
-}
 
 var (
 	// Used for monkey patching in tests.
@@ -226,4 +217,13 @@ func CreateDirIfNotExist(dir string) error {
 	}
 
 	return nil
+}
+
+func checkDir(dir string) (bool, error) {
+	stat, err := os.Stat(dir)
+	if err != nil {
+		return false, err
+	}
+
+	return stat.IsDir(), nil
 }

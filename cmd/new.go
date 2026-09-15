@@ -25,11 +25,12 @@ var (
 )
 
 func New() *cobra.Command {
+	cobra.OnInitialize(initCLI)
+
 	rootCmd := root(cliName)
 	rootCmd.AddCommand(version())
 	rootCmd.AddCommand(run())
 
-	cobra.OnInitialize(initCLI)
 	return rootCmd
 }
 
@@ -78,14 +79,8 @@ func initCLI() {
 	// If a config file is found, read it in.
 	configErr := viper.ReadInConfig()
 
-	log.SetDefaultLogger(
-		log.WithLevel(logLevel.Value()),
-		log.WithTimeFormat("2006-01-02T15:04:05Z07:00"),
-		log.SetStacktrace(addTrace.Value()),
-		log.WithName(cliName),
-		log.WithFormat(logFormat.Value()),
-	)
-	logger = log.Default.New(log.WithName(cliName))
+	onConfigChange = append(onConfigChange, setLogger)
+	setLogger()
 
 	if configErr != nil {
 		logger.Error("failed to read cobra config file", log.KeyError, configErr)
@@ -167,11 +162,11 @@ func setupViper(cliName string) {
 
 	viper.AutomaticEnv() // read in environment variables that match
 
-	viper.OnConfigChange(onFileChange(updateServieConfig))
+	viper.OnConfigChange(onFileChange(updateServiceConfig))
 	viper.WatchConfig()
 }
 
-func updateServieConfig() error {
+func updateServiceConfig() error {
 	if err := viper.ReadInConfig(); err != nil {
 		return fmt.Errorf("failed to read config file: %w", err)
 	}
@@ -181,4 +176,15 @@ func updateServieConfig() error {
 	}
 
 	return nil
+}
+
+func setLogger() {
+	log.SetDefaultLogger(
+		log.WithLevel(logLevel.Value()),
+		log.WithTimeFormat("2006-01-02T15:04:05Z07:00"),
+		log.SetStacktrace(addTrace.Value()),
+		log.WithName(cliName),
+		log.WithFormat(logFormat.Value()),
+	)
+	logger = log.Default.New(log.WithName(cliName))
 }

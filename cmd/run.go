@@ -54,6 +54,7 @@ func run() *cobra.Command {
 			if err != nil {
 				logger.Error("failed to parse timeout", log.KeyError, err)
 				shutdown.StopNow()
+				return
 			}
 
 			logger.Info(
@@ -62,10 +63,9 @@ func run() *cobra.Command {
 				"scrapeTimeout", sTimeout.String(),
 			)
 
-			// TODO: use proper context
 			go func() {
 				log.Info("starting HTTP server", "port", port.Value())
-				rest.ListenAndServe(port.Value(), logger.New(log.WithName("run")))
+				runServer(port.Value(), childLogger(logger, "run"))
 			}()
 
 			ctx := shutdown.GetContext()
@@ -91,3 +91,9 @@ func run() *cobra.Command {
 
 	return c
 }
+
+var (
+	// for test monkey patching
+	runServer   = rest.ListenAndServe
+	childLogger = func(l log.FullInterface, name string) log.MinInterface { return l.New(log.WithName(name)) }
+)
