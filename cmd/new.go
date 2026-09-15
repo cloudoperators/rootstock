@@ -25,7 +25,7 @@ var (
 )
 
 func New() *cobra.Command {
-	cobra.OnInitialize(initCLI)
+	cobra.OnInitialize(initCLI, initRedfishCredentials)
 
 	rootCmd := root(cliName)
 	rootCmd.AddCommand(version())
@@ -186,5 +186,5 @@ func setLogger() {
 		log.WithName(cliName),
 		log.WithFormat(logFormat.Value()),
 	)
-	logger = log.Default.New(log.WithName(cliName))
+	logger = log.Default.New(log.WithName("cmd"))
 }

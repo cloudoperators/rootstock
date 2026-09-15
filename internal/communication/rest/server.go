@@ -4,6 +4,7 @@
 package rest
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -22,7 +23,15 @@ const (
 	probeEndpoint   = "/probe"
 )
 
+var (
+	server *http.Server
+)
+
 func ListenAndServe(port int, logger log.MinInterface) {
+	if server != nil {
+		logger.Error("function called with http server still active - ignoring", "port", port)
+		return
+	}
 
 	r := chi.NewRouter()
 	r.Use(middleware.Heartbeat(healthEndpoint))
@@ -39,11 +48,25 @@ func ListenAndServe(port int, logger log.MinInterface) {
 	})
 
 	addr := fmt.Sprintf(":%d", port)
-	log.Info("server listening", "addr", addr)
+	logger.Info("server listening", "addr", addr)
 
-	if err := http.ListenAndServe(addr, r); err != nil {
-		logger.Error("server failed", log.KeyError, err)
-		shutdown.StopNow()
+	server = &http.Server{Addr: addr, Handler: r}
+	go func() {
+		if err := server.ListenAndServe(); err != nil {
+			if errors.Is(err, http.ErrServerClosed) {
+				logger.Info("server closed")
+				return
+			}
+			logger.Error("server failed", log.KeyError, err)
+			shutdown.StopNow()
+		}
+	}()
+}
+
+func StopServer() {
+	if server == nil {
+		return
 	}
-
+	server.Close()
+	server = nil
 }

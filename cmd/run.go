@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"path/filepath"
 	"time"
 
 	"github.com/SAP/rootstock/internal/communication/rest"
@@ -17,6 +18,7 @@ import (
 
 var (
 	scrapeTimeoutDefault = 30 * time.Second
+	redfishPassword      *string
 
 	port = NewParameter(
 		"port", "PORT", "port",
@@ -34,11 +36,11 @@ var (
 		"username for the redfish authorization",
 		"",
 	)
-	redfishPassword = NewParameter(
-		"redfish.password", "REDFISH_PASSWORD", "redfish-password",
-		"password for the redfish authorization",
-		"",
-	).WithBaseKey("secrets")
+	redfishCredFile = NewParameter(
+		"redfish.credentialsFile", "REDFISH_CREDENTIALS_FILE", "redfish-credentials-file",
+		"file that holds the password for the redfish authorization",
+		"redfish_password",
+	)
 )
 
 func run() *cobra.Command {
@@ -63,10 +65,7 @@ func run() *cobra.Command {
 				"scrapeTimeout", sTimeout.String(),
 			)
 
-			go func() {
-				log.Info("starting HTTP server", "port", port.Value())
-				runServer(port.Value(), childLogger(logger, "run"))
-			}()
+			dynamicRunServer(logger)
 
 			ctx := shutdown.GetContext()
 			<-ctx.Done()
@@ -87,7 +86,7 @@ func run() *cobra.Command {
 	port.Register(c.Flags())
 	scrapeTimeout.Register(c.Flags())
 	redfishUsername.Register(c.Flags())
-	redfishPassword.Register(c.Flags())
+	redfishCredFile.Register(c.Flags())
 
 	return c
 }
@@ -97,3 +96,27 @@ var (
 	runServer   = rest.ListenAndServe
 	childLogger = func(l log.FullInterface, name string) log.MinInterface { return l.New(log.WithName(name)) }
 )
+
+func dynamicRunServer(l log.FullInterface) {
+	rest.StopServer()
+	l.Info("starting HTTP server", "port", port.Value(), "pw", redfishPassword)
+	runServer(port.Value(), childLogger(l, "run"))
+
+}
+
+func initRedfishCredentials() {
+	file := filepath.Join(configFolder.Value(), redfishCredFile.Value())
+	err := InitFileConfig(
+		file,
+		func(content []byte) error {
+			newPassword := string(content)
+			if redfishPassword != nil && *redfishPassword == newPassword {
+				return nil
+			}
+			redfishPassword = &newPassword
+			dynamicRunServer(logger)
+			return nil
+		},
+	)
+	fatalOnError(err, fmt.Sprintf("failed to register file watch on %q", file))
+}
