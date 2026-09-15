@@ -7,13 +7,18 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"os"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
+	prom "github.com/SAP/rootstock/internal/collectors/prometheus"
 	"github.com/SAP/rootstock/internal/config"
+	"github.com/SAP/rootstock/internal/redfish"
 )
 
 const (
@@ -22,6 +27,55 @@ const (
 	readyEndpoint   = "/ready"
 	probeEndpoint   = "/probe"
 )
+
+// probeHandler creates an HTTP handler for the /probe endpoint that dynamically
+// probes PDUs based on the 'target' query parameter using Prometheus collector
+func probeHandler(cfg *config.Config, logger *slog.Logger) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+		target := req.URL.Query().Get("target")
+		if target == "" {
+			http.Error(w, "target parameter is required", http.StatusBadRequest)
+			logger.Warn("probe request missing target parameter")
+			return
+		}
+
+		// Read PDU ID from "labels" query parameter
+		pduID := req.URL.Query().Get("labels")
+		if pduID == "" {
+			http.Error(w, "labels parameter is required", http.StatusBadRequest)
+			logger.Warn("probe request missing labels parameter")
+			return
+		}
+
+		logger.Info("probing target", "target", target, "pduID", pduID)
+
+		// Parse target URL
+		targetURL, err := url.Parse(target)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("invalid target URL: %v", err), http.StatusBadRequest)
+			logger.Error("invalid target URL", "target", target, "error", err)
+			return
+		}
+
+		redfishClient := redfish.NewClient(targetURL, logger, cfg.RedfishPassword, cfg.RedfishUsername, 30*time.Second)
+
+		logger.Info("Using PDU ID from labels parameter", "pduID", pduID)
+		// Create a temporary collector for this target
+		collector := prom.NewCollector(redfishClient, pduID, logger)
+
+		// Create a temporary registry for this specific scrape
+		registry := prometheus.NewRegistry()
+		registry.MustRegister(collector)
+
+		// Use promhttp to handle the metrics collection and formatting
+		h := promhttp.HandlerFor(registry, promhttp.HandlerOpts{
+			ErrorLog:      slog.NewLogLogger(logger.Handler(), slog.LevelError),
+			ErrorHandling: promhttp.ContinueOnError,
+		})
+
+		h.ServeHTTP(w, req)
+	}
+}
 
 func main() {
 	cfg, err := config.ReadConfig()
@@ -47,10 +101,7 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	r.Get(probeEndpoint, func(w http.ResponseWriter, req *http.Request) {
-		// PDU scraping can be implemented here
-		w.WriteHeader(http.StatusNotImplemented)
-	})
+	r.Get(probeEndpoint, probeHandler(cfg, slog.Default()))
 
 	addr := fmt.Sprintf(":%d", cfg.Port)
 	slog.Info("server listening", "addr", addr)
