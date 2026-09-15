@@ -57,7 +57,7 @@ func probeHandler(cfg *config.Config, logger *slog.Logger) http.HandlerFunc {
 			return
 		}
 
-		redfishClient := redfish.NewClient(targetURL, logger, cfg.RedfishPassword, cfg.RedfishUsername, 30*time.Second)
+		redfishClient := redfish.NewClient(targetURL, logger, cfg.RedfishPassword, cfg.RedfishUsername, time.Duration(cfg.ScrapeTimeoutSeconds)*time.Second)
 
 		logger.Info("Using PDU ID from labels parameter", "pduID", pduID)
 		// Create a temporary collector for this target

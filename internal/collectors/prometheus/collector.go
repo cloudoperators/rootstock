@@ -7,6 +7,7 @@ import (
 	"context"
 	"log/slog"
 	"sync"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -80,7 +81,12 @@ func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	ctx := context.Background()
+	// Create a context with timeout for the API call
+	// Note: prometheus.Collector interface doesn't accept context as parameter,
+	// so we create one here with a reasonable timeout. The HTTP client's timeout
+	// (configured in NewClient) provides the ultimate backstop.
+	ctx, cancel := context.WithTimeout(context.Background(), 25*time.Second)
+	defer cancel()
 
 	// Fetch PDU metrics from Redfish API
 	metrics, err := c.redfishClient.GetPDUMetrics(ctx, c.pduID)
