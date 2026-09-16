@@ -5,7 +5,6 @@ package main
 
 import (
 	"fmt"
-	"log/slog"
 	"net/http"
 	"net/url"
 	"os"
@@ -19,6 +18,7 @@ import (
 	prom "github.com/SAP/rootstock/internal/collectors/prometheus"
 	"github.com/SAP/rootstock/internal/config"
 	"github.com/SAP/rootstock/internal/redfish"
+	"github.com/SAP/rootstock/pkg/log"
 )
 
 const (
@@ -76,21 +76,39 @@ func probeHandler(cfg *config.Config, logger *slog.Logger) http.HandlerFunc {
 		h.ServeHTTP(w, req)
 	}
 }
+// Version information set by link flags during build. We fall back to these sane
+// default values when we build outside the Makefile context (e.g. go run, go build, or go test).
+var (
+	version      = "99.99.99"             // value from VERSION file
+	buildDate    = "1970-01-01T00:00:00Z" // output from `date -u +'%Y-%m-%dT%H:%M:%SZ'`
+	gitCommit    = ""                     // output from `git rev-parse HEAD`
+	gitTag       = ""                     // output from `git describe --exact-match --tags HEAD` (if clean tree state)
+	gitTreeState = ""                     // determined from `git status --porcelain`. either 'clean' or 'dirty'
+)
 
 func main() {
 	cfg, err := config.ReadConfig()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to load config: %v\n", err)
+		log.Error("failed to load config", log.KeyError, err)
 		os.Exit(1)
 	}
 
-	if cfg.Env == "LOCAL" {
-		slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug})))
+	if cfg.ServiceEnv == "LOCAL" {
+		log.SetDefaultLogger(log.WithLevel(log.DebugLvl), log.WithTextFormat())
 	} else {
-		slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})))
+		log.SetDefaultLogger(log.WithLevel(log.InfoLvl))
 	}
 
-	slog.Info("rootstock starting up", "port", cfg.Port, "env", cfg.Env)
+	log.Info(
+		"rootstock starting up",
+		"port", cfg.ServicePort,
+		"env", cfg.ServiceEnv,
+		"version", version,
+		"buildDate", buildDate,
+		"gitCommit", gitCommit,
+		"gitTag", gitTag,
+		"gitTreeState", gitTreeState,
+	)
 
 	r := chi.NewRouter()
 	r.Use(middleware.Heartbeat(healthEndpoint))
@@ -103,11 +121,11 @@ func main() {
 
 	r.Get(probeEndpoint, probeHandler(cfg, slog.Default()))
 
-	addr := fmt.Sprintf(":%d", cfg.Port)
-	slog.Info("server listening", "addr", addr)
+	addr := fmt.Sprintf(":%d", cfg.ServicePort)
+	log.Info("server listening", "addr", addr)
 
 	if err := http.ListenAndServe(addr, r); err != nil {
-		slog.Error("server failed", "error", err)
+		log.Error("server failed", log.KeyError, err)
 		os.Exit(1)
 	}
 }

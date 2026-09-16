@@ -138,7 +138,7 @@ func TestGetPDU(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetPDU failed: %v", err)
 	}
-	if result.ID == "" {
+	if result.ID == 0 {
 		t.Fatal("response missing Id field")
 	}
 	if result.Metrics.ODataID == "" {
