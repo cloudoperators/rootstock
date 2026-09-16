@@ -33,6 +33,9 @@ reset := \033[0m
 
 .PHONY: build test test-integration test-contract test-performance \
         mockup-start mockup-stop \
+        prometheus-collector-start prometheus-collector-stop \
+        prometheus-local-setup prometheus-local-cleanup prometheus-local-run \
+        run-redfish \
         lint conventions scan \
         generate docker-build \
         help
@@ -101,6 +104,26 @@ generate: ## Run code generation (TODO: not yet needed)
 
 docker-build: ## Build the container image (TODO: Dockerfile not yet written)
 	@echo "TODO: docker build -t $(BINARY):$(VERSION) ."
+
+# Build everything that is necessary for testing prometheus locally
+prometheus-local-setup: build mockup-start prometheus-collector-start
+
+# Stop and remove docker images for the prometheus local setup
+prometheus-local-cleanup: mockup-stop prometheus-collector-stop
+
+prometheus-collector-start: ## Start Prometheus in Docker to scrape rootstock metrics
+	docker run -d --name prometheus -p 9090:9090 -v $(CURDIR)/prometheus.yaml:/etc/prometheus/prometheus.yml prom/prometheus:latest
+
+prometheus-collector-stop: ## Stop and remove Prometheus container
+	docker stop prometheus || true
+	docker rm prometheus || true
+
+# Run the go binary with the redfish config necessary for prometheus local test
+run-redfish: build
+	REDFISH_USERNAME="admin" REDFISH_PASSWORD="admin" ./bin/rootstock
+
+# Setup Prometheus locally and run the binary 
+prometheus-local-run: prometheus-local-setup run-redfish
 
 # Help
 
