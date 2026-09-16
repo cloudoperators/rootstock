@@ -5,7 +5,6 @@ package main
 
 import (
 	"fmt"
-	"log/slog"
 	"net/http"
 	"net/url"
 	"os"
@@ -41,12 +40,12 @@ var (
 
 // probeHandler creates an HTTP handler for the /probe endpoint that dynamically
 // probes PDUs based on the 'target' query parameter using Prometheus collector
-func probeHandler(cfg *config.Config, logger *slog.Logger) http.HandlerFunc {
+func probeHandler(cfg *config.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		target := req.URL.Query().Get("target")
 		if target == "" {
 			http.Error(w, "target parameter is required", http.StatusBadRequest)
-			logger.Warn("probe request missing target parameter")
+			log.Warn("probe request missing target parameter")
 			return
 		}
 
@@ -54,25 +53,26 @@ func probeHandler(cfg *config.Config, logger *slog.Logger) http.HandlerFunc {
 		pduID := req.URL.Query().Get("labels")
 		if pduID == "" {
 			http.Error(w, "labels parameter is required", http.StatusBadRequest)
-			logger.Warn("probe request missing labels parameter")
+			log.Warn("probe request missing labels parameter")
 			return
 		}
 
-		logger.Info("probing target", "target", target, "pduID", pduID)
+		log.Info("probing target", "target", target, "pduID", pduID)
 
 		// Parse target URL
 		targetURL, err := url.Parse(target)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("invalid target URL: %v", err), http.StatusBadRequest)
-			logger.Error("invalid target URL", "target", target, "error", err)
+			log.Error("invalid target URL", "target", target, log.KeyError, err)
 			return
 		}
 
-		redfishClient := redfish.NewClient(targetURL, logger, cfg.RedfishPassword, cfg.RedfishUsername, time.Duration(cfg.ScrapeTimeoutSeconds)*time.Second)
+		// Use default logger for this request
+		redfishClient := redfish.NewClient(targetURL, log.Default, cfg.RedfishPassword, cfg.RedfishUsername, time.Duration(cfg.ScrapeTimeoutSeconds)*time.Second)
 
-		logger.Info("Using PDU ID from labels parameter", "pduID", pduID)
+		log.Info("Using PDU ID from labels parameter", "pduID", pduID)
 		// Create a temporary collector for this target
-		collector := prom.NewCollector(redfishClient, pduID, logger)
+		collector := prom.NewCollector(redfishClient, pduID, log.Default)
 
 		// Create a temporary registry for this specific scrape
 		registry := prometheus.NewRegistry()
@@ -80,7 +80,6 @@ func probeHandler(cfg *config.Config, logger *slog.Logger) http.HandlerFunc {
 
 		// Use promhttp to handle the metrics collection and formatting
 		h := promhttp.HandlerFor(registry, promhttp.HandlerOpts{
-			ErrorLog:      slog.NewLogLogger(logger.Handler(), slog.LevelError),
 			ErrorHandling: promhttp.ContinueOnError,
 		})
 
@@ -121,7 +120,7 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	r.Get(probeEndpoint, probeHandler(cfg, slog.Default()))
+	r.Get(probeEndpoint, probeHandler(cfg))
 
 	addr := fmt.Sprintf(":%d", cfg.ServicePort)
 	log.Info("server listening", "addr", addr)

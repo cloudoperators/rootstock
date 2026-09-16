@@ -5,20 +5,20 @@ package prometheus
 
 import (
 	"context"
-	"log/slog"
 	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/SAP/rootstock/internal/redfish"
+	"github.com/SAP/rootstock/pkg/log"
 )
 
 type Collector struct {
 	mu            sync.Mutex
 	redfishClient *redfish.Client
 	pduID         string
-	logger        *slog.Logger
+	logger        log.MinInterface
 
 	peRackPDUMetrics *PERackPDUMetrics
 	peRackPDU        *PERackPDU
@@ -36,9 +36,9 @@ type PERackPDU struct {
 	PowerCapacityVA *prometheus.Desc
 }
 
-func NewCollector(redfishClient *redfish.Client, pduID string, logger *slog.Logger) *Collector {
+func NewCollector(redfishClient *redfish.Client, pduID string, logger log.MinInterface) *Collector {
 	if logger == nil {
-		logger = slog.Default()
+		logger = log.Default
 	}
 
 	return &Collector{

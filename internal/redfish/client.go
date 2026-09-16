@@ -9,10 +9,11 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"net/url"
 	"time"
+
+	"github.com/SAP/rootstock/pkg/log"
 )
 
 // talk to the PDU over HTTP.
@@ -31,7 +32,7 @@ type Client struct {
 	authToken  string // Session authentication token (X-Auth-Token)
 	sessionURL string // Session URL for logout
 
-	logger  *slog.Logger // Structured logger for debugging and audit
+	logger  log.MinInterface // Structured logger for debugging and audit
 	timeout time.Duration
 }
 
@@ -116,9 +117,9 @@ type SensorReading struct {
 	PowerFactor   float64 `json:"PowerFactor"`
 }
 
-func NewClient(baseURL *url.URL, logger *slog.Logger, username, password string, timeout time.Duration) *Client {
+func NewClient(baseURL *url.URL, logger log.MinInterface, username, password string, timeout time.Duration) *Client {
 	if logger == nil {
-		logger = slog.Default()
+		logger = log.Default
 	}
 
 	return &Client{
