@@ -80,8 +80,9 @@ type RackPDU struct {
 	Mains        Link   `json:"Mains"`
 	Branches     Link   `json:"Branches"`
 	// PowerSupplies   Link   `json:"PowerSupplies"`
-	RatedPowerWatts int    `json:"RatedPowerWatts"`
-	UUID            string `json:"UUID"`
+	RatedPowerWatts int     `json:"RatedPowerWatts"`
+	UUID            string  `json:"UUID"`
+	PowerCapacityVA float64 `json:"PowerCapacityVA"`
 	Location        struct {
 		Placement struct {
 			Row string `json:"Row"`
@@ -265,7 +266,7 @@ func (c *Client) GetRackPDUs(ctx context.Context) (*RackPDUsCollection, error) {
 }
 
 // GetPDU retrieves details for a specific PDU
-func (c *Client) GetPDU(ctx context.Context, pduID string) (*RackPDU, error) {
+func (c *Client) GetPERackPDU(ctx context.Context, pduID string) (*RackPDU, error) {
 	var result RackPDU
 	endpoint := fmt.Sprintf("/redfish/v1/PowerEquipment/RackPDUs/%s", pduID)
 	if err := c.get(ctx, endpoint, &result); err != nil {
@@ -275,7 +276,7 @@ func (c *Client) GetPDU(ctx context.Context, pduID string) (*RackPDU, error) {
 }
 
 // GetPDUMetrics retrieves metrics for a specific PDU
-func (c *Client) GetPDUMetrics(ctx context.Context, pduID string) (*PDUMetrics, error) {
+func (c *Client) GetPERackPDUMetrics(ctx context.Context, pduID string) (*PDUMetrics, error) {
 	var result PDUMetrics
 	endpoint := fmt.Sprintf("/redfish/v1/PowerEquipment/RackPDUs/%s/Metrics", pduID)
 	if err := c.get(ctx, endpoint, &result); err != nil {
