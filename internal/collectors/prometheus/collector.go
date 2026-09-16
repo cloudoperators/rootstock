@@ -18,15 +18,21 @@ type Collector struct {
 	redfishClient *redfish.Client
 	pduID         string
 	logger        *slog.Logger
-	pduMetrics    *PDUMetrics
+
+	peRackPDUMetrics *PERackPDUMetrics
+	peRackPDU        *PERackPDU
 }
 
-type PDUMetrics struct {
+type PERackPDUMetrics struct {
 	DataSourceUri *prometheus.Desc
 	Reading       *prometheus.Desc
 	ApparentVA    *prometheus.Desc
 	ReactiveVAR   *prometheus.Desc
 	PowerFactor   *prometheus.Desc
+}
+
+type PERackPDU struct {
+	PowerCapacityVA *prometheus.Desc
 }
 
 func NewCollector(redfishClient *redfish.Client, pduID string, logger *slog.Logger) *Collector {
@@ -38,7 +44,7 @@ func NewCollector(redfishClient *redfish.Client, pduID string, logger *slog.Logg
 		redfishClient: redfishClient,
 		pduID:         pduID,
 		logger:        logger,
-		pduMetrics: &PDUMetrics{
+		peRackPDUMetrics: &PERackPDUMetrics{
 			Reading: prometheus.NewDesc(
 				"pdu_power_watts",
 				"PDU power consumption in watts",
@@ -64,15 +70,24 @@ func NewCollector(redfishClient *redfish.Client, pduID string, logger *slog.Logg
 				nil,
 			),
 		},
+		peRackPDU: &PERackPDU{
+			PowerCapacityVA: prometheus.NewDesc(
+				"power_capacity_va",
+				"the maximum power rated as aparent power",
+				[]string{"pdu_id"},
+				nil,
+			),
+		},
 	}
 }
 
 // Describe implements prometheus.Collector.
 func (c *Collector) Describe(ch chan<- *prometheus.Desc) {
-	ch <- c.pduMetrics.Reading
-	ch <- c.pduMetrics.ApparentVA
-	ch <- c.pduMetrics.ReactiveVAR
-	ch <- c.pduMetrics.PowerFactor
+	ch <- c.peRackPDUMetrics.Reading
+	ch <- c.peRackPDUMetrics.ApparentVA
+	ch <- c.peRackPDUMetrics.ReactiveVAR
+	ch <- c.peRackPDUMetrics.PowerFactor
+	ch <- c.peRackPDU.PowerCapacityVA
 }
 
 // Collect implements prometheus.Collector.
@@ -83,7 +98,7 @@ func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 	ctx := context.Background()
 
 	// Fetch PDU metrics from Redfish API
-	metrics, err := c.redfishClient.GetPDUMetrics(ctx, c.pduID)
+	pduPERackMetrics, err := c.redfishClient.GetPERackPDUMetrics(ctx, c.pduID)
 	if err != nil {
 		c.logger.Error("failed to fetch PDU metrics", "error", err, "pdu_id", c.pduID)
 		return
@@ -93,42 +108,58 @@ func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 
 	// Extract metrics from the response
 	// PowerWatts metric
-	if metrics.PowerWatts.Reading != 0 {
+	if pduPERackMetrics.PowerWatts.Reading != 0 {
 		ch <- prometheus.MustNewConstMetric(
-			c.pduMetrics.Reading,
+			c.peRackPDUMetrics.Reading,
 			prometheus.GaugeValue,
-			metrics.PowerWatts.Reading,
+			pduPERackMetrics.PowerWatts.Reading,
 			c.pduID,
 		)
 	}
 
 	// ApparentVA metric
-	if metrics.PowerWatts.ApparentVA != 0 {
+	if pduPERackMetrics.PowerWatts.ApparentVA != 0 {
 		ch <- prometheus.MustNewConstMetric(
-			c.pduMetrics.ApparentVA,
+			c.peRackPDUMetrics.ApparentVA,
 			prometheus.GaugeValue,
-			metrics.PowerWatts.ApparentVA,
+			pduPERackMetrics.PowerWatts.ApparentVA,
 			c.pduID,
 		)
 	}
 
 	// ReactiveVAR metric
-	if metrics.PowerWatts.ReactiveVAR != 0 {
+	if pduPERackMetrics.PowerWatts.ReactiveVAR != 0 {
 		ch <- prometheus.MustNewConstMetric(
-			c.pduMetrics.ReactiveVAR,
+			c.peRackPDUMetrics.ReactiveVAR,
 			prometheus.GaugeValue,
-			metrics.PowerWatts.ReactiveVAR,
+			pduPERackMetrics.PowerWatts.ReactiveVAR,
 			c.pduID,
 		)
 	}
 
 	// PowerFactor metric
-	if metrics.PowerWatts.PowerFactor != 0 {
+	if pduPERackMetrics.PowerWatts.PowerFactor != 0 {
 		ch <- prometheus.MustNewConstMetric(
-			c.pduMetrics.PowerFactor,
+			c.peRackPDUMetrics.PowerFactor,
 			prometheus.GaugeValue,
-			metrics.PowerWatts.PowerFactor,
+			pduPERackMetrics.PowerWatts.PowerFactor,
 			c.pduID,
 		)
+	}
+
+	peRackPDU, err := c.redfishClient.GetPERackPDU(ctx, c.pduID)
+	if err != nil {
+		c.logger.Error("failed to fetch PDU metrics", "error", err, "pdu_id", c.pduID)
+		return
+	}
+
+	if peRackPDU.PowerCapacityVA != 0 {
+		ch <- prometheus.MustNewConstMetric(
+			c.peRackPDU.PowerCapacityVA,
+			prometheus.GaugeValue,
+			peRackPDU.PowerCapacityVA,
+			c.pduID,
+		)
+
 	}
 }
