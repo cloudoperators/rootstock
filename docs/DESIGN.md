@@ -100,53 +100,54 @@ TBD
 **Major components and their relationships:**
 
 ```
-                         Monitoring Network
-┌──────────────────────────────────────────────────────────────────────┐
-│                                                                      │
-│   ┌───────────────────────┐                                          │
-│   │    Prometheus         │                                          │
-│   │    (or other vendors) │                                          │
-│   │  Scrape /metrics      │                                          │
-│   └────────┬──────────────┘                                          │
-│            │ HTTP                                                    │
-│            │ GET /metrics                                            │
-│            ▼                                                         │
-│   ┌──────────────────────────────────────────────────────────────┐   │
-│   │                  Rootstock                                   │   │
-│   │                                                              │   │
-│   │  ┌────────────────┐      ┌──────────────────────────────┐    │   │
-│   │  │ HTTP Server    │      │ OTEL Collector               │    │   │
-│   │  │                │─────▶│                              │    │   │
-│   │  │ /metrics       │      │ - Receiver -> Processor      │    │   │
-│   │  │ /power         │      │  ->  Exporter                │    │   │
-│   │  │                │      │ - Metric collection          │    │   │
-│   │  │                │      │ - Metric normalization       │    │   │
-│   │  └────────────────┘      └──────────────┬───────────────┘    │   │
-│   │                                         │                    │   │
-│   │                                         ▼                    │   │
-│   │                         ┌──────────────────────────────┐     │   │
-│   │                         │       Redfish Client         │     │   │
-│   │                         │                              │     │   │
-│   │                         │ - HTTP/HTTPS                 │     │   │
-│   │                         │ - Authentication             │     │   │
-│   │                         │ - TLS                        │     │   │
-│   │                         │ - Timeouts                   │     │   │
-│   │                         │ - JSON decoding              │     │   │
-│   │                         └──────────────┬───────────────┘     │   │
-│   │                                        │                     │   │
-│   └────────────────────────────────────────┼───────────────────-─┘   │
-│                                            │ HTTPS / Redfish         │
-└────────────────────────────────────────────┼─────────────────────-───┘
-                                             │
-                       ┌─────────────────────┼─────────────────────┐
-                       │                     │                     │
-                       ▼                     ▼                     ▼
-                ┌─────────────┐       ┌─────────────┐       ┌─────────────┐
-                │    PDU 1    │       │    PDU 2    │       │    PDU N    │
-                │             │       │             │       │             │
-                │  Redfish    │       │  Redfish    │       │  Redfish    │
-                │     API     │       │     API     │       │     API     │
-                └─────────────┘       └─────────────┘       └─────────────┘
+┌──────────────────────────────────────────────────────────────────────────┐
+│                          Monitoring Network                              │
+│                                                                          │
+│  ┌───────────────────────┐         ┌──────────────────────────┐          │
+│  │    Prometheus         │         │   OTLP Compatible        │          │
+│  │    (or other vendors) │         │   Vendor (Dynatrace,     │          │
+│  │  Scrape /metrics      │         │   Datadog, New Relic)    │          │
+│  └────────┬──────────────┘         └──────────────────────────┘          │
+│           │ HTTP GET /metrics                 ▲                          │
+│           │                                   │ OTLP Push                │
+│           ▼                                   │                          │
+│  ┌────────────────────────────────────────────┬────────────────────┐     │
+│  │                        Rootstock           │                    │     │
+│  │                                            │                    │     │
+│  │  ┌────────────────┐     ┌──────────────┐   │ ┌──────────────┐   │     │
+│  │  │  HTTP Server   │────▶│  Prometheus  │   │ │     OTEL     │   │     │
+│  │  │                │     │  Collector   │   └─┤  Collector   │   │     │ 
+│  │  │  /metrics      │     │              │     │              │   │     │    
+│  │  │  /power        │     └──────┬───────┘     └──────┴───────┘   │     │
+│  │  │                │            │                    │           │     │
+│  │  └────────────────┘            │                    │           │     │ 
+│  │                                │                    │           │     │ 
+│  │                                │                    │           │     │
+│  │                                │                    │           │     │ 
+│  │                                ▼                    ▼           │     │
+│  │                         ┌──────────────────────────────┐        │     │
+│  │                         │       Redfish Client         │        │     │
+│  │                         │                              │        │     │
+│  │                         │ - HTTP/HTTPS                 │        │     │
+│  │                         │ - Auth                       │        │     │
+│  │                         │ - TLS                        │        │     │
+│  │                         │ - Timeouts                   │        │     │
+│  │                         │ - JSON decode                │        │     │
+│  │                         └──────────────┬───────────────┘        │     │
+│  │                                        │                        │     │
+│  └────────────────────────────────────────┼────────────────────────┘     │
+│                                            HTTPS / Redfish               │
+└────────────────────────────────────────────────────────┼─────────────────┘
+                                                         │
+                            ┌────────────────────────────┼────────────────┐
+                            │                            │                │
+                            ▼                            ▼                ▼
+                     ┌─────────────┐            ┌─────────────┐   ┌─────────────┐
+                     │    PDU 1    │            │    PDU 2    │   │    PDU N    │
+                     │             │            │             │   │             │
+                     │  Redfish    │            │  Redfish    │   │  Redfish    │
+                     │     API     │            │     API     │   │     API     │
+                     └─────────────┘            └─────────────┘   └─────────────┘
 ```
 
 ### 4.2 Component Design
@@ -161,7 +162,10 @@ TBD
 #### 4.2.2. OTEL Collector
 - transport, process, enrich, filter, batch, route, export
 
-#### 4.2.3. Redfish Client
+#### 4.2.3. Prometheus Collector
+For the Prometheus probing route, we implement a Prometheus collector that is compatible with Prometheus's pull-based scraping mechanism. More detailed design in [PROMETHEUS.md](PROMETHEUS.md).
+
+#### 4.2.4. Redfish Client
 The Redfish client is the core HTTP communication layer for interacting with PDU devices using the Redfish API.
 
 **Responsibilities:**
@@ -175,7 +179,7 @@ The Redfish client is the core HTTP communication layer for interacting with PDU
 - Panduit (primary target)
 - Extensible for other Redfish-compliant PDUs
 
-#### 4.2.4. PDU Discovery and Configuration
+#### 4.2.5. PDU Discovery and Configuration
 
 **Overview:**
 For the initial implementation, we use static configuration with validation.
@@ -186,15 +190,36 @@ For the initial implementation, we use static configuration with validation.
 
 ### 4.3 Data Flow
 
+#### 4.3.1 Prometheus Probing Flow
+
 **Complete Flow:**
-1. **Prometheus → Rootstock**: Prometheus scrapes `/metrics?target=xyz
-2. **HTTP Server**: Receives request, validates target parameter
-3. **Redfish Client**: Establishes HTTPS connection to PDU, authenticates
-4. **Redfish API Call**: Queries
-5. **Response Processing**: Parse JSON response
-6. **OTEL Collector** (optional): Process, enrich, transform metrics
-7. **Metric Conversion**: Convert Redfish data to Prometheus format
-8. **HTTP Response**: Return Prometheus metrics to Prometheus server
+1. **Prometheus → Rootstock**: Prometheus scrapes `/metrics?target=<pdu-host>`
+2. **HTTP Server**: Receives request and validates target parameter
+3. **Prometheus Collector**: Checks cache for `<pdu-host>` metrics
+   - **Cache Hit**:
+     - Returns cached metrics immediately
+     - Skips to step 8
+   - **Cache Miss** (no cached data or expired):
+     - Proceeds to step 4
+4. **Redfish Client**: Establishes HTTPS connection to PDU and handles authentication
+5. **Redfish API Call**: The Redfish client queries the appropriate Redfish endpoints to retrieve PDU metrics
+6. **Response Processing**: The Redfish client parses the JSON response and returns the relevant data to the collector
+7. **Cache Update**: Stores fetched metrics in cache with timestamp for future requests
+8. **Metric Conversion**: Converts Redfish data to Prometheus format in Prometheus Collector
+9. **HTTP Response**: Returns Prometheus metrics to Prometheus server
+
+For the POC we would leave out the Cache implementation
+
+#### 4.3.2 OTLP Compatible Vendor Flow
+
+**Complete Flow:**
+1. **OTLP Collector**: Initiates collection of power and energy metrics
+2. **Redfish Client**: Establishes HTTPS connection to PDU and handles authentication
+3. **Redfish API Call**: The Redfish client queries the appropriate Redfish endpoints to retrieve PDU metrics
+4. **Response Processing**: The Redfish client parses the JSON response and returns the relevant data to the collector
+5. **Metric Conversion**: The OTLP Collector converts the Redfish data into OpenTelemetry pmetric format
+6. **OTLP Push**: The OTEL Collector exports the metrics using OTLP to the compatible telemetry vendor
+
 
 ## 5. API Design
 

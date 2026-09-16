@@ -1,0 +1,17 @@
+{
+  "@odata.type": "#Sensor.v1_5_0.Sensor",
+  "Id": "EnergyOUTLET7",
+  "Name": "Energy for outlet OUTLET7",
+  "ReadingType": "EnergykWh",
+  "ElectricalContext": "Total",
+  "Status": {
+    "State": "Enabled",
+    "Health": "OK"
+  },
+  "Reading": 541.448974609375,
+  "ReadingUnits": "kW.h",
+  "PhysicalContext": "Chassis",
+  "Oem": {},
+  "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/1/Sensors/EnergyOUTLET7",
+  "@Redfish.Copyright": "Copyright 2014-2021 DMTF. For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright."
+}
