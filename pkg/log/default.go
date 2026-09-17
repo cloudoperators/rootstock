@@ -22,7 +22,7 @@ var (
 		timeFormat:    time.RFC3339,
 		jsonFormat:    true,
 		addCaller:     true,
-		callerOffest:  0,
+		callerOffset:  0,
 		addStacktrace: true,
 		infoTarget:    os.Stdout,
 		errTarget:     os.Stderr,

@@ -109,7 +109,7 @@ func newLogger(o *loggerOptions) *Logger {
 				),
 			},
 			o.addCaller,
-			o.callerOffest,
+			o.callerOffset,
 		},
 	)
 	return &Logger{sLogger, zapLogger, *o}
@@ -121,7 +121,7 @@ type loggerOptions struct {
 	timeFormat    string
 	jsonFormat    bool
 	addCaller     bool
-	callerOffest  int
+	callerOffset  int
 	addStacktrace bool
 	infoTarget    zapcore.WriteSyncer
 	errTarget     zapcore.WriteSyncer
@@ -135,6 +135,7 @@ func (o *loggerOptions) DeepCopy() *loggerOptions {
 	r.timeFormat = o.timeFormat
 	r.jsonFormat = o.jsonFormat
 	r.addCaller = o.addCaller
+	r.callerOffset = o.callerOffset
 	r.addStacktrace = o.addStacktrace
 	r.infoTarget = o.infoTarget
 	r.errTarget = o.errTarget
