@@ -16,10 +16,10 @@ import (
 func captureDefault(t *testing.T, level log.Level) log.MockTarget {
 	t.Helper()
 	target := log.NewMockTarget()
-	original := log.Default
-	t.Cleanup(func() { log.Default = original })
+	original := log.Default()
+	t.Cleanup(func() { log.SetDefault(original) })
 	log.SetDefaultLogger(
-		log.WithLevel(level),
+		log.WithLevel(level.String()),
 		log.WithoutCaller(),
 		log.SetStacktrace(false),
 		log.WithInfoTarget(target),
@@ -65,6 +65,18 @@ func TestPackageLevelFunctions(t *testing.T) {
 			level:   log.DebugLvl,
 			logFn:   func() { log.DebugContext(context.Background(), "pkg-debug-ctx-msg") },
 			wantMsg: "pkg-debug-ctx-msg",
+		},
+		{
+			name:    "InfoContext",
+			level:   log.InfoLvl,
+			logFn:   func() { log.InfoContext(context.Background(), "pkg-debug-ctx-msg") },
+			wantMsg: "pkg-debug-ctx-msg",
+		},
+		{
+			name:    "WarnContext",
+			level:   log.WarnLvl,
+			logFn:   func() { log.WarnContext(context.Background(), "pkg-error-ctx-msg") },
+			wantMsg: "pkg-error-ctx-msg",
 		},
 		{
 			name:    "ErrorContext",
