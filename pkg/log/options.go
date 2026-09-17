@@ -93,6 +93,13 @@ func SetStacktrace(enabled bool) Option {
 	}
 }
 
+// SetStacktrace sets the stacktrace.
+func WithCallerOffset(i int) Option {
+	return func(o *loggerOptions) {
+		o.callerOffest = i
+	}
+}
+
 // WithInfoTarget sets the info target.
 func WithInfoTarget(target WriteSyncer) Option {
 	return func(o *loggerOptions) {

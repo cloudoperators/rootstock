@@ -109,7 +109,7 @@ func newLogger(o *loggerOptions) *Logger {
 				),
 			},
 			o.addCaller,
-			0,
+			o.callerOffest,
 		},
 	)
 	return &Logger{sLogger, zapLogger, *o}
@@ -121,6 +121,7 @@ type loggerOptions struct {
 	timeFormat    string
 	jsonFormat    bool
 	addCaller     bool
+	callerOffest  int
 	addStacktrace bool
 	infoTarget    zapcore.WriteSyncer
 	errTarget     zapcore.WriteSyncer
