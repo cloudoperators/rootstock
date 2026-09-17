@@ -39,9 +39,9 @@ func With(
 }
 
 // WithLevel sets the log level.
-func WithLevel(l Level) Option {
+func WithLevel(l string) Option {
 	return func(o *loggerOptions) {
-		o.level = zapcore.Level(l)
+		o.level = zapcore.Level(ToLevel(l))
 	}
 }
 
@@ -66,9 +66,9 @@ func WithTextFormat() Option {
 	}
 }
 
-func WithFormat(format Format) Option {
+func WithFormat(format string) Option {
 	return func(o *loggerOptions) {
-		switch format {
+		switch Format(format) {
 		case TextFormat:
 			o.jsonFormat = false
 		case JSONFormat:

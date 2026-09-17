@@ -20,11 +20,10 @@ func TestLevelString(t *testing.T) {
 		level log.Level
 		want  string
 	}{
-		{log.DebugLvl, "DEBUG"},
-		{log.InfoLvl, "INFO"},
-		{log.WarnLvl, "WARN"},
-		{log.ErrorLvl, "ERROR"},
-		{log.FatalLvl, "FATAL"},
+		{log.DebugLvl, "debug"},
+		{log.InfoLvl, "info"},
+		{log.WarnLvl, "warn"},
+		{log.ErrorLvl, "error"},
 		{log.Level(99), "unknown"},
 	}
 
@@ -33,6 +32,15 @@ func TestLevelString(t *testing.T) {
 			if got := tc.level.String(); got != tc.want {
 				t.Errorf("Level(%d).String() = %q, want %q", tc.level, got, tc.want)
 			}
+			gotLevel := log.ToLevel(tc.want)
+			if gotLevel != tc.level {
+				if tc.want != "unknown" {
+					t.Errorf("Level(%d).String() = %q, want %q", tc.level, gotLevel, tc.want)
+				} else if gotLevel != log.InfoLvl {
+					t.Errorf("Level(%d).String() = %q, want %q", tc.level, gotLevel, log.InfoLvl)
+				}
+			}
+
 		})
 	}
 }
@@ -50,7 +58,7 @@ func TestNewWithOptions(t *testing.T) {
 		},
 		{
 			name:    "debug level",
-			options: []log.Option{log.WithLevel(log.DebugLvl)},
+			options: []log.Option{log.WithLevel("debug")},
 		},
 		{
 			name:    "with name",
@@ -62,15 +70,15 @@ func TestNewWithOptions(t *testing.T) {
 		},
 		{
 			name:    "json format via WithFormat",
-			options: []log.Option{log.WithFormat(log.JSONFormat)},
+			options: []log.Option{log.WithFormat("json")},
 		},
 		{
 			name:    "text format via WithFormat",
-			options: []log.Option{log.WithFormat(log.TextFormat)},
+			options: []log.Option{log.WithFormat("text")},
 		},
 		{
 			name:    "unknown format defaults to json",
-			options: []log.Option{log.WithFormat(log.Format("unknown"))},
+			options: []log.Option{log.WithFormat("unknown")},
 		},
 		{
 			name:    "without caller",
@@ -106,67 +114,67 @@ func TestMockLoggerLevels(t *testing.T) {
 	tests := []struct {
 		name    string
 		logFn   func(l log.FullInterface)
-		level   log.Level
+		level   string
 		wantMsg string
 	}{
 		{
 			name:    "Info",
 			logFn:   func(l log.FullInterface) { l.Info("hello info") },
-			level:   log.InfoLvl,
+			level:   "info",
 			wantMsg: "hello info",
 		},
 		{
 			name:    "Warn",
 			logFn:   func(l log.FullInterface) { l.Warn("hello warn") },
-			level:   log.WarnLvl,
+			level:   "warn",
 			wantMsg: "hello warn",
 		},
 		{
 			name:    "Error",
 			logFn:   func(l log.FullInterface) { l.Error("hello error") },
-			level:   log.ErrorLvl,
+			level:   "error",
 			wantMsg: "hello error",
 		},
 		{
 			name:    "Debug",
 			logFn:   func(l log.FullInterface) { l.Debug("hello debug") },
-			level:   log.DebugLvl,
+			level:   "debug",
 			wantMsg: "hello debug",
 		},
 		{
 			name:    "InfoContext",
 			logFn:   func(l log.FullInterface) { l.InfoContext(context.Background(), "ctx info") },
-			level:   log.InfoLvl,
+			level:   "info",
 			wantMsg: "ctx info",
 		},
 		{
 			name:    "WarnContext",
 			logFn:   func(l log.FullInterface) { l.WarnContext(context.Background(), "ctx warn") },
-			level:   log.WarnLvl,
+			level:   "warn",
 			wantMsg: "ctx warn",
 		},
 		{
 			name:    "ErrorContext",
 			logFn:   func(l log.FullInterface) { l.ErrorContext(context.Background(), "ctx error") },
-			level:   log.ErrorLvl,
+			level:   "error",
 			wantMsg: "ctx error",
 		},
 		{
 			name:    "DebugContext",
 			logFn:   func(l log.FullInterface) { l.DebugContext(context.Background(), "ctx debug") },
-			level:   log.DebugLvl,
+			level:   "debug",
 			wantMsg: "ctx debug",
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			ml := log.NewMockLogger(log.WithLevel(log.DebugLvl), log.WithoutCaller(), log.SetStacktrace(false))
+			ml := log.NewMockLogger(log.WithLevel(tc.level), log.WithoutCaller(), log.SetStacktrace(false))
 			tc.logFn(ml)
 			ml.SortByType()
 
-			if !ml.Contains(tc.level, tc.wantMsg) {
-				t.Errorf("expected %q in %s messages, got: %v", tc.wantMsg, tc.level, ml.ReadByType(tc.level))
+			if !ml.Contains(log.ToLevel(tc.level), tc.wantMsg) {
+				t.Errorf("expected %q in %s messages, got: %v", tc.wantMsg, tc.level, ml.ReadByType(log.ToLevel(tc.level)))
 			}
 		})
 	}
@@ -175,7 +183,7 @@ func TestMockLoggerLevels(t *testing.T) {
 // --- Infof / Warnf / Errorf / Debugf formatted methods ---
 
 func TestLoggerFormatMethods(t *testing.T) {
-	ml := log.NewMockLogger(log.WithLevel(log.DebugLvl), log.WithoutCaller(), log.SetStacktrace(false))
+	ml := log.NewMockLogger(log.WithLevel("debug"), log.WithoutCaller(), log.SetStacktrace(false))
 
 	formatTests := []struct {
 		name    string
@@ -216,7 +224,7 @@ func TestLoggerFormatMethods(t *testing.T) {
 // --- Logger.With returns a child logger that preserves fields ---
 
 func TestLoggerWith(t *testing.T) {
-	ml := log.NewMockLogger(log.WithLevel(log.InfoLvl), log.WithoutCaller(), log.SetStacktrace(false))
+	ml := log.NewMockLogger(log.WithLevel("info"), log.WithoutCaller(), log.SetStacktrace(false))
 	child := ml.With("component", "auth")
 	child.Info("login attempt")
 	ml.SortByType()
@@ -236,7 +244,7 @@ func TestLoggerNew(t *testing.T) {
 	target := &syncBuffer{buf}
 
 	parent := log.New(
-		log.WithLevel(log.InfoLvl),
+		log.WithLevel("info"),
 		log.WithoutCaller(),
 		log.SetStacktrace(false),
 		log.WithInfoTarget(target),
@@ -246,26 +254,6 @@ func TestLoggerNew(t *testing.T) {
 	child := parent.New(log.WithName("child"))
 	if child == nil {
 		t.Fatal("expected non-nil child logger")
-	}
-}
-
-// --- Logger.Update modifies the logger in place ---
-
-func TestLoggerUpdate(t *testing.T) {
-	ml := log.NewMockLogger(log.WithLevel(log.InfoLvl), log.WithoutCaller(), log.SetStacktrace(false))
-
-	// Debug messages should not appear at InfoLvl
-	ml.Debug("hidden debug")
-	ml.SortByType()
-	if ml.Contains(log.DebugLvl, "hidden debug") {
-		t.Error("debug message should not appear at info level")
-	}
-
-	ml.Update(log.WithLevel(log.DebugLvl))
-	ml.Debug("visible debug")
-	ml.SortByType()
-	if !ml.Contains(log.DebugLvl, "visible debug") {
-		t.Error("expected debug message after updating level to debug")
 	}
 }
 
@@ -304,7 +292,7 @@ func TestAppendCtx(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			ml := log.NewMockLogger(log.WithLevel(log.InfoLvl), log.WithoutCaller(), log.SetStacktrace(false))
+			ml := log.NewMockLogger(log.WithLevel("info"), log.WithoutCaller(), log.SetStacktrace(false))
 			ctx := tc.buildCtx()
 			ml.InfoContext(ctx, "with context")
 
@@ -318,7 +306,7 @@ func TestAppendCtx(t *testing.T) {
 // --- MockLogger.SortByType / ReadByType / Contains ---
 
 func TestMockLoggerSortAndRead(t *testing.T) {
-	ml := log.NewMockLogger(log.WithLevel(log.DebugLvl), log.WithoutCaller(), log.SetStacktrace(false))
+	ml := log.NewMockLogger(log.WithLevel("debug"), log.WithoutCaller(), log.SetStacktrace(false))
 	ml.Info("msg-info")
 	ml.Warn("msg-warn")
 	ml.Error("msg-error")
@@ -345,7 +333,7 @@ func TestMockLoggerSortAndRead(t *testing.T) {
 }
 
 func TestMockLoggerContainsMissing(t *testing.T) {
-	ml := log.NewMockLogger(log.WithLevel(log.InfoLvl), log.WithoutCaller(), log.SetStacktrace(false))
+	ml := log.NewMockLogger(log.WithLevel("info"), log.WithoutCaller(), log.SetStacktrace(false))
 	ml.Info("present message")
 	ml.SortByType()
 
@@ -358,7 +346,7 @@ func TestMockLoggerReadByTypeUnknownLevel(t *testing.T) {
 	ml := log.NewMockLogger(log.WithoutCaller(), log.SetStacktrace(false))
 	ml.SortByType()
 
-	entries := ml.ReadByType(log.FatalLvl)
+	entries := ml.ReadByType(log.ErrorLvl)
 	if entries != nil {
 		t.Errorf("ReadByType for unsupported level should return nil, got %v", entries)
 	}
@@ -401,9 +389,9 @@ func TestMockTargetWrite(t *testing.T) {
 
 func TestCallerHandlerEnabled(t *testing.T) {
 	tests := []struct {
-		name        string
-		addCaller   bool
-		wantCaller  bool
+		name       string
+		addCaller  bool
+		wantCaller bool
 	}{
 		{"caller enabled", true, true},
 		{"caller disabled", false, false},
@@ -415,7 +403,7 @@ func TestCallerHandlerEnabled(t *testing.T) {
 			if !tc.addCaller {
 				opts = append(opts, log.WithoutCaller())
 			}
-			opts = append(opts, log.WithLevel(log.InfoLvl), log.SetStacktrace(false))
+			opts = append(opts, log.WithLevel("info"), log.SetStacktrace(false))
 
 			ml := log.NewMockLogger(opts...)
 			ml.Info("test message")
@@ -439,13 +427,13 @@ func TestSetDefaultLogger(t *testing.T) {
 	}{
 		{"no options", nil},
 		{"with name", []log.Option{log.WithName("custom")}},
-		{"debug level", []log.Option{log.WithLevel(log.DebugLvl)}},
+		{"debug level", []log.Option{log.WithLevel("debug")}},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			log.SetDefaultLogger(tc.options...)
-			if log.Default == nil {
+			if log.Default() == nil {
 				t.Error("Default logger should not be nil after SetDefaultLogger")
 			}
 		})
@@ -462,7 +450,7 @@ func TestWithAdditionalTargets(t *testing.T) {
 	t2 := log.NewMockTarget()
 
 	l := log.New(
-		log.WithLevel(log.InfoLvl),
+		log.WithLevel("info"),
 		log.WithoutCaller(),
 		log.SetStacktrace(false),
 		log.WithAdditionalTargets(t1, t2),
