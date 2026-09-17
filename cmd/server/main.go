@@ -14,6 +14,7 @@ import (
 
 	"github.com/SAP/rootstock/internal/config"
 	"github.com/SAP/rootstock/pkg/log"
+	v "github.com/SAP/rootstock/pkg/version"
 )
 
 const (
@@ -26,7 +27,7 @@ const (
 // Version information set by link flags during build. We fall back to these sane
 // default values when we build outside the Makefile context (e.g. go run, go build, or go test).
 var (
-	version      = "99.99.99"             // value from VERSION file
+	version      = "99.99.99"             // value from VERSION.yaml file
 	buildDate    = "1970-01-01T00:00:00Z" // output from `date -u +'%Y-%m-%dT%H:%M:%SZ'`
 	gitCommit    = ""                     // output from `git rev-parse HEAD`
 	gitTag       = ""                     // output from `git describe --exact-match --tags HEAD` (if clean tree state)
@@ -34,6 +35,7 @@ var (
 )
 
 func main() {
+
 	cfg, err := config.ReadConfig()
 	if err != nil {
 		log.Error("failed to load config", log.KeyError, err)
@@ -46,15 +48,14 @@ func main() {
 		log.SetDefaultLogger(log.WithLevel(log.InfoLvl))
 	}
 
+	if err := v.Init(version, buildDate, gitCommit, gitTag, gitTreeState); err != nil {
+		log.Error("failed to initialise binary version", "error", err)
+	}
+
 	log.Info(
 		"rootstock starting up",
-		"port", cfg.ServicePort,
-		"env", cfg.ServiceEnv,
-		"version", version,
-		"buildDate", buildDate,
-		"gitCommit", gitCommit,
-		"gitTag", gitTag,
-		"gitTreeState", gitTreeState,
+		"version", v.ReadAll(),
+		"port", cfg.Port, "env", cfg.Env,
 	)
 
 	r := chi.NewRouter()
