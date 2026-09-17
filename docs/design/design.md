@@ -1,5 +1,42 @@
 # Design Document: Rootstock
 
+## Table of Contents
+- [1. Overview](#1-overview)
+  - [1.1 Problem Statement](#11-problem-statement)
+  - [1.2 Scope](#12-scope)
+  - [1.3 Background](#13-background)
+- [2. Goals and Non-Goals](#2-goals-and-non-goals)
+  - [2.1 Goals](#21-goals)
+    - [2.1.0 Comprehensive Energy Metrics Monitoring](#210-comprehensive-energy-metrics-monitoring)
+    - [2.1.1 Scalability](#211-scalability)
+    - [2.1.2 Multi-Vendor Support](#212-multi-vendor-support)
+    - [2.1.3 Security and Production Readiness](#213-security-and-production-readiness)
+    - [2.1.4 Performance Optimization](#214-performance-optimization)
+    - [2.1.5 Ready-to-Go Operation](#215-ready-to-go-operation)
+    - [2.1.6 Observability](#216-observability)
+  - [2.2 Non-Goals](#22-non-goals)
+- [3. Requirements](#3-requirements)
+  - [3.1 Functional Requirements](#31-functional-requirements)
+  - [3.2 Non-Functional Requirements](#32-non-functional-requirements)
+- [4. System Architecture](#4-system-architecture)
+  - [4.1 High-Level Architecture](#41-high-level-architecture)
+  - [4.2 Component Design](#42-component-design)
+  - [4.3 Data Flow](#43-data-flow)
+    - [4.3.1 Prometheus Probing Flow](#431-prometheus-probing-flow)
+    - [4.3.2 OTLP Compatible Vendor Flow](#432-otlp-compatible-vendor-flow)
+- [5. API Design](#5-api-design)
+  - [5.1 HTTP Server Endpoints (Rootstock)](#51-http-server-endpoints-rootstock)
+    - [5.1.1 Metrics Endpoint](#511-metrics-endpoint)
+    - [5.1.2 Health and Readiness Endpoints](#512-health-and-readiness-endpoints)
+  - [5.2 Redfish Client API (PDU Side)](#52-redfish-client-api-pdu-side)
+    - [5.2.1 Redfish Endpoints Used](#521-redfish-endpoints-used)
+    - [5.2.2 Authentication](#522-authentication)
+- [6. Security Considerations](#6-security-considerations)
+- [7. Performance and Scalability](#7-performance-and-scalability)
+  - [7.1 Performance Targets](#71-performance-targets)
+
+---
+
 ## 1. Overview
 ### 1.1 Problem statement
 Rootstock should solve the issue of collecting sustainability metrics for PDUs. This service is supposed to collect these metrics for multiple vendors and store them in Prometheus. 

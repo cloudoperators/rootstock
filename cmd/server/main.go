@@ -5,7 +5,6 @@ package main
 
 import (
 	"fmt"
-	"log/slog"
 	"net/http"
 	"os"
 
@@ -14,6 +13,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/SAP/rootstock/internal/config"
+	"github.com/SAP/rootstock/pkg/log"
 	v "github.com/SAP/rootstock/pkg/version"
 )
 
@@ -38,21 +38,21 @@ func main() {
 
 	cfg, err := config.ReadConfig()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to load config: %v\n", err)
+		log.Error("failed to load config", log.KeyError, err)
 		os.Exit(1)
 	}
 
-	if cfg.Env == "LOCAL" {
-		slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug})))
+	if cfg.ServiceEnv == "LOCAL" {
+		log.SetDefaultLogger(log.WithLevel(log.DebugLvl), log.WithTextFormat())
 	} else {
-		slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})))
+		log.SetDefaultLogger(log.WithLevel(log.InfoLvl))
 	}
 
 	if err := v.Init(version, buildDate, gitCommit, gitTag, gitTreeState); err != nil {
-		slog.Error("failed to initialise binary version", "error", err)
+		log.Error("failed to initialise binary version", "error", err)
 	}
 
-	slog.Info(
+	log.Info(
 		"rootstock starting up",
 		"version", v.ReadAll(),
 		"port", cfg.Port, "env", cfg.Env,
@@ -72,11 +72,11 @@ func main() {
 		w.WriteHeader(http.StatusNotImplemented)
 	})
 
-	addr := fmt.Sprintf(":%d", cfg.Port)
-	slog.Info("server listening", "addr", addr)
+	addr := fmt.Sprintf(":%d", cfg.ServicePort)
+	log.Info("server listening", "addr", addr)
 
 	if err := http.ListenAndServe(addr, r); err != nil {
-		slog.Error("server failed", "error", err)
+		log.Error("server failed", log.KeyError, err)
 		os.Exit(1)
 	}
 }
