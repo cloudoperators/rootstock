@@ -186,5 +186,5 @@ func setLogger() {
 		log.WithName(cliName),
 		log.WithFormat(logFormat.Value()),
 	)
-	logger = log.Default.New(log.WithName("cmd"))
+	logger = log.Default().New(log.WithName("cmd"))
 }

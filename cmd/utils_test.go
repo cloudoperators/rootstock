@@ -17,7 +17,7 @@ import (
 
 func TestMain(m *testing.M) {
 	log.SetDefaultLogger(log.WithLevel(log.InfoLvl.String()))
-	logger = log.Default.New(log.WithName("test"))
+	logger = log.Default().New(log.WithName("test"))
 	os.Exit(m.Run())
 }
 

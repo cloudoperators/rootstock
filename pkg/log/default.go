@@ -6,7 +6,7 @@ package log
 import (
 	"log/slog"
 	"os"
-	"sync"
+	"sync/atomic"
 	"time"
 
 	"go.uber.org/zap"
@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	Default *Logger
+	atomicDefault atomic.Pointer[Logger]
 
 	defaultOptions = loggerOptions{
 		level:         zap.InfoLevel,
@@ -27,28 +27,33 @@ var (
 		errTarget:     os.Stderr,
 		addTarget:     make([]zapcore.WriteSyncer, 0),
 	}
-	defaultLoggerMutex = sync.RWMutex{}
 )
+
+// Default returns the current default logger. Safe for concurrent use.
+func Default() *Logger {
+	return atomicDefault.Load()
+}
+
+// SetDefault replaces the default logger with l. Safe for concurrent use.
+func SetDefault(l *Logger) {
+	atomicDefault.Store(l)
+}
 
 // This package uses 1 init function to ensure the Default logger is present
 func init() {
-	Default = newLogger(&defaultOptions)
+	atomicDefault.Store(newLogger(&defaultOptions))
 }
 
 func SetDefaultLogger(options ...Option) {
-	// Default configuration
 	o := defaultOptions.DeepCopy()
-	// Apply provided options
 	for _, option := range options {
 		option(o)
 	}
 
-	defaultLoggerMutex.Lock()
-	defer defaultLoggerMutex.Unlock()
-
-	Default = newLogger(o)
-	slog.SetDefault(Default.Logger)
-	Default.Debug("default logger configured",
+	l := newLogger(o)
+	atomicDefault.Store(l)
+	slog.SetDefault(l.Logger)
+	l.Debug("default logger configured",
 		slog.Group("options",
 			slog.Any("lvl", o.level),
 			slog.String("timeFormat", o.timeFormat),

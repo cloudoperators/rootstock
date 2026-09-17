@@ -16,8 +16,8 @@ import (
 func captureDefault(t *testing.T, level log.Level) log.MockTarget {
 	t.Helper()
 	target := log.NewMockTarget()
-	original := log.Default
-	t.Cleanup(func() { log.Default = original })
+	original := log.Default()
+	t.Cleanup(func() { log.SetDefault(original) })
 	log.SetDefaultLogger(
 		log.WithLevel(level.String()),
 		log.WithoutCaller(),

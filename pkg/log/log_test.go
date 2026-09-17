@@ -454,7 +454,7 @@ func TestSetDefaultLogger(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			log.SetDefaultLogger(tc.options...)
-			if log.Default == nil {
+			if log.Default() == nil {
 				t.Error("Default logger should not be nil after SetDefaultLogger")
 			}
 		})
