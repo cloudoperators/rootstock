@@ -4,9 +4,8 @@
 package main
 
 import (
-	"os"
-
 	"github.com/SAP/rootstock/cmd"
+	"github.com/SAP/rootstock/internal/shutdown"
 	"github.com/SAP/rootstock/pkg/log"
 	v "github.com/SAP/rootstock/pkg/version"
 )
@@ -32,11 +31,13 @@ func main() {
 
 	if err := v.Init(version, buildDate, gitCommit, gitTag, gitTreeState); err != nil {
 		log.Error("failed to initialise binary version", log.KeyError, err)
+		shutdown.StopNow()
 	}
 
 	rootCmd := cmd.New()
 	if err := rootCmd.Execute(); err != nil {
-		panic(err)
+		log.Error("rootstock cli failed", log.KeyError, err)
+		shutdown.StopNow()
 	}
-	os.Exit(0)
+	shutdown.StopNowWith(0)
 }

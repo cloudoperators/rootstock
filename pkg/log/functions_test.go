@@ -67,6 +67,18 @@ func TestPackageLevelFunctions(t *testing.T) {
 			wantMsg: "pkg-debug-ctx-msg",
 		},
 		{
+			name:    "InfoContext",
+			level:   log.InfoLvl,
+			logFn:   func() { log.InfoContext(context.Background(), "pkg-debug-ctx-msg") },
+			wantMsg: "pkg-debug-ctx-msg",
+		},
+		{
+			name:    "WarnContext",
+			level:   log.WarnLvl,
+			logFn:   func() { log.WarnContext(context.Background(), "pkg-error-ctx-msg") },
+			wantMsg: "pkg-error-ctx-msg",
+		},
+		{
 			name:    "ErrorContext",
 			level:   log.InfoLvl,
 			logFn:   func() { log.ErrorContext(context.Background(), "pkg-error-ctx-msg") },

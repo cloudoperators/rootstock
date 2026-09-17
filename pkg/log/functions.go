@@ -21,12 +21,19 @@ func Debugf(msg string, args ...any) {
 	Default().Debug(fmt.Sprintf(msg, args...))
 }
 
+func InfoContext(ctx context.Context, msg string, args ...any) {
+	Default().InfoContext(ctx, msg, args...)
+}
 func Info(msg string, args ...any) {
 	Default().Info(msg, args...)
 }
 
 func Infof(msg string, args ...any) {
 	Default().Info(fmt.Sprintf(msg, args...))
+}
+
+func WarnContext(ctx context.Context, msg string, args ...any) {
+	Default().WarnContext(ctx, msg, args...)
 }
 
 func Warn(msg string, args ...any) {

@@ -24,7 +24,6 @@ func TestLevelString(t *testing.T) {
 		{log.InfoLvl, "info"},
 		{log.WarnLvl, "warn"},
 		{log.ErrorLvl, "error"},
-		{log.FatalLvl, "fatal"},
 		{log.Level(99), "unknown"},
 	}
 
@@ -347,7 +346,7 @@ func TestMockLoggerReadByTypeUnknownLevel(t *testing.T) {
 	ml := log.NewMockLogger(log.WithoutCaller(), log.SetStacktrace(false))
 	ml.SortByType()
 
-	entries := ml.ReadByType(log.FatalLvl)
+	entries := ml.ReadByType(log.ErrorLvl)
 	if entries != nil {
 		t.Errorf("ReadByType for unsupported level should return nil, got %v", entries)
 	}

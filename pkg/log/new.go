@@ -18,7 +18,6 @@ const (
 	InfoLvl  Level = Level(zapcore.InfoLevel)
 	WarnLvl  Level = Level(zapcore.WarnLevel)
 	ErrorLvl Level = Level(zapcore.ErrorLevel)
-	FatalLvl Level = Level(zapcore.FatalLevel)
 
 	JSONFormat Format = "json"
 	TextFormat Format = "text"
@@ -35,7 +34,6 @@ func AllLevels() []string {
 		InfoLvl.String(),
 		WarnLvl.String(),
 		ErrorLvl.String(),
-		FatalLvl.String(),
 	}
 }
 
@@ -49,8 +47,6 @@ func (l Level) String() string {
 		return zapcore.WarnLevel.String()
 	case ErrorLvl:
 		return zapcore.ErrorLevel.String()
-	case FatalLvl:
-		return zapcore.FatalLevel.String()
 	default:
 		return "unknown"
 	}
@@ -67,8 +63,6 @@ func ToLevel(rawLvl string) Level {
 		return WarnLvl
 	case ErrorLvl.String(), "2":
 		return ErrorLvl
-	case FatalLvl.String(), "3":
-		return FatalLvl
 	default:
 		Warnf("log level %q not available - defaulting to level %q", l, InfoLvl.String())
 		return InfoLvl

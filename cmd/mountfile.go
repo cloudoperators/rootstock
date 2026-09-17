@@ -51,7 +51,7 @@ func onFileChange(onChange func() error) func(in fsnotify.Event) {
 		case fsnotify.Remove, fsnotify.Rename, fsnotify.Chmod:
 			logger.Debug("not implemented by viper", "event", e.Op, logKeyFile, e.Name, logKeyID, changeID)
 		default:
-			logger.Warn("case not handled by vpier", "event", e.Op, logKeyFile, e.Name, logKeyID, changeID)
+			logger.Warn("case not handled by viper", "event", e.Op, logKeyFile, e.Name, logKeyID, changeID)
 		}
 	}
 }
