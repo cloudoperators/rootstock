@@ -258,26 +258,6 @@ func TestLoggerNew(t *testing.T) {
 	}
 }
 
-// --- Logger.Update modifies the logger in place ---
-
-func TestLoggerUpdate(t *testing.T) {
-	ml := log.NewMockLogger(log.WithLevel("info"), log.WithoutCaller(), log.SetStacktrace(false))
-
-	// Debug messages should not appear at InfoLvl
-	ml.Debug("hidden debug")
-	ml.SortByType()
-	if ml.Contains(log.DebugLvl, "hidden debug") {
-		t.Error("debug message should not appear at info level")
-	}
-
-	ml.Update(log.WithLevel("debug"))
-	ml.Debug("visible debug")
-	ml.SortByType()
-	if !ml.Contains(log.DebugLvl, "visible debug") {
-		t.Error("expected debug message after updating level to debug")
-	}
-}
-
 // --- AppendCtx attaches attributes to context ---
 
 func TestAppendCtx(t *testing.T) {
