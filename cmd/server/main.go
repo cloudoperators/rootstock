@@ -43,9 +43,9 @@ func main() {
 	}
 
 	if cfg.ServiceEnv == "LOCAL" {
-		log.SetDefaultLogger(log.WithLevel(log.DebugLvl), log.WithTextFormat())
+		log.SetDefaultLogger(log.WithLevel("debug"), log.WithTextFormat())
 	} else {
-		log.SetDefaultLogger(log.WithLevel(log.InfoLvl))
+		log.SetDefaultLogger(log.WithLevel("info"))
 	}
 
 	if err := v.Init(version, buildDate, gitCommit, gitTag, gitTreeState); err != nil {
@@ -55,7 +55,7 @@ func main() {
 	log.Info(
 		"rootstock starting up",
 		"version", v.ReadAll(),
-		"port", cfg.Port, "env", cfg.Env,
+		"port", cfg.ServicePort, "env", cfg.ServiceEnv,
 	)
 
 	r := chi.NewRouter()
