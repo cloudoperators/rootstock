@@ -56,6 +56,12 @@ func AddStopFunction(f func()) {
 // StopNowWith will invoke the stop function to cancel the context.
 // It will panic if stop is nil.
 func StopNowWith(exitCode int) {
+
+	shutdownLock.Lock()
+	funcs := make([]func(), 0, len(stopFuncs))
+	funcs = append(funcs, stopFuncs...)
+	defer shutdownLock.Unlock()
+
 	for _, stopFunc := range stopFuncs {
 		stopFunc()
 	}
