@@ -47,7 +47,7 @@ build: ## Compile a static server binary to bin/
 			-a \
 			-o bin/$(BINARY) \
 			-ldflags "$(LDFLAGS)" \
-			./cmd/server
+			.
 
 # Tests
 
