@@ -1,5 +1,22 @@
 # Prometheus Integration
 
+## Table of Contents
+- [1. Overview](#1-overview)
+  - [Architecture](#architecture)
+  - [Design Principles](#design-principles)
+- [2. Components](#2-components)
+  - [2.1 Prometheus Collector](#21-prometheus-collector)
+  - [2.2 Metric Definitions](#22-metric-definitions)
+  - [2.3 Redfish Client Integration](#23-redfish-client-integration)
+  - [2.4 HTTP Server](#24-http-server)
+- [3. Usage Example](#3-usage-example)
+  - [Prometheus Configuration](#prometheus-configuration)
+- [4. Future Enhancements](#4-future-enhancements)
+  - [Dynamic Target Probing](#dynamic-target-probing)
+  - [Performance Optimizations](#performance-optimizations)
+
+---
+
 ## 1. Overview
 
 Rootstock will provide multiple functionalities regarding data center power reporting in the future. One of these functionalities is acting as a **Prometheus exporter** that probes Power Distribution Units (PDUs) to expose power and energy metrics.

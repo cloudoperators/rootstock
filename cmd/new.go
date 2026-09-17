@@ -82,6 +82,8 @@ func initCLI() {
 	onConfigChange = append(onConfigChange, setLogger)
 	setLogger()
 
+	logger.Info("rootstock binary", "version", v.ReadAll())
+
 	if configErr != nil {
 		logger.Error("failed to read cobra config file", log.KeyError, configErr)
 	}

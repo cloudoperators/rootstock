@@ -60,7 +60,7 @@ func run() *cobra.Command {
 			}
 
 			logger.Info(
-				"rootstock starting up",
+				"rootstock configurations",
 				"port", port.Value(),
 				"scrapeTimeout", sTimeout.String(),
 			)
