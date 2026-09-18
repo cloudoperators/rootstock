@@ -64,7 +64,7 @@ Probes the PDU via Redfish API and sends fresh metrics to Prometheus. Called on 
 4. redfishClient.GetPDUMetrics(ctx, pduID) executes HTTP request to PDU - eventually cache will be added to the probing flow
    (Additional Redfish client calls will be added in the future)
 5. Redfish JSON response parsed into structured data - eventually saving cache will be added to the flow
-6. Prometheus metrics created with MustNewConstMetric()
+6. Prometheus metrics created with NewConstMetric() with error handling
 7. Metrics sent to Prometheus via channel
 8. Mutex released
 9. Prometheus formats response in exposition format
