@@ -15,7 +15,7 @@ import (
 
 type Collector struct {
 	mu            sync.Mutex
-	redfishClient *redfish.Client
+	redfishClient redfish.Client
 	pduID         string
 	logger        log.MinInterface
 
@@ -35,7 +35,7 @@ type PERackPDU struct {
 	PowerCapacityVA *prometheus.Desc
 }
 
-func NewCollector(redfishClient *redfish.Client, pduID string) *Collector {
+func NewCollector(redfishClient redfish.Client, pduID string) *Collector {
 	logger := log.Default
 
 	return &Collector{
