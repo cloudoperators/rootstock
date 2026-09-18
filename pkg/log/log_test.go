@@ -346,7 +346,7 @@ func TestMockLoggerReadByTypeUnknownLevel(t *testing.T) {
 	ml := log.NewMockLogger(log.WithoutCaller(), log.SetStacktrace(false))
 	ml.SortByType()
 
-	entries := ml.ReadByType(log.ErrorLvl)
+	entries := ml.ReadByType(log.Level(99))
 	if entries != nil {
 		t.Errorf("ReadByType for unsupported level should return nil, got %v", entries)
 	}

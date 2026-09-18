@@ -93,6 +93,13 @@ func SetStacktrace(enabled bool) Option {
 	}
 }
 
+// WithCallerOffset sets the callstack offset for the caller field in log output
+func WithCallerOffset(i int) Option {
+	return func(o *loggerOptions) {
+		o.callerOffset = i
+	}
+}
+
 // WithInfoTarget sets the info target.
 func WithInfoTarget(target WriteSyncer) Option {
 	return func(o *loggerOptions) {
