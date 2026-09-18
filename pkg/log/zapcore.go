@@ -31,7 +31,8 @@ func (o *loggerOptions) zapLogger() *zap.Logger {
 		LevelKey:    "lvl",
 		EncodeLevel: zapcore.CapitalColorLevelEncoder,
 
-		MessageKey:     "msg",
+		MessageKey: "msg",
+		// if the StacktraceKey is empty, zap will not add a trace
 		StacktraceKey:  "",
 		LineEnding:     zapcore.DefaultLineEnding,
 		EncodeDuration: zapcore.SecondsDurationEncoder,

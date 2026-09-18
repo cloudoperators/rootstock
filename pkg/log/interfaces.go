@@ -52,6 +52,4 @@ type FullInterface interface {
 	Sync()
 	// New returns a child logger from the existing logger interface.
 	New(options ...Option) FullInterface
-	// Update allows to dynamically update the options for an existing logger.
-	Update(options ...Option)
 }
