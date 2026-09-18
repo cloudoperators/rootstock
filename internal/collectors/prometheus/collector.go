@@ -149,7 +149,7 @@ func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 
 	peRackPDU, err := c.redfishClient.GetPERackPDU(ctx, c.pduID)
 	if err != nil {
-		c.logger.Error("failed to fetch PDU metrics", "error", err, "pdu_id", c.pduID)
+		c.logger.Error("failed to fetch PDU metrics", log.KeyError, err, "pdu_id", c.pduID)
 		return
 	}
 
