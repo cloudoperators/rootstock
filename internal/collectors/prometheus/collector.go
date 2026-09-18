@@ -17,7 +17,7 @@ type Collector struct {
 	mu            sync.Mutex
 	redfishClient *redfish.Client
 	pduID         string
-	logger        *slog.Logger
+	logger        log.MinInterface
 
 	peRackPDUMetrics *PERackPDUMetrics
 	peRackPDU        *PERackPDU
