@@ -172,8 +172,8 @@ func (p parameter[T]) Register(fs *pflag.FlagSet) {
 		}
 	}
 
-	cobra.CheckErr(viper.BindPFlag(p.Key(), fs.Lookup(p.cliFlag)))
 	cobra.CheckErr(viper.BindEnv(p.Key(), p.envVar))
+	cobra.CheckErr(viper.BindPFlag(p.Key(), fs.Lookup(p.cliFlag)))
 }
 
 func fatalOnError(err error, msg string) {

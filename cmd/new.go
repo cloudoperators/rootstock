@@ -10,19 +10,16 @@ import (
 
 	"github.com/SAP/rootstock/internal/shutdown"
 	"github.com/SAP/rootstock/pkg/log"
+	v "github.com/SAP/rootstock/pkg/version"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-
-	v "github.com/SAP/rootstock/pkg/version"
 )
 
 const (
 	cliName = "rootstock"
 )
 
-var (
-	logger log.FullInterface
-)
+var logger log.FullInterface
 
 func New() *cobra.Command {
 	cobra.OnInitialize(initCLI, initRedfishCredentials)

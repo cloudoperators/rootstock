@@ -7,13 +7,13 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"time"
 
 	"github.com/SAP/rootstock/internal/shutdown"
 	"github.com/SAP/rootstock/pkg/log"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 const (
@@ -21,11 +21,11 @@ const (
 	healthEndpoint  = "/healthz"
 	readyEndpoint   = "/ready"
 	probeEndpoint   = "/probe"
+
+	serverTimeout = 5 * time.Second
 )
 
-var (
-	server *http.Server
-)
+var server *http.Server
 
 func ListenAndServe(port int, logger log.MinInterface) {
 	if server != nil {
@@ -38,11 +38,11 @@ func ListenAndServe(port int, logger log.MinInterface) {
 
 	r.Handle(metricsEndpoint, promhttp.Handler())
 
-	r.Get(readyEndpoint, func(w http.ResponseWriter, req *http.Request) {
+	r.Get(readyEndpoint, func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	r.Get(probeEndpoint, func(w http.ResponseWriter, req *http.Request) {
+	r.Get(probeEndpoint, func(w http.ResponseWriter, _ *http.Request) {
 		// PDU scraping can be implemented here
 		w.WriteHeader(http.StatusNotImplemented)
 	})
@@ -50,16 +50,26 @@ func ListenAndServe(port int, logger log.MinInterface) {
 	addr := fmt.Sprintf(":%d", port)
 	logger.Info("server listening", "addr", addr)
 
-	server = &http.Server{Addr: addr, Handler: r}
+	server = &http.Server{
+		Addr:              addr,
+		Handler:           r,
+		ReadHeaderTimeout: serverTimeout,
+		WriteTimeout:      serverTimeout,
+		IdleTimeout:       serverTimeout,
+	}
 	go func() {
-		if err := server.ListenAndServe(); err != nil {
-			if errors.Is(err, http.ErrServerClosed) {
-				logger.Info("server closed")
-				return
-			}
-			logger.Error("server failed", log.KeyError, err)
-			shutdown.StopNow()
+		err := server.ListenAndServe()
+		if err == nil {
+			return
 		}
+
+		if errors.Is(err, http.ErrServerClosed) {
+			logger.Info("server closed")
+			return
+		}
+
+		logger.Error("server failed", log.KeyError, err)
+		shutdown.StopNow()
 	}()
 }
 
@@ -67,6 +77,7 @@ func StopServer() {
 	if server == nil {
 		return
 	}
+
 	server.Close()
 	server = nil
 }

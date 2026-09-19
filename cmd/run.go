@@ -44,7 +44,6 @@ var (
 )
 
 func run() *cobra.Command {
-
 	c := &cobra.Command{
 		Use:   "run",
 		Short: fmt.Sprintf(`run the %s server`, cliName),
@@ -56,6 +55,7 @@ func run() *cobra.Command {
 			if err != nil {
 				logger.Error("failed to parse timeout", log.KeyError, err)
 				shutdown.StopNow()
+
 				return
 			}
 
@@ -92,7 +92,7 @@ func run() *cobra.Command {
 }
 
 var (
-	// for test monkey patching
+	// for test monkey patching.
 	runServer   = rest.ListenAndServe
 	childLogger = func(l log.FullInterface, name string) log.MinInterface { return l.New(log.WithName(name)) }
 )
@@ -101,7 +101,6 @@ func dynamicRunServer(l log.FullInterface) {
 	rest.StopServer()
 	l.Info("starting HTTP server", "port", port.Value(), "pw", redfishPassword)
 	runServer(port.Value(), childLogger(l, "run"))
-
 }
 
 func initRedfishCredentials() {
@@ -113,8 +112,11 @@ func initRedfishCredentials() {
 			if redfishPassword != nil && *redfishPassword == newPassword {
 				return nil
 			}
+
 			redfishPassword = &newPassword
+
 			dynamicRunServer(logger)
+
 			return nil
 		},
 	)

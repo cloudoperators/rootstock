@@ -10,13 +10,6 @@ import (
 	v "github.com/SAP/rootstock/pkg/version"
 )
 
-const (
-	metricsEndpoint = "/metrics"
-	healthEndpoint  = "/healthz"
-	readyEndpoint   = "/ready"
-	probeEndpoint   = "/probe"
-)
-
 // Version information set by link flags during build. We fall back to these sane
 // default values when we build outside the Makefile context (e.g. go run, go build, or go test).
 var (
@@ -28,9 +21,8 @@ var (
 )
 
 func main() {
-
 	if err := v.Init(version, buildDate, gitCommit, gitTag, gitTreeState); err != nil {
-		log.Error("failed to initialise binary version", log.KeyError, err)
+		log.Error("failed to initialize binary version", log.KeyError, err)
 		shutdown.StopNow()
 	}
 
@@ -39,5 +31,6 @@ func main() {
 		log.Error("rootstock cli failed", log.KeyError, err)
 		shutdown.StopNow()
 	}
+
 	shutdown.StopNowWith(0)
 }

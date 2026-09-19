@@ -26,6 +26,15 @@ const (
 func InitFileConfig(
 	filePath string, updateFunc func(content []byte) error,
 ) error {
+	stat, err := os.Stat(filePath)
+	if err != nil {
+		return err
+	}
+
+	if stat.IsDir() {
+		return fmt.Errorf("%q must be a file but is a directory", filePath)
+	}
+
 	viperCfg := viper.New()
 	viperCfg.SetConfigFile(filePath)
 

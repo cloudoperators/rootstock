@@ -17,94 +17,123 @@ import (
 )
 
 func TestInitFileConfig(t *testing.T) {
+	t.Parallel()
+
+	selectedTest := ""
+	// "calls updateFunc with updated content on file change"
+
 	tests := []struct {
-		name           string
-		fileContent    []byte
-		noFile         bool
-		updateErr      error
-		wantCalled     bool
-		wantErr        string
-		updatedContent []byte
+		name               string
+		fileContentAtStart string
+		fileContentUpdates []string
+		updateErr          error
+		wantErr            string
 	}{
 		{
-			name:        "calls updateFunc with file content on init",
-			fileContent: []byte("config: value"),
-			wantCalled:  true,
+			name:               "calls updateFunc with file content on init",
+			fileContentAtStart: "config: value",
 		},
 		{
-			name:       "returns error when file does not exist",
-			noFile:     true,
-			wantCalled: false,
-			wantErr:    "failed to read config file",
+			name:    "returns error when file does not exist",
+			wantErr: "no such file or directory",
 		},
 		{
-			name:        "propagates updateFunc error",
-			fileContent: []byte("some content"),
-			updateErr:   errors.New("update failed"),
-			wantCalled:  true,
-			wantErr:     "failed to update clients on config file change",
+			name:               "propagates updateFunc error",
+			fileContentAtStart: "some content",
+			updateErr:          errors.New("update failed"),
+			wantErr:            "failed to update clients on config file change",
 		},
 		{
-			name:           "calls updateFunc with updated content on file change",
-			fileContent:    []byte("value: initial"),
-			wantCalled:     true,
-			updatedContent: []byte("value: updated"),
+			name:               "calls updateFunc with updated content on file change",
+			fileContentAtStart: "value: initial",
+			fileContentUpdates: []string{"value: updated"},
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var filePath string
-			if tt.noFile {
-				filePath = filepath.Join(t.TempDir(), "nonexistent.yaml")
-			} else {
-				filePath = filepath.Join(t.TempDir(), "config.yaml")
-				require.NoError(t, os.WriteFile(filePath, tt.fileContent, 0o644))
-			}
+		if selectedTest != "" && tt.name != selectedTest {
+			continue
+		}
 
-			var mu sync.Mutex
-			var calls [][]byte
-			updateFn := func(content []byte) error {
-				mu.Lock()
-				defer mu.Unlock()
-				calls = append(calls, content)
-				return tt.updateErr
-			}
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			filePath, updateFn,
+				expectedContents, actualContents,
+				lock := setupFileConfig(t, tt.fileContentAtStart, tt.updateErr)
 
 			err := InitFileConfig(filePath, updateFn)
 
-			if tt.wantErr != "" {
-				require.Error(t, err)
-				assert.Contains(t, err.Error(), tt.wantErr)
-			} else {
-				require.NoError(t, err)
+			checkErr(t, tt.wantErr, err)
+
+			for _, u := range tt.fileContentUpdates {
+				require.NoError(t, os.WriteFile(filePath, []byte(u), 0o600))
+				*expectedContents = append(*expectedContents, u)
+
+				time.Sleep(100 * time.Millisecond)
 			}
 
-			mu.Lock()
-			if tt.wantCalled {
-				require.NotEmpty(t, calls)
-				assert.Equal(t, tt.fileContent, calls[0])
-			} else {
-				assert.Empty(t, calls)
-			}
-			mu.Unlock()
+			assert.Eventually(t, func() bool {
+				lock.Lock()
+				defer lock.Unlock()
 
-			if tt.updatedContent != nil {
-				require.NoError(t, os.WriteFile(filePath, tt.updatedContent, 0o644))
-				assert.Eventually(t, func() bool {
-					mu.Lock()
-					defer mu.Unlock()
-					if len(calls) < 2 {
-						return false
-					}
-					return assert.Equal(t, tt.updatedContent, calls[len(calls)-1])
-				}, 2*time.Second, 50*time.Millisecond, "updateFunc was not called with updated content")
-			}
+				return assert.Equal(t, expectedContents, actualContents,
+					"expected file content and acutal content do not match",
+				)
+			},
+				2*time.Second, 200*time.Millisecond,
+				"updateFunc was not called with updated content",
+			)
 		})
 	}
 }
 
+func checkErr(t *testing.T, want string, got error) {
+	t.Helper()
+
+	if want != "" {
+		require.Error(t, got)
+		assert.Contains(t, got.Error(), want)
+
+		return
+	}
+
+	require.NoError(t, got)
+}
+
+func setupFileConfig(t *testing.T, contentAtStart string, updateErr error) (
+	filePath string, updateFunc func(c []byte) error,
+	expectedContents, actualContents *[]string, lock *sync.Mutex,
+) {
+	t.Helper()
+
+	if contentAtStart == "" {
+		filePath = filepath.Join(t.TempDir(), "nonexistent.yaml")
+		expectedContents = &[]string{}
+	} else {
+		filePath = filepath.Join(t.TempDir(), "config.yaml")
+		expectedContents = &[]string{contentAtStart}
+		require.NoError(t, os.WriteFile(filePath, []byte(contentAtStart), 0o600))
+	}
+
+	lock = &sync.Mutex{}
+	actualContents = &[]string{}
+
+	updateFunc = func(content []byte) error {
+		lock.Lock()
+		defer lock.Unlock()
+
+		*actualContents = append(*actualContents, string(content))
+
+		return updateErr
+	}
+
+	return filePath, updateFunc, expectedContents, actualContents, lock
+}
+
 func TestOnFileChange(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name         string
 		op           fsnotify.Op
@@ -146,6 +175,8 @@ func TestOnFileChange(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			called := false
 			handler := onFileChange(func() error {
 				called = true
