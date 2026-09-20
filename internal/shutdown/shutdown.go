@@ -19,7 +19,7 @@ var (
 	gracePeriod time.Duration = 1 * time.Second
 
 	// package-specific functions that should be called for graceful shutdown and
-	// log.Sync functions for additional loggers
+	// log.Sync functions for additional loggers.
 	stopFuncs  []func()
 	stopAction = func(exitCode int) { os.Exit(exitCode) }
 )
@@ -50,20 +50,18 @@ func GetContext() context.Context {
 func AddStopFunction(f func()) {
 	shutdownLock.Lock()
 	defer shutdownLock.Unlock()
+
 	stopFuncs = append(stopFuncs, f)
 }
 
 // StopNowWith will invoke the stop function to cancel the context.
 // It will panic if stop is nil.
 func StopNowWith(exitCode int) {
-
 	shutdownLock.Lock()
-	funcs := make([]func(), 0, len(stopFuncs))
-	funcs = append(funcs, stopFuncs...)
 	defer shutdownLock.Unlock()
 
-	for _, stopFunc := range stopFuncs {
-		stopFunc()
+	for _, f := range stopFuncs {
+		f()
 	}
 
 	time.Sleep(gracePeriod)
