@@ -3,3 +3,7 @@
 
 
 tmp/
+bin/
+.vscode/
+
+go-report.xml
