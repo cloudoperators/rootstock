@@ -24,6 +24,7 @@ func Debugf(msg string, args ...any) {
 func InfoContext(ctx context.Context, msg string, args ...any) {
 	Default().InfoContext(ctx, msg, args...)
 }
+
 func Info(msg string, args ...any) {
 	Default().Info(msg, args...)
 }

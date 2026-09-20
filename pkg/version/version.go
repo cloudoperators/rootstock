@@ -46,10 +46,12 @@ func Init(semVersion, buildDate, gitCommit, gitTag, gitTreeState string) error {
 	if err != nil {
 		return fmt.Errorf(errMsg, "major", semVersion, err)
 	}
+
 	serviceVersion.minor, err = strconv.Atoi(matches[2])
 	if err != nil {
 		return fmt.Errorf(errMsg, "minor", semVersion, err)
 	}
+
 	serviceVersion.patch, err = strconv.Atoi(matches[3])
 	if err != nil {
 		return fmt.Errorf(errMsg, "patch", semVersion, err)

@@ -93,7 +93,7 @@ func SetStacktrace(enabled bool) Option {
 	}
 }
 
-// WithCallerOffset sets the callstack offset for the caller field in log output
+// WithCallerOffset sets the callstack offset for the caller field in log output.
 func WithCallerOffset(i int) Option {
 	return func(o *loggerOptions) {
 		o.callerOffset = i

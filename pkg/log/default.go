@@ -40,7 +40,7 @@ func SetDefault(l *Logger) {
 	atomicDefault.Store(l)
 }
 
-// This package uses 1 init function to ensure the Default logger is present
+// This package uses 1 init function to ensure the Default logger is present.
 func init() {
 	atomicDefault.Store(newLogger(&defaultOptions))
 }

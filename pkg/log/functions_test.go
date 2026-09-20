@@ -15,8 +15,10 @@ import (
 // and restores the original Default when the test ends.
 func captureDefault(t *testing.T, level log.Level) log.MockTarget {
 	t.Helper()
+
 	target := log.NewMockTarget()
 	original := log.Default()
+
 	t.Cleanup(func() { log.SetDefault(original) })
 	log.SetDefaultLogger(
 		log.WithLevel(level.String()),
@@ -25,6 +27,7 @@ func captureDefault(t *testing.T, level log.Level) log.MockTarget {
 		log.WithInfoTarget(target),
 		log.WithErrorTarget(target),
 	)
+
 	return target
 }
 
@@ -90,6 +93,7 @@ func TestPackageLevelFunctions(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			target := captureDefault(t, tc.level)
 			tc.logFn()
+
 			if !strings.Contains(target.ReadAllString(), tc.wantMsg) {
 				t.Errorf("expected %q in output, got: %s", tc.wantMsg, target.ReadAllString())
 			}
@@ -135,6 +139,7 @@ func TestPackageLevelFormatFunctions(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			target := captureDefault(t, tc.level)
 			tc.logFn()
+
 			if !strings.Contains(target.ReadAllString(), tc.wantMsg) {
 				t.Errorf("expected %q in output, got: %s", tc.wantMsg, target.ReadAllString())
 			}
@@ -146,7 +151,9 @@ func TestPackageLevelFormatFunctions(t *testing.T) {
 // produce output when Default is at info level.
 func TestPackageLevelDebugSuppressedAtInfoLevel(t *testing.T) {
 	target := captureDefault(t, log.InfoLvl)
+
 	log.Debug("should-not-appear")
+
 	if strings.Contains(target.ReadAllString(), "should-not-appear") {
 		t.Errorf("debug message should be suppressed at info level, got: %s", target.ReadAllString())
 	}
@@ -194,6 +201,7 @@ func TestAddCallerReportsCallingLocation(t *testing.T) {
 	if !strings.Contains(keys["file"], "functions_test.go") {
 		t.Errorf("expected file to contain 'functions_test.go', got %q", keys["file"])
 	}
+
 	if !strings.Contains(keys["func"], "TestAddCallerReportsCallingLocation") {
 		t.Errorf("expected func to contain 'TestAddCallerReportsCallingLocation', got %q", keys["func"])
 	}

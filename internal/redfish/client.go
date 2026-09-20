@@ -8,6 +8,7 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -35,7 +36,7 @@ type Client struct {
 	timeout time.Duration
 }
 
-// PowerEquipment represents the PowerEquipment collection
+// PowerEquipment represents the PowerEquipment collection.
 type PowerEquipment struct {
 	ODataID   string `json:"@odata.id"`
 	ODataType string `json:"@odata.type"`
@@ -45,7 +46,7 @@ type PowerEquipment struct {
 	} `json:"RackPDUs"`
 }
 
-// RackPDUsCollection represents the collection of RackPDUs
+// RackPDUsCollection represents the collection of RackPDUs.
 type RackPDUsCollection struct {
 	ODataID      string `json:"@odata.id"`
 	ODataType    string `json:"@odata.type"`
@@ -54,12 +55,12 @@ type RackPDUsCollection struct {
 	MembersCount int    `json:"Members@odata.count"`
 }
 
-// Link represents a Redfish link object
+// Link represents a Redfish link object.
 type Link struct {
 	ODataID string `json:"@odata.id"`
 }
 
-// RackPDU represents a single RackPDU device
+// RackPDU represents a single RackPDU device.
 type RackPDU struct {
 	ODataID         string `json:"@odata.id"`
 	ODataType       string `json:"@odata.type"`
@@ -89,13 +90,13 @@ type RackPDU struct {
 	} `json:"Location"`
 }
 
-// Status represents the status of a Redfish resource
+// Status represents the status of a Redfish resource.
 type Status struct {
 	State  string `json:"State"`
 	Health string `json:"Health"`
 }
 
-// PDUMetrics represents the metrics for a PDU
+// PDUMetrics represents the metrics for a PDU.
 type PDUMetrics struct {
 	ODataID            string        `json:"@odata.id"`
 	ODataType          string        `json:"@odata.type"`
@@ -106,7 +107,7 @@ type PDUMetrics struct {
 	TemperatureCelsius SensorReading `json:"TemperatureCelsius"`
 }
 
-// SensorReading represents a sensor reading with value and metadata
+// SensorReading represents a sensor reading with value and metadata.
 type SensorReading struct {
 	DataSourceUri string  `json:"DataSourceUri"`
 	Reading       float64 `json:"Reading"`
@@ -135,7 +136,7 @@ func NewClient(baseURL *url.URL, logger *slog.Logger, username, password string,
 	}
 }
 
-// Login creates redfish session
+// Login creates redfish session.
 func (c *Client) Login(ctx context.Context) error {
 	payload := map[string]string{
 		"UserName": c.username,
@@ -148,6 +149,7 @@ func (c *Client) Login(ctx context.Context) error {
 	}
 
 	loginURL := c.baseURL.ResolveReference(&url.URL{Path: "/redfish/v1/SessionService/Sessions"})
+
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
@@ -168,12 +170,12 @@ func (c *Client) Login(ctx context.Context) error {
 
 	token := resp.Header.Get("X-Auth-Token")
 	if token == "" {
-		return fmt.Errorf("login response did not contain X-Auth-Token")
+		return errors.New("login response did not contain X-Auth-Token")
 	}
 
 	sessionURL := resp.Header.Get("Location")
 	if sessionURL == "" {
-		return fmt.Errorf("login response did not contain session Location")
+		return errors.New("login response did not contain session Location")
 	}
 
 	c.authToken = token
@@ -184,22 +186,19 @@ func (c *Client) Login(ctx context.Context) error {
 	return nil
 }
 
-// Close terminates redfish session
+// Close terminates redfish session.
 func (c *Client) Close(ctx context.Context) error {
 	if c.sessionURL == "" || c.authToken == "" {
 		return nil // No session to clean up
 	}
 
 	sessionURL := c.baseURL.ResolveReference(&url.URL{Path: c.sessionURL})
-	req, err := http.NewRequestWithContext(
-		ctx,
-		http.MethodDelete,
-		sessionURL.String(),
-		nil,
-	)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, sessionURL.String(), http.NoBody)
 	if err != nil {
 		return err
 	}
+
 	req.Header.Set("X-Auth-Token", c.authToken)
 
 	resp, err := c.httpClient.Do(req)
@@ -216,12 +215,8 @@ func (c *Client) Close(ctx context.Context) error {
 
 func (c *Client) get(ctx context.Context, path string, result any) error {
 	fullURL := c.baseURL.ResolveReference(&url.URL{Path: path})
-	req, err := http.NewRequestWithContext(
-		ctx,
-		http.MethodGet,
-		fullURL.String(),
-		nil,
-	)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fullURL.String(), http.NoBody)
 	if err != nil {
 		return err
 	}
@@ -229,6 +224,7 @@ func (c *Client) get(ctx context.Context, path string, result any) error {
 	if c.authToken != "" {
 		req.Header.Set("X-Auth-Token", c.authToken)
 	}
+
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("GET %s: %w", path, err)
@@ -246,40 +242,46 @@ func (c *Client) get(ctx context.Context, path string, result any) error {
 	return nil
 }
 
-// GetPowerEquipment retrieves the Power Equipment collection
+// GetPowerEquipment retrieves the Power Equipment collection.
 func (c *Client) GetPowerEquipment(ctx context.Context) (*PowerEquipment, error) {
 	var result PowerEquipment
 	if err := c.get(ctx, "/redfish/v1/PowerEquipment", &result); err != nil {
 		return nil, err
 	}
+
 	return &result, nil
 }
 
-// GetRackPDUs retrieves the Rack PDUs collection
+// GetRackPDUs retrieves the Rack PDUs collection.
 func (c *Client) GetRackPDUs(ctx context.Context) (*RackPDUsCollection, error) {
 	var result RackPDUsCollection
 	if err := c.get(ctx, "/redfish/v1/PowerEquipment/RackPDUs", &result); err != nil {
 		return nil, err
 	}
+
 	return &result, nil
 }
 
-// GetPDU retrieves details for a specific PDU
+// GetPDU retrieves details for a specific PDU.
 func (c *Client) GetPDU(ctx context.Context, pduID string) (*RackPDU, error) {
 	var result RackPDU
-	endpoint := fmt.Sprintf("/redfish/v1/PowerEquipment/RackPDUs/%s", pduID)
+
+	endpoint := "/redfish/v1/PowerEquipment/RackPDUs/" + pduID
 	if err := c.get(ctx, endpoint, &result); err != nil {
 		return nil, err
 	}
+
 	return &result, nil
 }
 
-// GetPDUMetrics retrieves metrics for a specific PDU
+// GetPDUMetrics retrieves metrics for a specific PDU.
 func (c *Client) GetPDUMetrics(ctx context.Context, pduID string) (*PDUMetrics, error) {
 	var result PDUMetrics
+
 	endpoint := fmt.Sprintf("/redfish/v1/PowerEquipment/RackPDUs/%s/Metrics", pduID)
 	if err := c.get(ctx, endpoint, &result); err != nil {
 		return nil, err
 	}
+
 	return &result, nil
 }

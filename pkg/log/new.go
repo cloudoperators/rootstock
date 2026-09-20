@@ -93,6 +93,7 @@ func New(options ...Option) FullInterface {
 			slog.Bool("stacktrace", o.addStacktrace),
 		),
 	)
+
 	return l
 }
 
@@ -112,6 +113,7 @@ func newLogger(o *loggerOptions) *Logger {
 			o.callerOffset,
 		},
 	)
+
 	return &Logger{sLogger, zapLogger, *o}
 }
 

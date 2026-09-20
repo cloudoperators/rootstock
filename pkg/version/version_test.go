@@ -77,15 +77,19 @@ func TestInit(t *testing.T) {
 		if selectedCase != "" && tt.name != selectedCase {
 			continue
 		}
+
 		t.Run(tt.name, func(t *testing.T) {
 			err := Init(tt.semVer, tt.buildDate, tt.gitCommit, tt.gitTag, tt.gitTreeState)
 			if tt.wantErr != "" {
-				assert.NotNil(t, err)
+				assert.Error(t, err)
 				assert.ErrorContains(t, err, tt.wantErr)
+
 				return
 			}
-			assert.Nil(t, err)
+
+			assert.NoError(t, err)
 			assert.Equal(t, tt.wantRead, Read())
+
 			if tt.wantMajor+tt.wantMinor+tt.wantPatch > 0 {
 				gotMajor, gotMinor, gotPatch := SemanticVersion()
 				assert.Equal(t, tt.wantMajor, gotMajor)
@@ -106,7 +110,7 @@ func TestReadAll(t *testing.T) {
 	gitTreeState := "clean"
 
 	err := Init(semVer, buildDate, gitCommit, gitTag, gitTreeState)
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 
 	want := fmt.Sprintf("{"+
 		"version:%s major:%d minor:%d patch:%d suffix:%s buildDate:%s gitCommit:%s "+

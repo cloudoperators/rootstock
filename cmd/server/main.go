@@ -8,13 +8,12 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-
 	"github.com/SAP/rootstock/internal/config"
 	"github.com/SAP/rootstock/pkg/log"
 	v "github.com/SAP/rootstock/pkg/version"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 const (
@@ -35,7 +34,6 @@ var (
 )
 
 func main() {
-
 	cfg, err := config.ReadConfig()
 	if err != nil {
 		log.Error("failed to load config", log.KeyError, err)
@@ -49,7 +47,7 @@ func main() {
 	}
 
 	if err := v.Init(version, buildDate, gitCommit, gitTag, gitTreeState); err != nil {
-		log.Error("failed to initialise binary version", "error", err)
+		log.Error("failed to initialize binary version", "error", err)
 	}
 
 	log.Info(

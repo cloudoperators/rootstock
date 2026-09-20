@@ -65,7 +65,6 @@ func (m *mockLogger) SortByType() {
 }
 
 func (m *mockLogger) ReadByType(lvl Level) []string {
-	//nolint:exhaustive // not listed cases are not used by us
 	switch lvl {
 	case DebugLvl:
 		return m.debugMsg
