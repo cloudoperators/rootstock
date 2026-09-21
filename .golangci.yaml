@@ -695,6 +695,7 @@ linters:
           - dupl
           - gosec
           - revive
+          - godoclint
       # Run some linter only for test files by excluding its issues for everything else.
       - path-except: _test\.go
         linters:
@@ -707,10 +708,10 @@ formatters:
     - goimports
   settings:
     gofumpt:
-      module-path: github.tools.sap/AI/user-content/components/api
+      module-path: github.com/SAP/rootstock
     goimports:
       local-prefixes:
-        - github.com/golangci/golangci-lint
+        - github.com/SAP/rootstock
   exclusions:
     generated: lax
     paths:
