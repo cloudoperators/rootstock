@@ -77,7 +77,12 @@ func probeHandler(cfg *config.Config) http.HandlerFunc {
 
 		// Create a temporary registry for this specific scrape
 		registry := prometheus.NewRegistry()
-		registry.MustRegister(collector)
+		err = registry.Register(collector)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("can not register prometheus collector: %v", err), http.StatusInternalServerError)
+			log.Error("can not register prometheus collector", log.KeyError, err)
+			return
+		}
 
 		// Use promhttp to handle the metrics collection and formatting
 		h := promhttp.HandlerFor(registry, promhttp.HandlerOpts{
