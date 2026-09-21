@@ -7,10 +7,9 @@ import (
 	"context"
 	"sync"
 
-	"github.com/prometheus/client_golang/prometheus"
-
 	"github.com/SAP/rootstock/internal/redfish"
 	"github.com/SAP/rootstock/pkg/log"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type Collector struct {
@@ -36,7 +35,7 @@ type PERackPDU struct {
 }
 
 func NewCollector(redfishClient redfish.Client, pduID string) *Collector {
-	logger := log.Default
+	logger := log.Default()
 
 	return &Collector{
 		redfishClient: redfishClient,
@@ -71,7 +70,7 @@ func NewCollector(redfishClient redfish.Client, pduID string) *Collector {
 		peRackPDU: &PERackPDU{
 			PowerCapacityVA: prometheus.NewDesc(
 				"power_capacity_va",
-				"the maximum power rated as aparent power",
+				"the maximum power rated as apparent power",
 				[]string{"pdu_id"},
 				nil,
 			),
@@ -82,9 +81,13 @@ func NewCollector(redfishClient redfish.Client, pduID string) *Collector {
 // Describe implements prometheus.Collector.
 func (c *Collector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- c.peRackPDUMetrics.Reading
+
 	ch <- c.peRackPDUMetrics.ApparentVA
+
 	ch <- c.peRackPDUMetrics.ReactiveVAR
+
 	ch <- c.peRackPDUMetrics.PowerFactor
+
 	ch <- c.peRackPDU.PowerCapacityVA
 }
 
@@ -183,6 +186,5 @@ func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 		} else {
 			ch <- metric
 		}
-
 	}
 }

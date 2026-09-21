@@ -11,7 +11,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"net/url"
 	"time"
@@ -129,7 +128,7 @@ type SensorReading struct {
 	PowerFactor   float64 `json:"PowerFactor"`
 }
 
-func NewClient(baseURL *url.URL, logger *slog.Logger, username, password string, timeout time.Duration) Client {
+func NewClient(baseURL *url.URL, logger log.MinInterface, username, password string, timeout time.Duration) Client {
 	if logger == nil {
 		logger = log.Default()
 	}
@@ -149,7 +148,7 @@ func NewClient(baseURL *url.URL, logger *slog.Logger, username, password string,
 	}
 }
 
-// Login creates redfish session
+// Login creates redfish session.
 func (c *ClientImpl) Login(ctx context.Context) error {
 	payload := map[string]string{
 		"UserName": c.username,
@@ -199,7 +198,7 @@ func (c *ClientImpl) Login(ctx context.Context) error {
 	return nil
 }
 
-// Close terminates redfish session
+// Close terminates redfish session.
 func (c *ClientImpl) Close(ctx context.Context) error {
 	if c.sessionURL == "" || c.authToken == "" {
 		return nil // No session to clean up
@@ -226,41 +225,47 @@ func (c *ClientImpl) Close(ctx context.Context) error {
 	return nil
 }
 
-// GetPowerEquipment retrieves the Power Equipment collection
+// GetPowerEquipment retrieves the Power Equipment collection.
 func (c *ClientImpl) GetPowerEquipment(ctx context.Context) (*PowerEquipment, error) {
 	var result PowerEquipment
 	if err := c.get(ctx, "/redfish/v1/PowerEquipment", &result); err != nil {
 		return nil, err
 	}
+
 	return &result, nil
 }
 
-// GetRackPDUs retrieves the Rack PDUs collection
+// GetRackPDUs retrieves the Rack PDUs collection.
 func (c *ClientImpl) GetRackPDUs(ctx context.Context) (*RackPDUsCollection, error) {
 	var result RackPDUsCollection
 	if err := c.get(ctx, "/redfish/v1/PowerEquipment/RackPDUs", &result); err != nil {
 		return nil, err
 	}
+
 	return &result, nil
 }
 
-// GetPDU retrieves details for a specific PDU
+// GetPDU retrieves details for a specific PDU.
 func (c *ClientImpl) GetPERackPDU(ctx context.Context, pduID string) (*RackPDU, error) {
 	var result RackPDU
-	endpoint := fmt.Sprintf("/redfish/v1/PowerEquipment/RackPDUs/%s", pduID)
+
+	endpoint := "/redfish/v1/PowerEquipment/RackPDUs/" + pduID
 	if err := c.get(ctx, endpoint, &result); err != nil {
 		return nil, err
 	}
+
 	return &result, nil
 }
 
-// GetPDUMetrics retrieves metrics for a specific PDU
+// GetPDUMetrics retrieves metrics for a specific PDU.
 func (c *ClientImpl) GetPERackPDUMetrics(ctx context.Context, pduID string) (*PDUMetrics, error) {
 	var result PDUMetrics
+
 	endpoint := fmt.Sprintf("/redfish/v1/PowerEquipment/RackPDUs/%s/Metrics", pduID)
 	if err := c.get(ctx, endpoint, &result); err != nil {
 		return nil, err
 	}
+
 	return &result, nil
 }
 
