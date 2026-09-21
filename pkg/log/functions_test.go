@@ -33,9 +33,9 @@ func captureDefault(t *testing.T, level log.Level) log.MockTarget {
 }
 
 // TestPackageLevelFunctions checks that each top-level log function routes to Default.
+//
+//nolint:paralleltest // uses the singleton default logger
 func TestPackageLevelFunctions(t *testing.T) {
-	t.Parallel()
-
 	tests := []struct {
 		name    string
 		level   log.Level
@@ -94,7 +94,6 @@ func TestPackageLevelFunctions(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
 			target := captureDefault(t, tc.level)
 			tc.logFn()
 
@@ -106,9 +105,9 @@ func TestPackageLevelFunctions(t *testing.T) {
 }
 
 // TestPackageLevelFormatFunctions checks that the f-suffix functions apply [fmt.Sprintf].
+//
+//nolint:paralleltest // uses the singleton default logger
 func TestPackageLevelFormatFunctions(t *testing.T) {
-	t.Parallel()
-
 	tests := []struct {
 		name    string
 		level   log.Level
@@ -143,7 +142,6 @@ func TestPackageLevelFormatFunctions(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
 			target := captureDefault(t, tc.level)
 			tc.logFn()
 

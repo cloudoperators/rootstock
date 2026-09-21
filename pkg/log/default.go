@@ -32,13 +32,13 @@ var (
 )
 
 // Default returns the current default logger. Safe for concurrent use.
-func Default() *Logger {
+func Default() FullInterface {
 	return atomicDefault.Load()
 }
 
-// SetDefault replaces the default logger with l. Safe for concurrent use.
-func SetDefault(l *Logger) {
-	atomicDefault.Store(l)
+func SetDefault(l FullInterface) {
+	opts := l.readOptions()
+	atomicDefault.Store(newLogger(&opts))
 }
 
 // This package uses 1 init function to ensure the Default logger is present.

@@ -96,3 +96,7 @@ func (l *Logger) With(args ...any) FullInterface {
 		options: l.options,
 	}
 }
+
+func (l *Logger) readOptions() loggerOptions {
+	return l.options
+}

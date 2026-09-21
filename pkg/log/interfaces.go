@@ -53,4 +53,6 @@ type FullInterface interface {
 	Sync()
 	// New returns a child logger from the existing logger interface.
 	New(options ...Option) FullInterface
+
+	readOptions() loggerOptions
 }
