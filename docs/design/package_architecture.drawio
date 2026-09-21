@@ -58,7 +58,7 @@
                 <mxCell id="114" value="scraping" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="115">
                     <mxGeometry x="1" width="60" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="95" value="otel emitter&lt;div&gt;(SCI prometheus pull)&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="161">
+                <mxCell id="95" value="prometheus collector&lt;div&gt;(SCI prometheus pull)&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="161">
                     <mxGeometry x="239.5" y="158" width="120" height="60" as="geometry"/>
                 </mxCell>
                 <mxCell id="98" value="" style="group" vertex="1" connectable="0" parent="161">
