@@ -42,19 +42,6 @@ func (l *Logger) New(options ...Option) FullInterface {
 	return newLogger(&opts)
 }
 
-func (l *Logger) Update(options ...Option) {
-	opts := l.options
-	for _, option := range options {
-		option(&opts)
-	}
-
-	newL := newLogger(&opts)
-
-	l.options = newL.options
-	l.core = newL.core
-	l.Logger = newL.Logger
-}
-
 func (l *Logger) DebugContext(ctx context.Context, msg string, args ...any) {
 	l.Logger.DebugContext(ctx, msg, args...)
 }
