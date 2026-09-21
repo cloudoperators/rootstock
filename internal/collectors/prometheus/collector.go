@@ -14,6 +14,10 @@ import (
 	"github.com/SAP/rootstock/pkg/log"
 )
 
+const (
+	CollectorTimeout = 25 * time.Second
+)
+
 type Collector struct {
 	mu            sync.Mutex
 	redfishClient redfish.Client
@@ -98,7 +102,7 @@ func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 	// Note: prometheus.Collector interface doesn't accept context as parameter,
 	// so we create one here with a reasonable timeout. The HTTP client's timeout
 	// (configured in NewClient) provides the ultimate backstop.
-	ctx, cancel := context.WithTimeout(context.Background(), 25*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), CollectorTimeout)
 	defer cancel()
 
 	// Fetch PDU metrics from Redfish API
