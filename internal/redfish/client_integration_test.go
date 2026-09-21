@@ -34,7 +34,7 @@ var mockupBase = func() string {
 	return "http://localhost:8000"
 }()
 
-func newTestClient(t *testing.T) *redfish.Client {
+func newTestClient(t *testing.T) redfish.Client {
 	t.Helper()
 	base, err := url.Parse(mockupBase)
 	if err != nil {
