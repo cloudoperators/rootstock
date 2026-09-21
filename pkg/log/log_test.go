@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Greenhouse contributors
 // SPDX-License-Identifier: Apache-2.0
-
+//
+//nolint:depguard // log pkg dependencies allowed in the log package
 package log_test
 
 import (
@@ -16,6 +17,8 @@ import (
 // --- Level.String ---
 
 func TestLevelString(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		level log.Level
 		want  string
@@ -29,6 +32,8 @@ func TestLevelString(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.want, func(t *testing.T) {
+			t.Parallel()
+
 			if got := tc.level.String(); got != tc.want {
 				t.Errorf("Level(%d).String() = %q, want %q", tc.level, got, tc.want)
 			}
@@ -48,6 +53,8 @@ func TestLevelString(t *testing.T) {
 // --- New / options ---
 
 func TestNewWithOptions(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name    string
 		options []log.Option
@@ -100,6 +107,8 @@ func TestNewWithOptions(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			l := log.New(tc.options...)
 			if l == nil {
 				t.Fatal("expected non-nil logger")
@@ -111,6 +120,8 @@ func TestNewWithOptions(t *testing.T) {
 // --- MockLogger: logging at each level appears in output ---
 
 func TestMockLoggerLevels(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name    string
 		logFn   func(l log.FullInterface)
@@ -169,6 +180,8 @@ func TestMockLoggerLevels(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			ml := log.NewMockLogger(log.WithLevel(tc.level), log.WithoutCaller(), log.SetStacktrace(false))
 			tc.logFn(ml)
 			ml.SortByType()
@@ -183,6 +196,8 @@ func TestMockLoggerLevels(t *testing.T) {
 // --- Infof / Warnf / Errorf / Debugf formatted methods ---
 
 func TestLoggerFormatMethods(t *testing.T) {
+	t.Parallel()
+
 	ml := log.NewMockLogger(log.WithLevel("debug"), log.WithoutCaller(), log.SetStacktrace(false))
 
 	formatTests := []struct {
@@ -204,6 +219,7 @@ func TestLoggerFormatMethods(t *testing.T) {
 
 	for _, tc := range formatTests {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			// The format string is logged as the message verbatim since Info/Warn/Error/Debug
 			// treat the first arg as the message and remaining as key-value pairs.
 			// Here we just verify the message text appears in any form.
@@ -226,6 +242,8 @@ func TestLoggerFormatMethods(t *testing.T) {
 // --- Logger.With returns a child logger that preserves fields ---
 
 func TestLoggerWith(t *testing.T) {
+	t.Parallel()
+
 	ml := log.NewMockLogger(log.WithLevel("info"), log.WithoutCaller(), log.SetStacktrace(false))
 	child := ml.With("component", "auth")
 	child.Info("login attempt")
@@ -243,6 +261,8 @@ func TestLoggerWith(t *testing.T) {
 // --- Logger.New creates an independent child logger ---
 
 func TestLoggerNew(t *testing.T) {
+	t.Parallel()
+
 	buf := &bytes.Buffer{}
 	target := &syncBuffer{buf}
 
@@ -263,6 +283,8 @@ func TestLoggerNew(t *testing.T) {
 // --- AppendCtx attaches attributes to context ---
 
 func TestAppendCtx(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name      string
 		buildCtx  func() context.Context
@@ -295,6 +317,8 @@ func TestAppendCtx(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			ml := log.NewMockLogger(log.WithLevel("info"), log.WithoutCaller(), log.SetStacktrace(false))
 			ctx := tc.buildCtx()
 			ml.InfoContext(ctx, "with context")
@@ -309,6 +333,8 @@ func TestAppendCtx(t *testing.T) {
 // --- MockLogger.SortByType / ReadByType / Contains ---
 
 func TestMockLoggerSortAndRead(t *testing.T) {
+	t.Parallel()
+
 	ml := log.NewMockLogger(log.WithLevel("debug"), log.WithoutCaller(), log.SetStacktrace(false))
 	ml.Info("msg-info")
 	ml.Warn("msg-warn")
@@ -328,6 +354,8 @@ func TestMockLoggerSortAndRead(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.level.String(), func(t *testing.T) {
+			t.Parallel()
+
 			if !ml.Contains(tc.level, tc.wantMsg) {
 				t.Errorf("expected %q in %s level, got: %v", tc.wantMsg, tc.level, ml.ReadByType(tc.level))
 			}
@@ -336,6 +364,8 @@ func TestMockLoggerSortAndRead(t *testing.T) {
 }
 
 func TestMockLoggerContainsMissing(t *testing.T) {
+	t.Parallel()
+
 	ml := log.NewMockLogger(log.WithLevel("info"), log.WithoutCaller(), log.SetStacktrace(false))
 	ml.Info("present message")
 	ml.SortByType()
@@ -346,6 +376,8 @@ func TestMockLoggerContainsMissing(t *testing.T) {
 }
 
 func TestMockLoggerReadByTypeUnknownLevel(t *testing.T) {
+	t.Parallel()
+
 	ml := log.NewMockLogger(log.WithoutCaller(), log.SetStacktrace(false))
 	ml.SortByType()
 
@@ -358,6 +390,8 @@ func TestMockLoggerReadByTypeUnknownLevel(t *testing.T) {
 // --- MockTarget direct write ---
 
 func TestMockTargetWrite(t *testing.T) {
+	t.Parallel()
+
 	target := log.NewMockTarget()
 
 	data := []byte("line one\n")
@@ -396,6 +430,8 @@ func TestMockTargetWrite(t *testing.T) {
 // --- CallerHandler adds caller group when enabled ---
 
 func TestCallerHandlerEnabled(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name       string
 		addCaller  bool
@@ -407,6 +443,8 @@ func TestCallerHandlerEnabled(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			var opts []log.Option
 			if !tc.addCaller {
 				opts = append(opts, log.WithoutCaller())
@@ -429,6 +467,7 @@ func TestCallerHandlerEnabled(t *testing.T) {
 
 // --- SetDefaultLogger ---
 
+//nolint:paralleltest // package global default variable prevents parallel testing
 func TestSetDefaultLogger(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -456,6 +495,8 @@ func TestSetDefaultLogger(t *testing.T) {
 // --- loggerOptions.DeepCopy does not share slice references ---
 
 func TestWithAdditionalTargets(t *testing.T) {
+	t.Parallel()
+
 	t1 := log.NewMockTarget()
 	t2 := log.NewMockTarget()
 
@@ -477,6 +518,8 @@ func TestWithAdditionalTargets(t *testing.T) {
 // --- With() builder option ---
 
 func TestWithBuilderOption(t *testing.T) {
+	t.Parallel()
+
 	buf := &bytes.Buffer{}
 	infoTarget := &syncBuffer{buf}
 	errTarget := &syncBuffer{buf}
@@ -497,7 +540,7 @@ func TestWithBuilderOption(t *testing.T) {
 	}
 }
 
-// syncBuffer wraps bytes.Buffer to satisfy zapcore.WriteSyncer.
+// syncBuffer wraps [bytes.Buffer] to satisfy zapcore.WriteSyncer.
 type syncBuffer struct {
 	*bytes.Buffer
 }

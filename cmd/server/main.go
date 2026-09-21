@@ -61,11 +61,11 @@ func main() {
 
 	r.Handle(metricsEndpoint, promhttp.Handler())
 
-	r.Get(readyEndpoint, func(w http.ResponseWriter, req *http.Request) {
+	r.Get(readyEndpoint, func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	r.Get(probeEndpoint, func(w http.ResponseWriter, req *http.Request) {
+	r.Get(probeEndpoint, func(w http.ResponseWriter, _ *http.Request) {
 		// PDU scraping can be implemented here
 		w.WriteHeader(http.StatusNotImplemented)
 	})

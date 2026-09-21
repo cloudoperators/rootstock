@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Greenhouse contributors
 // SPDX-License-Identifier: Apache-2.0
-
+//
+//nolint:depguard // log pkg dependencies allowed in the log package
 package log
 
 import (
@@ -59,7 +60,8 @@ func Errorf(msg string, args ...any) {
 
 func AddCaller() slog.Attr {
 	// offset to skip the current function and the logger functions.
-	callstackFunctionOffset := 3
+	const callstackFunctionOffset = 3
+
 	fileV, funcV := prepareCallerValues(callstackFunctionOffset)
 
 	return slog.Group(

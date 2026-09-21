@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Greenhouse contributors
 // SPDX-License-Identifier: Apache-2.0
+//
 
 package log_test
 
@@ -33,6 +34,8 @@ func captureDefault(t *testing.T, level log.Level) log.MockTarget {
 
 // TestPackageLevelFunctions checks that each top-level log function routes to Default.
 func TestPackageLevelFunctions(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name    string
 		level   log.Level
@@ -91,6 +94,7 @@ func TestPackageLevelFunctions(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			target := captureDefault(t, tc.level)
 			tc.logFn()
 
@@ -101,8 +105,10 @@ func TestPackageLevelFunctions(t *testing.T) {
 	}
 }
 
-// TestPackageLevelFormatFunctions checks that the f-suffix functions apply fmt.Sprintf.
+// TestPackageLevelFormatFunctions checks that the f-suffix functions apply [fmt.Sprintf].
 func TestPackageLevelFormatFunctions(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name    string
 		level   log.Level
@@ -137,6 +143,7 @@ func TestPackageLevelFormatFunctions(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			target := captureDefault(t, tc.level)
 			tc.logFn()
 
@@ -150,6 +157,7 @@ func TestPackageLevelFormatFunctions(t *testing.T) {
 // TestPackageLevelDebugSuppressedAtInfoLevel verifies that Debug does not
 // produce output when Default is at info level.
 func TestPackageLevelDebugSuppressedAtInfoLevel(t *testing.T) {
+	t.Parallel()
 	target := captureDefault(t, log.InfoLvl)
 
 	log.Debug("should-not-appear")
@@ -159,8 +167,10 @@ func TestPackageLevelDebugSuppressedAtInfoLevel(t *testing.T) {
 	}
 }
 
-// TestAddCallerAttrStructure verifies AddCaller returns a slog.Group attr with file and func keys.
+// TestAddCallerAttrStructure verifies AddCaller returns a [slog.Group] attr with file and func keys.
 func TestAddCallerAttrStructure(t *testing.T) {
+	t.Parallel()
+
 	attr := log.AddCaller()
 
 	if attr.Key != "caller" {
@@ -190,6 +200,8 @@ func TestAddCallerAttrStructure(t *testing.T) {
 // TestAddCallerReportsCallingLocation verifies that AddCaller captures the file and function
 // of the direct caller.
 func TestAddCallerReportsCallingLocation(t *testing.T) {
+	t.Parallel()
+
 	attr := log.AddCaller()
 	group := attr.Value.Group()
 

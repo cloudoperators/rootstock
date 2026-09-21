@@ -9,8 +9,10 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
+//nolint:paralleltest // package global variable prevents parallel testing
 func TestInit(t *testing.T) {
 	selectedCase := ""
 	tests := []struct {
@@ -81,13 +83,13 @@ func TestInit(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			err := Init(tt.semVer, tt.buildDate, tt.gitCommit, tt.gitTag, tt.gitTreeState)
 			if tt.wantErr != "" {
-				assert.Error(t, err)
+				require.Error(t, err)
 				assert.ErrorContains(t, err, tt.wantErr)
 
 				return
 			}
 
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			assert.Equal(t, tt.wantRead, Read())
 
 			if tt.wantMajor+tt.wantMinor+tt.wantPatch > 0 {
@@ -101,6 +103,8 @@ func TestInit(t *testing.T) {
 }
 
 func TestReadAll(t *testing.T) {
+	t.Parallel()
+
 	major, minor, patch := 1, 2, 3
 	suffix := "-suf"
 	semVer := fmt.Sprintf("%d.%d.%d%v", major, minor, patch, suffix)
@@ -110,7 +114,7 @@ func TestReadAll(t *testing.T) {
 	gitTreeState := "clean"
 
 	err := Init(semVer, buildDate, gitCommit, gitTag, gitTreeState)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	want := fmt.Sprintf("{"+
 		"version:%s major:%d minor:%d patch:%d suffix:%s buildDate:%s gitCommit:%s "+

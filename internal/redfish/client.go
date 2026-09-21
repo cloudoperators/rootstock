@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Greenhouse contributors
 // SPDX-License-Identifier: Apache-2.0
-
+//
+//nolint:tagliatelle // json format required from redfish schema
 package redfish
 
 import (
@@ -10,10 +11,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"net/url"
 	"time"
+
+	"github.com/SAP/rootstock/pkg/log"
 )
 
 // talk to the PDU over HTTP.
@@ -32,7 +34,7 @@ type Client struct {
 	authToken  string // Session authentication token (X-Auth-Token)
 	sessionURL string // Session URL for logout
 
-	logger  *slog.Logger // Structured logger for debugging and audit
+	logger  log.MinInterface // Structured logger for debugging and audit
 	timeout time.Duration
 }
 
@@ -109,16 +111,16 @@ type PDUMetrics struct {
 
 // SensorReading represents a sensor reading with value and metadata.
 type SensorReading struct {
-	DataSourceUri string  `json:"DataSourceUri"`
+	DataSourceURI string  `json:"DataSourceUri"`
 	Reading       float64 `json:"Reading"`
 	ApparentVA    float64 `json:"ApparentVA"`
 	ReactiveVAR   float64 `json:"ReactiveVAR"`
 	PowerFactor   float64 `json:"PowerFactor"`
 }
 
-func NewClient(baseURL *url.URL, logger *slog.Logger, username, password string, timeout time.Duration) *Client {
+func NewClient(baseURL *url.URL, logger log.MinInterface, username, password string, timeout time.Duration) *Client {
 	if logger == nil {
-		logger = slog.Default()
+		logger = log.Default()
 	}
 
 	return &Client{
@@ -213,35 +215,6 @@ func (c *Client) Close(ctx context.Context) error {
 	return nil
 }
 
-func (c *Client) get(ctx context.Context, path string, result any) error {
-	fullURL := c.baseURL.ResolveReference(&url.URL{Path: path})
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fullURL.String(), http.NoBody)
-	if err != nil {
-		return err
-	}
-
-	if c.authToken != "" {
-		req.Header.Set("X-Auth-Token", c.authToken)
-	}
-
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return fmt.Errorf("GET %s: %w", path, err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("GET %s: unexpected status code %d", path, resp.StatusCode)
-	}
-
-	if err := json.NewDecoder(resp.Body).Decode(result); err != nil {
-		return fmt.Errorf("decode GET %s response: %w", path, err)
-	}
-
-	return nil
-}
-
 // GetPowerEquipment retrieves the Power Equipment collection.
 func (c *Client) GetPowerEquipment(ctx context.Context) (*PowerEquipment, error) {
 	var result PowerEquipment
@@ -284,4 +257,33 @@ func (c *Client) GetPDUMetrics(ctx context.Context, pduID string) (*PDUMetrics, 
 	}
 
 	return &result, nil
+}
+
+func (c *Client) get(ctx context.Context, path string, result any) error {
+	fullURL := c.baseURL.ResolveReference(&url.URL{Path: path})
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fullURL.String(), http.NoBody)
+	if err != nil {
+		return err
+	}
+
+	if c.authToken != "" {
+		req.Header.Set("X-Auth-Token", c.authToken)
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("GET %s: %w", path, err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("GET %s: unexpected status code %d", path, resp.StatusCode)
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(result); err != nil {
+		return fmt.Errorf("decode GET %s response: %w", path, err)
+	}
+
+	return nil
 }
