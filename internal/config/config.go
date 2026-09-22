@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Package config holds the runtime configuration for the rootstock service.
-
 package config
 
 import (
@@ -12,17 +11,17 @@ import (
 )
 
 type Config struct {
-	ServiceName string `envconfig:"SERVICE_NAME" default:"rootstock"`
+	ServiceName string `default:"rootstock" envconfig:"SERVICE_NAME"`
 
-	ServiceEnv string `envconfig:"SERVICE_ENV" default:"PROD"`
+	ServiceEnv string `default:"PROD" envconfig:"SERVICE_ENV"`
 
-	ServicePort int `envconfig:"SERVICE_PORT" default:"9220"`
+	ServicePort int `default:"9220" envconfig:"SERVICE_PORT"`
 
 	// Redfish credentials used to authenticate against PDUs.
 	RedfishUsername string `envconfig:"REDFISH_USERNAME" required:"true"`
 	RedfishPassword string `envconfig:"REDFISH_PASSWORD" required:"true"`
 
-	ScrapeTimeoutSeconds int `envconfig:"SCRAPE_TIMEOUT" default:"30"`
+	ScrapeTimeoutSeconds int `default:"30" envconfig:"SCRAPE_TIMEOUT"`
 }
 
 func ReadConfig() (*Config, error) {
@@ -30,5 +29,6 @@ func ReadConfig() (*Config, error) {
 	if err := envconfig.Process("", &c); err != nil {
 		return nil, fmt.Errorf("failed to read config: %w", err)
 	}
+
 	return &c, nil
 }

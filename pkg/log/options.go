@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Greenhouse contributors
 // SPDX-License-Identifier: Apache-2.0
-
+//
+//nolint:depguard // log pkg dependencies allowed in the log package
 package log
 
 import (
@@ -93,7 +94,7 @@ func SetStacktrace(enabled bool) Option {
 	}
 }
 
-// WithCallerOffset sets the callstack offset for the caller field in log output
+// WithCallerOffset sets the callstack offset for the caller field in log output.
 func WithCallerOffset(i int) Option {
 	return func(o *loggerOptions) {
 		o.callerOffset = i

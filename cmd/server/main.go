@@ -7,14 +7,14 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"time"
 
 	"github.com/SAP/rootstock/internal/config"
 	"github.com/SAP/rootstock/pkg/log"
 	v "github.com/SAP/rootstock/pkg/version"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 const (
@@ -22,6 +22,11 @@ const (
 	healthEndpoint  = "/healthz"
 	readyEndpoint   = "/ready"
 	probeEndpoint   = "/probe"
+
+	readHeaderTimeout = 10 * time.Second
+	readTimeout       = 30 * time.Second
+	writeTimeout      = 30 * time.Second
+	idleTimeout       = 120 * time.Second
 )
 
 // Version information set by link flags during build. We fall back to these sane
@@ -35,7 +40,6 @@ var (
 )
 
 func main() {
-
 	cfg, err := config.ReadConfig()
 	if err != nil {
 		log.Error("failed to load config", log.KeyError, err)
@@ -49,7 +53,7 @@ func main() {
 	}
 
 	if err := v.Init(version, buildDate, gitCommit, gitTag, gitTreeState); err != nil {
-		log.Error("failed to initialise binary version", "error", err)
+		log.Error("failed to initialize binary version", "error", err)
 	}
 
 	log.Info(
@@ -63,11 +67,11 @@ func main() {
 
 	r.Handle(metricsEndpoint, promhttp.Handler())
 
-	r.Get(readyEndpoint, func(w http.ResponseWriter, req *http.Request) {
+	r.Get(readyEndpoint, func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	r.Get(probeEndpoint, func(w http.ResponseWriter, req *http.Request) {
+	r.Get(probeEndpoint, func(w http.ResponseWriter, _ *http.Request) {
 		// PDU scraping can be implemented here
 		w.WriteHeader(http.StatusNotImplemented)
 	})
@@ -75,7 +79,16 @@ func main() {
 	addr := fmt.Sprintf(":%d", cfg.ServicePort)
 	log.Info("server listening", "addr", addr)
 
-	if err := http.ListenAndServe(addr, r); err != nil {
+	srv := &http.Server{
+		Addr:              addr,
+		Handler:           r,
+		ReadHeaderTimeout: readHeaderTimeout,
+		ReadTimeout:       readTimeout,
+		WriteTimeout:      writeTimeout,
+		IdleTimeout:       idleTimeout,
+	}
+
+	if err := srv.ListenAndServe(); err != nil {
 		log.Error("server failed", log.KeyError, err)
 		os.Exit(1)
 	}
