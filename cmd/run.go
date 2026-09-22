@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/SAP/rootstock/internal/communication/rest"
@@ -65,6 +66,8 @@ func run() *cobra.Command {
 				"scrapeTimeout", sTimeout.String(),
 			)
 
+			shutdown.AddStopFunction(func() { server.Stop(shutdown.GetContext()) })
+
 			dynamicRunServer(logger)
 
 			ctx := shutdown.GetContext()
@@ -92,16 +95,9 @@ func run() *cobra.Command {
 }
 
 var (
-	// for test monkey patching.
-	runServer   = rest.ListenAndServe
-	childLogger = func(l log.FullInterface, name string) log.MinInterface { return l.New(log.WithName(name)) }
+	serverLock sync.Mutex
+	server     rest.Server
 )
-
-func dynamicRunServer(l log.FullInterface) {
-	rest.StopServer()
-	l.Info("starting HTTP server", "port", port.Value(), "pw", redfishPassword)
-	runServer(port.Value(), childLogger(l, "run"))
-}
 
 func initRedfishCredentials() {
 	file := filepath.Join(configFolder.Value(), redfishCredFile.Value())
@@ -121,4 +117,15 @@ func initRedfishCredentials() {
 		},
 	)
 	fatalOnError(err, fmt.Sprintf("failed to register file watch on %q", file))
+}
+
+func dynamicRunServer(l log.FullInterface) {
+	serverLock.Lock()
+	defer serverLock.Unlock()
+	if server != nil {
+		server.Stop(shutdown.GetContext())
+	}
+	server = rest.New(port.Value(), l.New(log.WithName("run")))
+	l.Info("starting HTTP server", "port", port.Value(), "pw", redfishPassword)
+	server.ListenAndServe()
 }

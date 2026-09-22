@@ -4,6 +4,7 @@
 package rest
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -25,14 +26,12 @@ const (
 	serverTimeout = 5 * time.Second
 )
 
-var server *http.Server
+type Server interface {
+	ListenAndServe()
+	Stop(context.Context)
+}
 
-func ListenAndServe(port int, logger log.MinInterface) {
-	if server != nil {
-		logger.Error("function called with http server still active - ignoring", "port", port)
-		return
-	}
-
+func New(port int, logger log.MinInterface) Server {
 	r := chi.NewRouter()
 	r.Use(middleware.Heartbeat(healthEndpoint))
 
@@ -47,37 +46,106 @@ func ListenAndServe(port int, logger log.MinInterface) {
 		w.WriteHeader(http.StatusNotImplemented)
 	})
 
-	addr := fmt.Sprintf(":%d", port)
-	logger.Info("server listening", "addr", addr)
-
-	server = &http.Server{
-		Addr:              addr,
-		Handler:           r,
-		ReadHeaderTimeout: serverTimeout,
-		WriteTimeout:      serverTimeout,
-		IdleTimeout:       serverTimeout,
+	return &server{
+		&http.Server{
+			Addr:              fmt.Sprintf(":%d", port),
+			Handler:           r,
+			ReadHeaderTimeout: serverTimeout,
+			WriteTimeout:      serverTimeout,
+			IdleTimeout:       serverTimeout,
+		},
+		logger,
 	}
+}
+
+type server struct {
+	server *http.Server
+	log    log.MinInterface
+}
+
+func (s *server) ListenAndServe() {
+	s.log.Info("server listening", "addr", s.server.Addr)
 	go func() {
-		err := server.ListenAndServe()
+		err := s.server.ListenAndServe()
 		if err == nil {
 			return
 		}
 
 		if errors.Is(err, http.ErrServerClosed) {
-			logger.Info("server closed")
+			s.log.Info("server closed")
 			return
 		}
 
-		logger.Error("server failed", log.KeyError, err)
+		s.log.Error("server failed", log.KeyError, err)
 		shutdown.StopNow()
 	}()
 }
-
-func StopServer() {
-	if server == nil {
+func (s *server) Stop(ctx context.Context) {
+	if s.server == nil {
 		return
 	}
 
-	server.Close()
-	server = nil
+	if err := s.server.Shutdown(ctx); err != nil {
+		s.log.Error("failed to shutdown server", log.KeyError, err)
+		shutdown.StopNow()
+	}
+	s.server = nil
+
+	//TODO: wait until the server shutdown is complete. Only then return
+	time.Sleep(200 * time.Millisecond)
 }
+
+// func ListenAndServe(port int, logger log.MinInterface) {
+// 	if server != nil {
+// 		logger.Error("function called with http server still active - ignoring", "port", port)
+// 		return
+// 	}
+
+// 	r := chi.NewRouter()
+// 	r.Use(middleware.Heartbeat(healthEndpoint))
+
+// 	r.Handle(metricsEndpoint, promhttp.Handler())
+
+// 	r.Get(readyEndpoint, func(w http.ResponseWriter, _ *http.Request) {
+// 		w.WriteHeader(http.StatusOK)
+// 	})
+
+// 	r.Get(probeEndpoint, func(w http.ResponseWriter, _ *http.Request) {
+// 		// PDU scraping can be implemented here
+// 		w.WriteHeader(http.StatusNotImplemented)
+// 	})
+
+// 	addr := fmt.Sprintf(":%d", port)
+// 	logger.Info("server listening", "addr", addr)
+
+// 	server = &http.Server{
+// 		Addr:              addr,
+// 		Handler:           r,
+// 		ReadHeaderTimeout: serverTimeout,
+// 		WriteTimeout:      serverTimeout,
+// 		IdleTimeout:       serverTimeout,
+// 	}
+// 	go func() {
+// 		err := server.ListenAndServe()
+// 		if err == nil {
+// 			return
+// 		}
+
+// 		if errors.Is(err, http.ErrServerClosed) {
+// 			logger.Info("server closed")
+// 			return
+// 		}
+
+// 		logger.Error("server failed", log.KeyError, err)
+// 		shutdown.StopNow()
+// 	}()
+// }
+
+// func StopServer() {
+// 	if server == nil {
+// 		return
+// 	}
+
+// 	err := server.Close()
+// 	server = nil
+// }
