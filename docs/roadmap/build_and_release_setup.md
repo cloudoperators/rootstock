@@ -69,8 +69,8 @@ The following linters and configuration files are used:
 
 Additional conventions are:
 
-- file names: concatenated filenames use dashes, e.g.
-  `my-concatenated-file-name.*`
+- file names: concatenated filenames use underscores, e.g.
+  `my_concatenated_file_name.*`
 - we follow the markdown style from
   [markdownlint](https://github.com/DavidAnson/markdownlint)
 - markdown headlines start with a capital letter

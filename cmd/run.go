@@ -14,6 +14,7 @@ import (
 	"github.com/SAP/rootstock/internal/communication/rest"
 	"github.com/SAP/rootstock/internal/shutdown"
 	"github.com/SAP/rootstock/pkg/log"
+	v "github.com/SAP/rootstock/pkg/version"
 	"github.com/spf13/cobra"
 )
 
@@ -35,7 +36,7 @@ var (
 	redfishUsername = NewParameter(
 		"redfish.username", "REDFISH_USERNAME", "redfish-username",
 		"username for the redfish authorization",
-		"",
+		"redfish",
 	)
 	redfishCredFile = NewParameter(
 		"redfish.credentialsFile", "REDFISH_CREDENTIALS_FILE", "redfish-credentials-file",
@@ -50,7 +51,7 @@ func run() *cobra.Command {
 		Short: fmt.Sprintf(`run the %s server`, cliName),
 		// Args:  cobra.ExactArgs(1),
 		Run: func(_ *cobra.Command, _ []string) {
-			logger.Info("starting " + cliName + " api")
+			logger.Info("rootstock binary", "version", v.ReadAll())
 
 			sTimeout, err := time.ParseDuration(scrapeTimeout.Value())
 			if err != nil {
@@ -68,7 +69,7 @@ func run() *cobra.Command {
 
 			shutdown.AddStopFunction(func() { server.Stop(shutdown.GetContext()) })
 
-			dynamicRunServer(logger)
+			registerCredentialsWatchAndRunServer()
 
 			ctx := shutdown.GetContext()
 			<-ctx.Done()
@@ -99,7 +100,7 @@ var (
 	server     rest.Server
 )
 
-func initRedfishCredentials() {
+func registerCredentialsWatchAndRunServer() {
 	file := filepath.Join(configFolder.Value(), redfishCredFile.Value())
 	err := InitFileConfig(
 		file,

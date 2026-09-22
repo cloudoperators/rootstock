@@ -22,7 +22,7 @@ const (
 var logger log.FullInterface
 
 func New() *cobra.Command {
-	cobra.OnInitialize(initCLI, initRedfishCredentials)
+	cobra.OnInitialize(initCLI)
 
 	rootCmd := root(cliName)
 	rootCmd.AddCommand(version())
@@ -79,10 +79,8 @@ func initCLI() {
 	onConfigChange = append(onConfigChange, setLogger)
 	setLogger()
 
-	logger.Info("rootstock binary", "version", v.ReadAll())
-
 	if configErr != nil {
-		logger.Error("failed to read cobra config file", log.KeyError, configErr)
+		logger.Warn("failed to read cobra config file", log.KeyError, configErr)
 	}
 
 	if tmpFolder.Value() == "" {
@@ -143,7 +141,8 @@ func version() *cobra.Command {
 		Short: "Returns the cli version",
 		Long:  `The version command returns service version and additional platform information`,
 		Run: func(cmd *cobra.Command, _ []string) {
-			fmt.Fprintf(cmd.OutOrStdout(), "%s\n", "TODO")
+			viper.Set(logLevel.Key(), log.ErrorLvl.String())
+			fmt.Fprintf(cmd.OutOrStdout(), "%s\n", v.ReadAll())
 			shutdown.StopNowWith(0)
 		},
 	}
