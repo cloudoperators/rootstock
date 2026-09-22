@@ -5,6 +5,7 @@ package log
 
 import (
 	"log/slog"
+	"strings"
 
 	"go.uber.org/zap/exp/zapslog"
 	"go.uber.org/zap/zapcore"
@@ -17,7 +18,6 @@ const (
 	InfoLvl  Level = Level(zapcore.InfoLevel)
 	WarnLvl  Level = Level(zapcore.WarnLevel)
 	ErrorLvl Level = Level(zapcore.ErrorLevel)
-	FatalLvl Level = Level(zapcore.FatalLevel)
 
 	JSONFormat Format = "json"
 	TextFormat Format = "text"
@@ -28,20 +28,44 @@ type (
 	Format string
 )
 
+func AllLevels() []string {
+	return []string{
+		DebugLvl.String(),
+		InfoLvl.String(),
+		WarnLvl.String(),
+		ErrorLvl.String(),
+	}
+}
+
 func (l Level) String() string {
 	switch l {
 	case DebugLvl:
-		return zapcore.DebugLevel.CapitalString()
+		return zapcore.DebugLevel.String()
 	case InfoLvl:
-		return zapcore.InfoLevel.CapitalString()
+		return zapcore.InfoLevel.String()
 	case WarnLvl:
-		return zapcore.WarnLevel.CapitalString()
+		return zapcore.WarnLevel.String()
 	case ErrorLvl:
-		return zapcore.ErrorLevel.CapitalString()
-	case FatalLvl:
-		return zapcore.FatalLevel.CapitalString()
+		return zapcore.ErrorLevel.String()
 	default:
 		return "unknown"
+	}
+}
+
+func ToLevel(rawLvl string) Level {
+	l := strings.ToLower(rawLvl)
+	switch l {
+	case DebugLvl.String(), "-1":
+		return DebugLvl
+	case InfoLvl.String(), "0":
+		return InfoLvl
+	case WarnLvl.String(), "1":
+		return WarnLvl
+	case ErrorLvl.String(), "2":
+		return ErrorLvl
+	default:
+		Warnf("log level %q not available - defaulting to level %q", l, InfoLvl.String())
+		return InfoLvl
 	}
 }
 
@@ -85,7 +109,7 @@ func newLogger(o *loggerOptions) *Logger {
 				),
 			},
 			o.addCaller,
-			0,
+			o.callerOffset,
 		},
 	)
 	return &Logger{sLogger, zapLogger, *o}
@@ -97,6 +121,7 @@ type loggerOptions struct {
 	timeFormat    string
 	jsonFormat    bool
 	addCaller     bool
+	callerOffset  int
 	addStacktrace bool
 	infoTarget    zapcore.WriteSyncer
 	errTarget     zapcore.WriteSyncer
@@ -110,6 +135,7 @@ func (o *loggerOptions) DeepCopy() *loggerOptions {
 	r.timeFormat = o.timeFormat
 	r.jsonFormat = o.jsonFormat
 	r.addCaller = o.addCaller
+	r.callerOffset = o.callerOffset
 	r.addStacktrace = o.addStacktrace
 	r.infoTarget = o.infoTarget
 	r.errTarget = o.errTarget

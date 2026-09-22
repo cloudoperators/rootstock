@@ -39,9 +39,9 @@ func With(
 }
 
 // WithLevel sets the log level.
-func WithLevel(l Level) Option {
+func WithLevel(l string) Option {
 	return func(o *loggerOptions) {
-		o.level = zapcore.Level(l)
+		o.level = zapcore.Level(ToLevel(l))
 	}
 }
 
@@ -66,9 +66,9 @@ func WithTextFormat() Option {
 	}
 }
 
-func WithFormat(format Format) Option {
+func WithFormat(format string) Option {
 	return func(o *loggerOptions) {
-		switch format {
+		switch Format(format) {
 		case TextFormat:
 			o.jsonFormat = false
 		case JSONFormat:
@@ -90,6 +90,13 @@ func WithoutCaller() Option {
 func SetStacktrace(enabled bool) Option {
 	return func(o *loggerOptions) {
 		o.addStacktrace = enabled
+	}
+}
+
+// WithCallerOffset sets the callstack offset for the caller field in log output
+func WithCallerOffset(i int) Option {
+	return func(o *loggerOptions) {
+		o.callerOffset = i
 	}
 }
 
