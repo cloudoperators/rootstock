@@ -128,7 +128,7 @@ type SensorReading struct {
 
 func NewClient(baseURL *url.URL, logger log.MinInterface, username, password string, timeout time.Duration) Client {
 	if logger == nil {
-		logger = log.Default
+		logger = log.Default()
 	}
 
 	return &ClientImpl{

@@ -69,11 +69,11 @@ func probeHandler(cfg *config.Config) http.HandlerFunc {
 		}
 
 		// Use default logger for this request
-		redfishClient := redfish.NewClient(targetURL, log.Default, cfg.RedfishPassword, cfg.RedfishUsername, time.Duration(cfg.ScrapeTimeoutSeconds)*time.Second)
+		redfishClient := redfish.NewClient(targetURL, log.Default(), cfg.RedfishPassword, cfg.RedfishUsername, time.Duration(cfg.ScrapeTimeoutSeconds)*time.Second)
 
 		log.Info("Using PDU ID from labels parameter", "pduID", pduID)
 		// Create a temporary collector for this target
-		collector := prom.NewCollector(redfishClient, pduID, log.Default)
+		collector := prom.NewCollector(redfishClient, pduID)
 
 		// Create a temporary registry for this specific scrape
 		registry := prometheus.NewRegistry()
