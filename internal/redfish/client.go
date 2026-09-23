@@ -9,10 +9,11 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"net/url"
 	"time"
+
+	"github.com/SAP/rootstock/pkg/log"
 )
 
 // talk to the PDU over HTTP.
@@ -21,7 +22,16 @@ import (
 // Fetch a URL from the PDU and return the JSON
 // Log out and close the connection cleanly
 
-type Client struct {
+type Client interface {
+	Login(context.Context) error
+	Close(context.Context) error
+	GetPowerEquipment(context.Context) (*PowerEquipment, error)
+	GetRackPDUs(context.Context) (*RackPDUsCollection, error)
+	GetPERackPDU(context.Context, string) (*RackPDU, error)
+	GetPERackPDUMetrics(context.Context, string) (*PDUMetrics, error)
+}
+
+type ClientImpl struct {
 	baseURL    *url.URL     // Base URL of the PDU Redfish API (e.g., https://pdu01.example.com)
 	httpClient *http.Client // HTTP client with timeout and TLS configuration
 
@@ -31,7 +41,7 @@ type Client struct {
 	authToken  string // Session authentication token (X-Auth-Token)
 	sessionURL string // Session URL for logout
 
-	logger  *slog.Logger // Structured logger for debugging and audit
+	logger  log.MinInterface // Structured logger for debugging and audit
 	timeout time.Duration
 }
 
@@ -63,7 +73,7 @@ type Link struct {
 type RackPDU struct {
 	ODataID         string `json:"@odata.id"`
 	ODataType       string `json:"@odata.type"`
-	ID              int    `json:"Id"`
+	ID              string `json:"Id"`
 	Name            string `json:"Name"`
 	EquipmentType   string `json:"EquipmentType"`
 	FirmwareVersion string `json:"FirmwareVersion"`
@@ -80,8 +90,9 @@ type RackPDU struct {
 	Mains        Link   `json:"Mains"`
 	Branches     Link   `json:"Branches"`
 	// PowerSupplies   Link   `json:"PowerSupplies"`
-	RatedPowerWatts int    `json:"RatedPowerWatts"`
-	UUID            string `json:"UUID"`
+	RatedPowerWatts int     `json:"RatedPowerWatts"`
+	UUID            string  `json:"UUID"`
+	PowerCapacityVA float64 `json:"PowerCapacityVA"`
 	Location        struct {
 		Placement struct {
 			Row string `json:"Row"`
@@ -115,12 +126,12 @@ type SensorReading struct {
 	PowerFactor   float64 `json:"PowerFactor"`
 }
 
-func NewClient(baseURL *url.URL, logger *slog.Logger, username, password string, timeout time.Duration) *Client {
+func NewClient(baseURL *url.URL, logger log.MinInterface, username, password string, timeout time.Duration) Client {
 	if logger == nil {
-		logger = slog.Default()
+		logger = log.Default
 	}
 
-	return &Client{
+	return &ClientImpl{
 		httpClient: &http.Client{
 			Timeout: timeout,
 			Transport: &http.Transport{
@@ -136,7 +147,7 @@ func NewClient(baseURL *url.URL, logger *slog.Logger, username, password string,
 }
 
 // Login creates redfish session
-func (c *Client) Login(ctx context.Context) error {
+func (c *ClientImpl) Login(ctx context.Context) error {
 	payload := map[string]string{
 		"UserName": c.username,
 		"Password": c.password,
@@ -185,7 +196,7 @@ func (c *Client) Login(ctx context.Context) error {
 }
 
 // Close terminates redfish session
-func (c *Client) Close(ctx context.Context) error {
+func (c *ClientImpl) Close(ctx context.Context) error {
 	if c.sessionURL == "" || c.authToken == "" {
 		return nil // No session to clean up
 	}
@@ -214,7 +225,7 @@ func (c *Client) Close(ctx context.Context) error {
 	return nil
 }
 
-func (c *Client) get(ctx context.Context, path string, result any) error {
+func (c *ClientImpl) get(ctx context.Context, path string, result any) error {
 	fullURL := c.baseURL.ResolveReference(&url.URL{Path: path})
 	req, err := http.NewRequestWithContext(
 		ctx,
@@ -247,7 +258,7 @@ func (c *Client) get(ctx context.Context, path string, result any) error {
 }
 
 // GetPowerEquipment retrieves the Power Equipment collection
-func (c *Client) GetPowerEquipment(ctx context.Context) (*PowerEquipment, error) {
+func (c *ClientImpl) GetPowerEquipment(ctx context.Context) (*PowerEquipment, error) {
 	var result PowerEquipment
 	if err := c.get(ctx, "/redfish/v1/PowerEquipment", &result); err != nil {
 		return nil, err
@@ -256,7 +267,7 @@ func (c *Client) GetPowerEquipment(ctx context.Context) (*PowerEquipment, error)
 }
 
 // GetRackPDUs retrieves the Rack PDUs collection
-func (c *Client) GetRackPDUs(ctx context.Context) (*RackPDUsCollection, error) {
+func (c *ClientImpl) GetRackPDUs(ctx context.Context) (*RackPDUsCollection, error) {
 	var result RackPDUsCollection
 	if err := c.get(ctx, "/redfish/v1/PowerEquipment/RackPDUs", &result); err != nil {
 		return nil, err
@@ -265,7 +276,7 @@ func (c *Client) GetRackPDUs(ctx context.Context) (*RackPDUsCollection, error) {
 }
 
 // GetPDU retrieves details for a specific PDU
-func (c *Client) GetPDU(ctx context.Context, pduID string) (*RackPDU, error) {
+func (c *ClientImpl) GetPERackPDU(ctx context.Context, pduID string) (*RackPDU, error) {
 	var result RackPDU
 	endpoint := fmt.Sprintf("/redfish/v1/PowerEquipment/RackPDUs/%s", pduID)
 	if err := c.get(ctx, endpoint, &result); err != nil {
@@ -275,7 +286,7 @@ func (c *Client) GetPDU(ctx context.Context, pduID string) (*RackPDU, error) {
 }
 
 // GetPDUMetrics retrieves metrics for a specific PDU
-func (c *Client) GetPDUMetrics(ctx context.Context, pduID string) (*PDUMetrics, error) {
+func (c *ClientImpl) GetPERackPDUMetrics(ctx context.Context, pduID string) (*PDUMetrics, error) {
 	var result PDUMetrics
 	endpoint := fmt.Sprintf("/redfish/v1/PowerEquipment/RackPDUs/%s/Metrics", pduID)
 	if err := c.get(ctx, endpoint, &result); err != nil {
