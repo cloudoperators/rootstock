@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Greenhouse contributors
 // SPDX-License-Identifier: Apache-2.0
-
+//
+//nolint:depguard // log pkg dependencies allowed in the log package
 package log
 
 import (
@@ -40,7 +41,9 @@ func SetDefault(l *Logger) {
 	atomicDefault.Store(l)
 }
 
-// This package uses 1 init function to ensure the Default logger is present
+// This package uses 1 init function to ensure the Default logger is present.
+//
+//nolint:gochecknoinits // enforcing a default logger per init simplifies the package significantly
 func init() {
 	atomicDefault.Store(newLogger(&defaultOptions))
 }
