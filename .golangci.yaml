@@ -23,6 +23,7 @@ linters:
     - nlreturn
     - err113
     - exhaustruct
+    - exhaustruct_v5
     - tagliatelle
     - funcorder
     - inamedparam
