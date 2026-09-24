@@ -153,7 +153,7 @@ func TestGetPDU(t *testing.T) {
 
 // TestGetPDUMetrics verifies that GetPDUMetrics returns power readings with
 // non-negative values for PowerWatts and EnergykWh.
-func TestGetPDUMetrics(t *testing.T) {
+func TestGetPERackPDUMetrics(t *testing.T) {
 	t.Logf("  %-22s: GET /redfish/v1/PowerEquipment/RackPDUs/1/Metrics", "endpoint")
 	client := newTestClient(t)
 	ctx := context.Background()
@@ -163,7 +163,7 @@ func TestGetPDUMetrics(t *testing.T) {
 	}
 	defer client.Close(ctx)
 
-	result, err := client.GetPDUMetrics(ctx, "1")
+	result, err := client.GetPERackPDUMetrics(ctx, "1")
 	if err != nil {
 		t.Fatalf("GetPDUMetrics failed: %v", err)
 	}
@@ -191,7 +191,7 @@ func TestGetPDUNotFound(t *testing.T) {
 	}
 	defer client.Close(ctx)
 
-	_, err := client.GetPDU(ctx, "nonexistent")
+	_, err := client.GetRackPDUs(ctx, "nonexistent")
 	if err == nil {
 		t.Fatal("expected error for non-existent PDU, got nil")
 	}

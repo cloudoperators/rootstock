@@ -40,13 +40,37 @@ Future scope enhancements may be:
   metrics via open-telemetry [OTEL] collectors
 - additional OTEL collectors for metrics emmission
 
-## 2. Technical Requirements
+## 2. Requirements
 
-To be generally useful, rootstock has to fulfil a set of technical requirements
-on top of the business logic requirements.
+To be generally useful, rootstock has to fulfil a set of business and technical
+requirements. These are listed in this section.
 
-### 2.1 Scalability
+### 2.1 Functional Requirements
 
-### 2.2 Security
+Core functionality that must be implemented:
 
-### 2.3 Observability
+- **PDU Discovery and Configuration**: Support for static configuration of PDU
+  targets. If possible, extend to dynamic PDU target discovery
+- **Asynchronous scraping**: Periodically scrape current metrics from all
+  available PDUs with
+  [redfish protocol](https://redfish.dmtf.org/redfish/schema_index).
+- **Ingestion endpoint**" Offer an ingestion endpoint for non-redfish PDU
+  metrics.
+- **Metric Processing**: Process incoming raw metrics to a standardised
+  rootstock schema and enhance the output data where possible.
+- **Metric Exposition**: Expose the result metrics via Prometheus and further
+  OTEL collectors
+
+### 2.2 Scalability
+
+Since rootstock will be installed into every datacenter, it has to be able to
+process all devices within 1 datacenter. Notice, that the longterm plan for
+rootstock includes further types of devices like servers, routers, and other.
+Hence, rootstock must be able to continuously scrape metrics for hundreds of
+devices of various types.
+
+We assume that
+
+### 2.3 Security
+
+### 2.4 Observability

@@ -36,7 +36,7 @@ type PERackPDU struct {
 }
 
 func NewCollector(redfishClient redfish.Client, pduID string) *Collector {
-	logger := log.Default
+	logger := log.Default()
 
 	return &Collector{
 		redfishClient: redfishClient,
