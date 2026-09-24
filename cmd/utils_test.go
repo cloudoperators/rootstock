@@ -25,8 +25,6 @@ func TestMain(m *testing.M) {
 }
 
 func TestParameterKey(t *testing.T) {
-	t.Parallel()
-
 	origRootKey := cfgRootKey
 
 	t.Cleanup(func() { cfgRootKey = origRootKey })
@@ -68,8 +66,6 @@ func TestParameterKey(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
 			cfgRootKey = tt.cfgRootKey
 
 			p := NewParameter(tt.relativeKey, "ENVVAR", "cli-flag", "usage", "default")
@@ -82,6 +78,7 @@ func TestParameterKey(t *testing.T) {
 	}
 }
 
+//nolint:tparallel // relies on package global variable and hence subtest cannot be parallelised
 func TestParameterRegister(t *testing.T) {
 	t.Parallel()
 
@@ -89,8 +86,6 @@ func TestParameterRegister(t *testing.T) {
 
 	t.Cleanup(func() {
 		cfgRootKey = origRootKey
-
-		viper.Reset()
 	})
 
 	cfgRootKey = ""
@@ -167,7 +162,6 @@ func TestParameterRegister(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
 			viper.Reset()
 
 			fs := pflag.NewFlagSet("test", pflag.ContinueOnError)
@@ -342,6 +336,7 @@ func prepareInputs(t *testing.T, fs *pflag.FlagSet,
 	}
 }
 
+//nolint:tparallel // relies on package global variable and hence subtest cannot be parallelised
 func TestCreateDirIfNotExist(t *testing.T) {
 	t.Parallel()
 
@@ -403,8 +398,6 @@ func TestCreateDirIfNotExist(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
 			mkdirCalled := false
 			isDir = tt.isDirResult
 			mkdir = func(_ string, _ os.FileMode) error {

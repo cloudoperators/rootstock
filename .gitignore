@@ -7,3 +7,4 @@ bin/
 .vscode/
 
 go-report.xml
+coverage.out
