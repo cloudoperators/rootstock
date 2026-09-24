@@ -31,9 +31,9 @@ MOCKUP_CONTAINER := redfish-mockup
 green := \033[1;32m[+]
 reset := \033[0m
 
-.PHONY: build test test-integration test-contract test-performance \
+.PHONY: build test test-unit test-integration test-contract test-performance \
         mockup-start mockup-stop \
-        lint conventions scan \
+        lint lint-go conventions scan \
         generate docker-build \
         help
 
