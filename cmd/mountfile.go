@@ -4,8 +4,10 @@
 package cmd
 
 import (
+	"bytes"
 	"fmt"
 	"os"
+	"sync"
 
 	"github.com/cloudoperators/rootstock/pkg/log"
 	"github.com/fsnotify/fsnotify"
@@ -38,11 +40,37 @@ func InitFileConfig(
 	viperCfg := viper.New()
 	viperCfg.SetConfigFile(filePath)
 
-	viperCfg.OnConfigChange(
-		onFileChange(func() error { return updateClient(filePath, updateFunc) }))
+	var (
+		mu          sync.Mutex
+		lastContent []byte
+	)
+
+	update := func() error {
+		content, err := os.ReadFile(filePath)
+		if err != nil {
+			return fmt.Errorf("failed to read config file %q - %w", filePath, err)
+		}
+
+		mu.Lock()
+		defer mu.Unlock()
+
+		if bytes.Equal(content, lastContent) {
+			return nil
+		}
+
+		if err := updateFunc(content); err != nil {
+			return fmt.Errorf("failed to update clients on config file change - %w", err)
+		}
+
+		lastContent = content
+
+		return nil
+	}
+
+	viperCfg.OnConfigChange(onFileChange(update))
 	viperCfg.WatchConfig()
 
-	return updateClient(filePath, updateFunc)
+	return update()
 }
 
 func onFileChange(onChange func() error) func(in fsnotify.Event) {
@@ -63,17 +91,4 @@ func onFileChange(onChange func() error) func(in fsnotify.Event) {
 			logger.Warn("case not handled by viper", "event", e.Op, logKeyFile, e.Name, logKeyID, changeID)
 		}
 	}
-}
-
-func updateClient(filePath string, updateFunc func([]byte) error) error {
-	content, err := os.ReadFile(filePath)
-	if err != nil {
-		return fmt.Errorf("failed to read config file %q - %w", filePath, err)
-	}
-
-	if err := updateFunc(content); err != nil {
-		return fmt.Errorf("failed to update clients on config file change - %w", err)
-	}
-
-	return nil
 }
