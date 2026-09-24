@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Greenhouse contributors
 // SPDX-License-Identifier: Apache-2.0
-
+//
+//nolint:depguard // log pkg dependencies allowed in the log package
 package log
 
 import (
@@ -65,7 +66,6 @@ func (m *mockLogger) SortByType() {
 }
 
 func (m *mockLogger) ReadByType(lvl Level) []string {
-	//nolint:exhaustive // not listed cases are not used by us
 	switch lvl {
 	case DebugLvl:
 		return m.debugMsg

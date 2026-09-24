@@ -7,10 +7,9 @@ import (
 	"context"
 	"sync"
 
+	"github.com/cloudoperators/rootstock/internal/redfish"
+	"github.com/cloudoperators/rootstock/pkg/log"
 	"github.com/prometheus/client_golang/prometheus"
-
-	"github.com/SAP/rootstock/internal/redfish"
-	"github.com/SAP/rootstock/pkg/log"
 )
 
 type Collector struct {
@@ -24,7 +23,7 @@ type Collector struct {
 }
 
 type PERackPDUMetrics struct {
-	DataSourceUri *prometheus.Desc
+	DataSourceURI *prometheus.Desc
 	Reading       *prometheus.Desc
 	ApparentVA    *prometheus.Desc
 	ReactiveVAR   *prometheus.Desc
@@ -71,7 +70,7 @@ func NewCollector(redfishClient redfish.Client, pduID string) *Collector {
 		peRackPDU: &PERackPDU{
 			PowerCapacityVA: prometheus.NewDesc(
 				"power_capacity_va",
-				"the maximum power rated as aparent power",
+				"the maximum power rated as apparent power",
 				[]string{"pdu_id"},
 				nil,
 			),
@@ -82,9 +81,13 @@ func NewCollector(redfishClient redfish.Client, pduID string) *Collector {
 // Describe implements prometheus.Collector.
 func (c *Collector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- c.peRackPDUMetrics.Reading
+
 	ch <- c.peRackPDUMetrics.ApparentVA
+
 	ch <- c.peRackPDUMetrics.ReactiveVAR
+
 	ch <- c.peRackPDUMetrics.PowerFactor
+
 	ch <- c.peRackPDU.PowerCapacityVA
 }
 
@@ -171,18 +174,19 @@ func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 		return
 	}
 
-	if peRackPDU.PowerCapacityVA != 0 {
-		metric, err := prometheus.NewConstMetric(
-			c.peRackPDU.PowerCapacityVA,
-			prometheus.GaugeValue,
-			peRackPDU.PowerCapacityVA,
-			c.pduID,
-		)
-		if err != nil {
-			c.logger.Error("failed to create PowerCapacityVA metric", log.KeyError, err, "pdu_id", c.pduID)
-		} else {
-			ch <- metric
-		}
+	if peRackPDU.PowerCapacityVA == 0 {
+		return
+	}
 
+	metric, err := prometheus.NewConstMetric(
+		c.peRackPDU.PowerCapacityVA,
+		prometheus.GaugeValue,
+		peRackPDU.PowerCapacityVA,
+		c.pduID,
+	)
+	if err != nil {
+		c.logger.Error("failed to create PowerCapacityVA metric", log.KeyError, err, "pdu_id", c.pduID)
+	} else {
+		ch <- metric
 	}
 }
