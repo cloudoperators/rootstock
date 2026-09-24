@@ -39,6 +39,8 @@ linters:
     - gocheckcompilerdirectives
     - gomodguard
     - godot
+    - tagalign
+    - mnd
   settings:
     cyclop:
       # Relaxed to accommodate the metric-emitting Collect loop.
@@ -299,7 +301,7 @@ linters:
         # https://github.com/mgechev/revive/blob/HEAD/RULES_DESCRIPTIONS.md#early-return
         - name: early-return
           severity: warning
-          disabled: false
+          disabled: true
           exclude: [""]
           arguments:
             - "preserve-scope"
