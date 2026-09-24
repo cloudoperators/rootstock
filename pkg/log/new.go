@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Greenhouse contributors
 // SPDX-License-Identifier: Apache-2.0
-
+//
+//nolint:depguard // log pkg dependencies allowed in the log package
 package log
 
 import (
@@ -93,6 +94,7 @@ func New(options ...Option) FullInterface {
 			slog.Bool("stacktrace", o.addStacktrace),
 		),
 	)
+
 	return l
 }
 
@@ -112,6 +114,7 @@ func newLogger(o *loggerOptions) *Logger {
 			o.callerOffset,
 		},
 	)
+
 	return &Logger{sLogger, zapLogger, *o}
 }
 

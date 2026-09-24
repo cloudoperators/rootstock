@@ -1,4 +1,4 @@
-module github.com/SAP/rootstock
+module github.com/cloudoperators/rootstock
 
 go 1.26
 

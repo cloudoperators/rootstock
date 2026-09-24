@@ -10,16 +10,15 @@ import (
 	"os"
 	"time"
 
+	prom "github.com/cloudoperators/rootstock/internal/collectors/prometheus"
+	"github.com/cloudoperators/rootstock/internal/config"
+	"github.com/cloudoperators/rootstock/internal/redfish"
+	"github.com/cloudoperators/rootstock/pkg/log"
+	v "github.com/cloudoperators/rootstock/pkg/version"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-
-	prom "github.com/SAP/rootstock/internal/collectors/prometheus"
-	"github.com/SAP/rootstock/internal/config"
-	"github.com/SAP/rootstock/internal/redfish"
-	"github.com/SAP/rootstock/pkg/log"
-	v "github.com/SAP/rootstock/pkg/version"
 )
 
 const (
@@ -27,6 +26,11 @@ const (
 	healthEndpoint  = "/healthz"
 	readyEndpoint   = "/ready"
 	probeEndpoint   = "/probe"
+
+	readHeaderTimeout = 10 * time.Second
+	readTimeout       = 30 * time.Second
+	writeTimeout      = 30 * time.Second
+	idleTimeout       = 120 * time.Second
 )
 
 // Version information set by link flags during build. We fall back to these sane
@@ -47,6 +51,7 @@ func probeHandler(cfg *config.Config) http.HandlerFunc {
 		if target == "" {
 			http.Error(w, "target parameter is required", http.StatusBadRequest)
 			log.Warn("probe request missing target parameter")
+
 			return
 		}
 
@@ -55,6 +60,7 @@ func probeHandler(cfg *config.Config) http.HandlerFunc {
 		if pduID == "" {
 			http.Error(w, "labels parameter is required", http.StatusBadRequest)
 			log.Warn("probe request missing labels parameter")
+
 			return
 		}
 
@@ -65,22 +71,25 @@ func probeHandler(cfg *config.Config) http.HandlerFunc {
 		if err != nil {
 			http.Error(w, fmt.Sprintf("invalid target URL: %v", err), http.StatusBadRequest)
 			log.Error("invalid target URL", "target", target, log.KeyError, err)
+
 			return
 		}
 
 		// Use default logger for this request
-		redfishClient := redfish.NewClient(targetURL, log.Default, cfg.RedfishPassword, cfg.RedfishUsername, time.Duration(cfg.ScrapeTimeoutSeconds)*time.Second)
+		redfishClient := redfish.NewClient(targetURL, log.Default(), cfg.RedfishPassword, cfg.RedfishUsername, time.Duration(cfg.ScrapeTimeoutSeconds)*time.Second)
 
 		log.Info("Using PDU ID from labels parameter", "pduID", pduID)
 		// Create a temporary collector for this target
-		collector := prom.NewCollector(redfishClient, pduID, log.Default)
+		collector := prom.NewCollector(redfishClient, pduID)
 
 		// Create a temporary registry for this specific scrape
 		registry := prometheus.NewRegistry()
+
 		err = registry.Register(collector)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("can not register prometheus collector: %v", err), http.StatusInternalServerError)
 			log.Error("can not register prometheus collector", log.KeyError, err)
+
 			return
 		}
 
@@ -94,7 +103,6 @@ func probeHandler(cfg *config.Config) http.HandlerFunc {
 }
 
 func main() {
-
 	cfg, err := config.ReadConfig()
 	if err != nil {
 		log.Error("failed to load config", log.KeyError, err)
@@ -108,7 +116,7 @@ func main() {
 	}
 
 	if err := v.Init(version, buildDate, gitCommit, gitTag, gitTreeState); err != nil {
-		log.Error("failed to initialise binary version", "error", err)
+		log.Error("failed to initialize binary version", "error", err)
 	}
 
 	log.Info(
@@ -122,7 +130,7 @@ func main() {
 
 	r.Handle(metricsEndpoint, promhttp.Handler())
 
-	r.Get(readyEndpoint, func(w http.ResponseWriter, req *http.Request) {
+	r.Get(readyEndpoint, func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
 
@@ -131,7 +139,16 @@ func main() {
 	addr := fmt.Sprintf(":%d", cfg.ServicePort)
 	log.Info("server listening", "addr", addr)
 
-	if err := http.ListenAndServe(addr, r); err != nil {
+	srv := &http.Server{
+		Addr:              addr,
+		Handler:           r,
+		ReadHeaderTimeout: readHeaderTimeout,
+		ReadTimeout:       readTimeout,
+		WriteTimeout:      writeTimeout,
+		IdleTimeout:       idleTimeout,
+	}
+
+	if err := srv.ListenAndServe(); err != nil {
 		log.Error("server failed", log.KeyError, err)
 		os.Exit(1)
 	}
