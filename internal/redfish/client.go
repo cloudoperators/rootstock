@@ -14,7 +14,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/SAP/rootstock/pkg/log"
+	"github.com/cloudoperators/rootstock/pkg/log"
 )
 
 // talk to the PDU over HTTP.

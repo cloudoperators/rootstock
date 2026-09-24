@@ -719,10 +719,7 @@ formatters:
     - goimports
   settings:
     gofumpt:
-      module-path: github.com/SAP/rootstock
-    goimports:
-      local-prefixes:
-        - github.com/SAP/rootstock
+      module-path: github.com/cloudoperators/rootstock
   exclusions:
     generated: lax
     paths:

@@ -9,9 +9,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/SAP/rootstock/internal/config"
-	"github.com/SAP/rootstock/pkg/log"
-	v "github.com/SAP/rootstock/pkg/version"
+	"github.com/cloudoperators/rootstock/internal/config"
+	"github.com/cloudoperators/rootstock/pkg/log"
+	v "github.com/cloudoperators/rootstock/pkg/version"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/prometheus/client_golang/prometheus/promhttp"

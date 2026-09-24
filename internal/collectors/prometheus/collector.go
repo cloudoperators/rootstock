@@ -7,8 +7,8 @@ import (
 	"context"
 	"sync"
 
-	"github.com/SAP/rootstock/internal/redfish"
-	"github.com/SAP/rootstock/pkg/log"
+	"github.com/cloudoperators/rootstock/internal/redfish"
+	"github.com/cloudoperators/rootstock/pkg/log"
 	"github.com/prometheus/client_golang/prometheus"
 )
 

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/SAP/rootstock/pkg/log"
+	"github.com/cloudoperators/rootstock/pkg/log"
 )
 
 // captureDefault installs a fresh Default logger that writes to a MockTarget,

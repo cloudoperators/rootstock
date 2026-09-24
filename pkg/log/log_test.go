@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/SAP/rootstock/pkg/log"
+	"github.com/cloudoperators/rootstock/pkg/log"
 )
 
 // --- Level.String ---

@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/SAP/rootstock/internal/redfish"
+	"github.com/cloudoperators/rootstock/internal/redfish"
 )
 
 // Run with: make test-integration
