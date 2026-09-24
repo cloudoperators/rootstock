@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/SAP/rootstock/pkg/log"
+	"github.com/cloudoperators/rootstock/pkg/log"
 	"github.com/fsnotify/fsnotify"
 	"github.com/google/uuid"
 	"github.com/spf13/viper"

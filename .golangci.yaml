@@ -66,6 +66,7 @@ linters:
     funlen:
       lines: 100
       statements: 50
+
     goconst:
       min-len: 2
       min-occurrences: 3
@@ -707,6 +708,7 @@ linters:
           - dupl
           - gosec
           - revive
+          - funlen
       # Run some linter only for test files by excluding its issues for everything else.
       - path-except: _test\.go
         linters:

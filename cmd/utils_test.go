@@ -9,7 +9,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/SAP/rootstock/pkg/log"
+	"github.com/cloudoperators/rootstock/pkg/log"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
@@ -186,7 +186,6 @@ func TestParameterRegister(t *testing.T) {
 	}
 }
 
-//nolint:revive // too many literals as test values in this function
 func TestParameterValue(t *testing.T) {
 	relativeKey := "rel.key"
 	envVar := "ENV_VAR"
@@ -413,7 +412,7 @@ func TestCreateDirIfNotExist(t *testing.T) {
 				return tt.mkdirErr
 			}
 
-			err := CreateDirIfNotExist("/some/test/dir")
+			err := createDirIfNotExist("/some/test/dir")
 
 			assert.Equal(t, tt.expectMkdir, mkdirCalled, "mkdir call expectation mismatch")
 

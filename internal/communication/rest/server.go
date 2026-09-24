@@ -8,10 +8,11 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"sync"
 	"time"
 
-	"github.com/SAP/rootstock/internal/shutdown"
-	"github.com/SAP/rootstock/pkg/log"
+	"github.com/cloudoperators/rootstock/internal/shutdown"
+	"github.com/cloudoperators/rootstock/pkg/log"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -27,7 +28,9 @@ const (
 )
 
 type Server interface {
+	// ListenAndServe starts the rest server
 	ListenAndServe()
+	// Stop halts the rest server
 	Stop(context.Context)
 }
 
@@ -47,25 +50,27 @@ func New(port int, logger log.MinInterface) Server {
 	})
 
 	return &server{
-		&http.Server{
+		server: &http.Server{
 			Addr:              fmt.Sprintf(":%d", port),
 			Handler:           r,
 			ReadHeaderTimeout: serverTimeout,
 			WriteTimeout:      serverTimeout,
 			IdleTimeout:       serverTimeout,
 		},
-		logger,
+		log: logger,
 	}
 }
 
 type server struct {
 	server *http.Server
 	log    log.MinInterface
+	wg     sync.WaitGroup
 }
 
 func (s *server) ListenAndServe() {
 	s.log.Info("server listening", "addr", s.server.Addr)
-	go func() {
+
+	s.wg.Go(func() {
 		err := s.server.ListenAndServe()
 		if err == nil {
 			return
@@ -78,8 +83,9 @@ func (s *server) ListenAndServe() {
 
 		s.log.Error("server failed", log.KeyError, err)
 		shutdown.StopNow()
-	}()
+	})
 }
+
 func (s *server) Stop(ctx context.Context) {
 	if s.server == nil {
 		return
@@ -89,63 +95,8 @@ func (s *server) Stop(ctx context.Context) {
 		s.log.Error("failed to shutdown server", log.KeyError, err)
 		shutdown.StopNow()
 	}
+
 	s.server = nil
 
-	//TODO: wait until the server shutdown is complete. Only then return
-	time.Sleep(200 * time.Millisecond)
+	s.wg.Wait()
 }
-
-// func ListenAndServe(port int, logger log.MinInterface) {
-// 	if server != nil {
-// 		logger.Error("function called with http server still active - ignoring", "port", port)
-// 		return
-// 	}
-
-// 	r := chi.NewRouter()
-// 	r.Use(middleware.Heartbeat(healthEndpoint))
-
-// 	r.Handle(metricsEndpoint, promhttp.Handler())
-
-// 	r.Get(readyEndpoint, func(w http.ResponseWriter, _ *http.Request) {
-// 		w.WriteHeader(http.StatusOK)
-// 	})
-
-// 	r.Get(probeEndpoint, func(w http.ResponseWriter, _ *http.Request) {
-// 		// PDU scraping can be implemented here
-// 		w.WriteHeader(http.StatusNotImplemented)
-// 	})
-
-// 	addr := fmt.Sprintf(":%d", port)
-// 	logger.Info("server listening", "addr", addr)
-
-// 	server = &http.Server{
-// 		Addr:              addr,
-// 		Handler:           r,
-// 		ReadHeaderTimeout: serverTimeout,
-// 		WriteTimeout:      serverTimeout,
-// 		IdleTimeout:       serverTimeout,
-// 	}
-// 	go func() {
-// 		err := server.ListenAndServe()
-// 		if err == nil {
-// 			return
-// 		}
-
-// 		if errors.Is(err, http.ErrServerClosed) {
-// 			logger.Info("server closed")
-// 			return
-// 		}
-
-// 		logger.Error("server failed", log.KeyError, err)
-// 		shutdown.StopNow()
-// 	}()
-// }
-
-// func StopServer() {
-// 	if server == nil {
-// 		return
-// 	}
-
-// 	err := server.Close()
-// 	server = nil
-// }

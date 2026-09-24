@@ -4,10 +4,10 @@
 package main
 
 import (
-	"github.com/SAP/rootstock/cmd"
-	"github.com/SAP/rootstock/internal/shutdown"
-	"github.com/SAP/rootstock/pkg/log"
-	v "github.com/SAP/rootstock/pkg/version"
+	"github.com/cloudoperators/rootstock/cmd"
+	"github.com/cloudoperators/rootstock/internal/shutdown"
+	"github.com/cloudoperators/rootstock/pkg/log"
+	v "github.com/cloudoperators/rootstock/pkg/version"
 )
 
 // Version information set by link flags during build. We fall back to these sane

@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/SAP/rootstock/internal/shutdown"
+	"github.com/cloudoperators/rootstock/internal/shutdown"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -185,23 +185,13 @@ func fatalOnError(err error, msg string) {
 	shutdown.StopNow()
 }
 
-// TODO: is needed?
-
 var (
 	// Used for monkey patching in tests.
 	mkdir = os.Mkdir
 	isDir = checkDir
 )
 
-func SetHelpFunc(cmd *cobra.Command) {
-	defaultHelpFunc := cmd.HelpFunc()
-	cmd.SetHelpFunc(func(cmd *cobra.Command, args []string) {
-		defaultHelpFunc(cmd, args)
-		os.Exit(0)
-	})
-}
-
-func CreateDirIfNotExist(dir string) error {
+func createDirIfNotExist(dir string) error {
 	is, err := isDir(dir)
 	switch {
 	case errors.Is(err, os.ErrNotExist):

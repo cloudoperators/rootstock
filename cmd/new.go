@@ -8,9 +8,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/SAP/rootstock/internal/shutdown"
-	"github.com/SAP/rootstock/pkg/log"
-	v "github.com/SAP/rootstock/pkg/version"
+	"github.com/cloudoperators/rootstock/internal/shutdown"
+	"github.com/cloudoperators/rootstock/pkg/log"
+	v "github.com/cloudoperators/rootstock/pkg/version"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -93,7 +93,7 @@ func initCLI() {
 		)
 	}
 
-	err = CreateDirIfNotExist(tmpFolder.Value())
+	err = createDirIfNotExist(tmpFolder.Value())
 	fatalOnError(err, "failed to create tmp dir")
 
 	logger.Debug("cli configured",

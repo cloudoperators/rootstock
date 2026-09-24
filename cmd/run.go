@@ -11,10 +11,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/SAP/rootstock/internal/communication/rest"
-	"github.com/SAP/rootstock/internal/shutdown"
-	"github.com/SAP/rootstock/pkg/log"
-	v "github.com/SAP/rootstock/pkg/version"
+	"github.com/cloudoperators/rootstock/internal/communication/rest"
+	"github.com/cloudoperators/rootstock/internal/shutdown"
+	"github.com/cloudoperators/rootstock/pkg/log"
+	v "github.com/cloudoperators/rootstock/pkg/version"
 	"github.com/spf13/cobra"
 )
 
@@ -123,9 +123,11 @@ func registerCredentialsWatchAndRunServer() {
 func dynamicRunServer(l log.FullInterface) {
 	serverLock.Lock()
 	defer serverLock.Unlock()
+
 	if server != nil {
 		server.Stop(shutdown.GetContext())
 	}
+
 	server = rest.New(port.Value(), l.New(log.WithName("run")))
 	l.Info("starting HTTP server", "port", port.Value(), "pw", redfishPassword)
 	server.ListenAndServe()
