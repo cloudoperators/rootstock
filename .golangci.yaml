@@ -718,10 +718,10 @@ formatters:
     - goimports
   settings:
     gofumpt:
-      module-path: github.tools.sap/AI/user-content/components/api
+      module-path: github.com/SAP/rootstock
     goimports:
       local-prefixes:
-        - github.com/golangci/golangci-lint
+        - github.com/SAP/rootstock
   exclusions:
     generated: lax
     paths:
