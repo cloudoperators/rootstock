@@ -86,6 +86,7 @@ func TestInitFileConfig(t *testing.T) {
 
 			lock.Lock()
 			defer lock.Unlock()
+
 			assert.Equal(t, expectedContents, actualContents,
 				"expected file content and acutal content do not match",
 			)
