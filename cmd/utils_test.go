@@ -78,10 +78,7 @@ func TestParameterKey(t *testing.T) {
 	}
 }
 
-//nolint:tparallel // relies on package global variable and hence subtest cannot be parallelised
 func TestParameterRegister(t *testing.T) {
-	t.Parallel()
-
 	origRootKey := cfgRootKey
 
 	t.Cleanup(func() {
