@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Greenhouse contributors
+# SPDX-License-Identifier: Apache-2.0
+
 # snmp_exporter generator configuration
 #
 # This is the human-authored input to the snmp_exporter `generator` tool. It is the
