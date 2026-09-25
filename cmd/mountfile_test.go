@@ -7,6 +7,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"reflect"
 	"sync"
 	"testing"
 	"time"
@@ -77,12 +78,17 @@ func TestInitFileConfig(t *testing.T) {
 				lock.Lock()
 				defer lock.Unlock()
 
-				return assert.Equal(t, expectedContents, actualContents,
-					"expected file content and acutal content do not match",
-				)
+				return reflect.DeepEqual(*actualContents, *expectedContents)
 			},
-				2*time.Second, 200*time.Millisecond,
+				2*time.Second, 50*time.Millisecond,
 				"updateFunc was not called with updated content",
+			)
+
+			lock.Lock()
+			defer lock.Unlock()
+
+			assert.Equal(t, expectedContents, actualContents,
+				"expected file content and acutal content do not match",
 			)
 		})
 	}

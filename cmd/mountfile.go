@@ -78,14 +78,14 @@ func onFileChange(onChange func() error) func(in fsnotify.Event) {
 		changeID := uuid.New()
 		logger.Info("config file change - reloading", logKeyFile, e.Name, logKeyID, changeID)
 
-		switch e.Op {
-		case fsnotify.Create, fsnotify.Write:
+		switch {
+		case e.Has(fsnotify.Create) || e.Has(fsnotify.Write):
 			if err := onChange(); err != nil {
 				logger.Error("onChange function call failed", logKeyFile, e.Name, logKeyID, changeID, log.KeyError, err)
 			}
 
 			logger.Debug("config file change - complete", "event", e.Op, logKeyFile, e.Name, logKeyID, changeID)
-		case fsnotify.Remove, fsnotify.Rename, fsnotify.Chmod:
+		case e.Has(fsnotify.Remove) || e.Has(fsnotify.Rename) || e.Has(fsnotify.Chmod):
 			logger.Debug("not implemented by viper", "event", e.Op, logKeyFile, e.Name, logKeyID, changeID)
 		default:
 			logger.Warn("case not handled by viper", "event", e.Op, logKeyFile, e.Name, logKeyID, changeID)
