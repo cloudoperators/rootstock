@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Greenhouse contributors
 // SPDX-License-Identifier: Apache-2.0
-
+//
+//nolint:depguard // log pkg dependencies allowed in the log package
 package log_test
 
 import (
@@ -10,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/SAP/rootstock/pkg/log"
+	"github.com/cloudoperators/rootstock/pkg/log"
 )
 
 // --- Level.String ---
@@ -32,6 +33,7 @@ func TestLevelString(t *testing.T) {
 			if got := tc.level.String(); got != tc.want {
 				t.Errorf("Level(%d).String() = %q, want %q", tc.level, got, tc.want)
 			}
+
 			gotLevel := log.ToLevel(tc.want)
 			if gotLevel != tc.level {
 				if tc.want != "unknown" {
@@ -40,7 +42,6 @@ func TestLevelString(t *testing.T) {
 					t.Errorf("Level(%d).String() = %q, want %q", tc.level, gotLevel, log.InfoLvl)
 				}
 			}
-
 		})
 	}
 }
@@ -208,12 +209,14 @@ func TestLoggerFormatMethods(t *testing.T) {
 			// treat the first arg as the message and remaining as key-value pairs.
 			// Here we just verify the message text appears in any form.
 			found := false
+
 			for _, entry := range ml.ReadByType(tc.level) {
 				if strings.Contains(entry, strings.Split(tc.wantMsg, "=")[0]) {
 					found = true
 					break
 				}
 			}
+
 			if !found {
 				t.Errorf("expected entry containing %q at level %s, got %v", tc.wantMsg, tc.level, ml.ReadByType(tc.level))
 			}
@@ -232,6 +235,7 @@ func TestLoggerWith(t *testing.T) {
 	if !ml.Contains(log.InfoLvl, "login attempt") {
 		t.Error("expected child logger output to reach parent mock target")
 	}
+
 	if !ml.Contains(log.InfoLvl, "auth") {
 		t.Error("expected 'auth' field value in log output")
 	}
@@ -358,10 +362,12 @@ func TestMockTargetWrite(t *testing.T) {
 	target := log.NewMockTarget()
 
 	data := []byte("line one\n")
+
 	n, err := target.Write(data)
 	if err != nil {
 		t.Fatalf("Write error: %v", err)
 	}
+
 	if n != len(data) {
 		t.Errorf("Write returned %d, want %d", n, len(data))
 	}
@@ -369,12 +375,15 @@ func TestMockTargetWrite(t *testing.T) {
 	if !bytes.Contains(target.ReadAll(), []byte("line one")) {
 		t.Error("expected written data in ReadAll()")
 	}
+
 	if len(target.Read()) != 1 {
 		t.Errorf("expected 1 entry in Read(), got %d", len(target.Read()))
 	}
+
 	if !strings.Contains(target.ReadAllString(), "line one") {
 		t.Error("expected written data in ReadAllString()")
 	}
+
 	strs := target.ReadString()
 	if len(strs) != 1 || !strings.Contains(strs[0], "line one") {
 		t.Errorf("unexpected ReadString() result: %v", strs)
@@ -403,6 +412,7 @@ func TestCallerHandlerEnabled(t *testing.T) {
 			if !tc.addCaller {
 				opts = append(opts, log.WithoutCaller())
 			}
+
 			opts = append(opts, log.WithLevel("info"), log.SetStacktrace(false))
 
 			ml := log.NewMockLogger(opts...)
@@ -433,6 +443,7 @@ func TestSetDefaultLogger(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			log.SetDefaultLogger(tc.options...)
+
 			if log.Default() == nil {
 				t.Error("Default logger should not be nil after SetDefaultLogger")
 			}
@@ -487,7 +498,7 @@ func TestWithBuilderOption(t *testing.T) {
 	}
 }
 
-// syncBuffer wraps bytes.Buffer to satisfy zapcore.WriteSyncer.
+// syncBuffer wraps [bytes.Buffer] to satisfy zapcore.WriteSyncer.
 type syncBuffer struct {
 	*bytes.Buffer
 }

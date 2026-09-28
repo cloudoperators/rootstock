@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/SAP/rootstock/internal/redfish"
+	"github.com/cloudoperators/rootstock/internal/redfish"
 )
 
 // Run with: make test-integration
@@ -124,7 +124,7 @@ func TestGetRackPDUs(t *testing.T) {
 
 // TestGetPDU verifies that GetPDU returns typed fields for PDU "1",
 // including a non-empty ID and a Metrics link.
-func TestGetPDU(t *testing.T) {
+func TestGetPERackPDU(t *testing.T) {
 	t.Logf("  %-22s: GET /redfish/v1/PowerEquipment/RackPDUs/1", "endpoint")
 	client := newTestClient(t)
 	ctx := context.Background()
@@ -134,11 +134,11 @@ func TestGetPDU(t *testing.T) {
 	}
 	defer client.Close(ctx)
 
-	result, err := client.GetPDU(ctx, "1")
+	result, err := client.GetPERackPDU(ctx, "1")
 	if err != nil {
 		t.Fatalf("GetPDU failed: %v", err)
 	}
-	if result.ID == 0 {
+	if result.ID == "0" {
 		t.Fatal("response missing Id field")
 	}
 	if result.Metrics.ODataID == "" {
@@ -191,7 +191,7 @@ func TestGetPDUNotFound(t *testing.T) {
 	}
 	defer client.Close(ctx)
 
-	_, err := client.GetRackPDUs(ctx, "nonexistent")
+	_, err := client.GetPERackPDU(ctx, "nonexistent")
 	if err == nil {
 		t.Fatal("expected error for non-existent PDU, got nil")
 	}

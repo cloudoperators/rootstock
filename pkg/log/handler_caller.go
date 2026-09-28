@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Greenhouse contributors
 // SPDX-License-Identifier: Apache-2.0
-
+//
+//nolint:depguard // log pkg dependencies allowed in the log package
 package log
 
 import (
@@ -16,7 +17,7 @@ const (
 	funcKey     = "func"
 	fileKey     = "file"
 
-	callstackOffset = 7
+	callstackOffset = 6
 )
 
 type CallerHandler struct {
