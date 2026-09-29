@@ -10,24 +10,27 @@ on:
 
 jobs:
 
-  conventions:
-    name: Conventions
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: go.mod
-      - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v9
-        with:
-          version: v2.13.2
-      - name: TODO - Markdown linting
-        run: echo "TODO - run prettier on markdown files"
-      - name: TODO - Shell linting
-        run: echo "TODO - run shellcheck on shell scripts"
+  conventions-lint-golang:
+    name: Conventions lint-go
+    uses: cloudoperators/common/.github/workflows/shared-go-lint.yaml@main # golangci/golangci-lint-action@v9
+    with:
+      golangci-lint-version: v2.13.2
+      enable-govulncheck: true
+      govulncheck-version: v1.1.4
+    # runs-on: ubuntu-latest
+    # steps:
+    #   - name: Checkout
+    #     uses: actions/checkout@v4
+    #   - name: Set up Go
+    #     uses: actions/setup-go@v5
+    #     with:
+    #       go-version-file: go.mod
+    #   - name: Run golangci-lint
+
+    #   - name: TODO - Markdown linting
+    #     run: echo "TODO - run prettier on markdown files"
+    #   - name: TODO - Shell linting
+    #     run: echo "TODO - run shellcheck on shell scripts"
 
   code-scans:
     name: Code Scans
