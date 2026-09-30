@@ -1,20 +1,22 @@
 // SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Greenhouse contributors
 // SPDX-License-Identifier: Apache-2.0
 
-package main
+package rest
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
-	"os"
+	"sync"
 	"time"
 
 	prom "github.com/cloudoperators/rootstock/internal/collectors/prometheus"
-	"github.com/cloudoperators/rootstock/internal/config"
 	"github.com/cloudoperators/rootstock/internal/redfish"
+	"github.com/cloudoperators/rootstock/internal/shutdown"
 	"github.com/cloudoperators/rootstock/pkg/log"
-	v "github.com/cloudoperators/rootstock/pkg/version"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/prometheus/client_golang/prometheus"
@@ -27,25 +29,83 @@ const (
 	readyEndpoint   = "/ready"
 	probeEndpoint   = "/probe"
 
-	readHeaderTimeout = 10 * time.Second
-	readTimeout       = 30 * time.Second
-	writeTimeout      = 30 * time.Second
-	idleTimeout       = 120 * time.Second
+	serverTimeout = 5 * time.Second
 )
 
-// Version information set by link flags during build. We fall back to these sane
-// default values when we build outside the Makefile context (e.g. go run, go build, or go test).
-var (
-	version      = "99.99.99"             // value from VERSION.yaml file
-	buildDate    = "1970-01-01T00:00:00Z" // output from `date -u +'%Y-%m-%dT%H:%M:%SZ'`
-	gitCommit    = ""                     // output from `git rev-parse HEAD`
-	gitTag       = ""                     // output from `git describe --exact-match --tags HEAD` (if clean tree state)
-	gitTreeState = ""                     // determined from `git status --porcelain`. either 'clean' or 'dirty'
-)
+type Server interface {
+	// ListenAndServe starts the rest server
+	ListenAndServe()
+	// Stop halts the rest server
+	Stop(context.Context)
+}
+
+func New(port int, logger log.MinInterface) Server {
+	r := chi.NewRouter()
+	r.Use(middleware.Heartbeat(healthEndpoint))
+
+	r.Handle(metricsEndpoint, promhttp.Handler())
+
+	r.Get(readyEndpoint, func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	r.Get(probeEndpoint, probeHandler())
+
+	return &server{
+		server: &http.Server{
+			Addr:              fmt.Sprintf(":%d", port),
+			Handler:           r,
+			ReadHeaderTimeout: serverTimeout,
+			WriteTimeout:      serverTimeout,
+			IdleTimeout:       serverTimeout,
+		},
+		log: logger,
+	}
+}
+
+type server struct {
+	server *http.Server
+	log    log.MinInterface
+	wg     sync.WaitGroup
+}
+
+func (s *server) ListenAndServe() {
+	s.log.Info("server listening", "addr", s.server.Addr)
+
+	s.wg.Go(func() {
+		err := s.server.ListenAndServe()
+		if err == nil {
+			return
+		}
+
+		if errors.Is(err, http.ErrServerClosed) {
+			s.log.Info("server closed")
+			return
+		}
+
+		s.log.Error("server failed", log.KeyError, err)
+		shutdown.StopNow()
+	})
+}
+
+func (s *server) Stop(ctx context.Context) {
+	if s.server == nil {
+		return
+	}
+
+	if err := s.server.Shutdown(ctx); err != nil {
+		s.log.Error("failed to shutdown server", log.KeyError, err)
+		shutdown.StopNow()
+	}
+
+	s.server = nil
+
+	s.wg.Wait()
+}
 
 // probeHandler creates an HTTP handler for the /probe endpoint that dynamically
 // probes PDUs based on the 'target' query parameter using Prometheus collector
-func probeHandler(cfg *config.Config) http.HandlerFunc {
+func probeHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		target := req.URL.Query().Get("target")
 		if target == "" {
@@ -76,7 +136,7 @@ func probeHandler(cfg *config.Config) http.HandlerFunc {
 		}
 
 		// Use default logger for this request
-		redfishClient := redfish.NewClient(targetURL, log.Default(), cfg.RedfishPassword, cfg.RedfishUsername, time.Duration(cfg.ScrapeTimeoutSeconds)*time.Second)
+		redfishClient := redfish.NewClient(targetURL, log.Default(), "redfishPassword", "redfishUsername", 30*time.Second)
 
 		log.Info("Using PDU ID from labels parameter", "pduID", pduID)
 		// Create a temporary collector for this target
@@ -99,57 +159,5 @@ func probeHandler(cfg *config.Config) http.HandlerFunc {
 		})
 
 		h.ServeHTTP(w, req)
-	}
-}
-
-func main() {
-	cfg, err := config.ReadConfig()
-	if err != nil {
-		log.Error("failed to load config", log.KeyError, err)
-		os.Exit(1)
-	}
-
-	if cfg.ServiceEnv == "LOCAL" {
-		log.SetDefaultLogger(log.WithLevel("debug"), log.WithTextFormat())
-	} else {
-		log.SetDefaultLogger(log.WithLevel("info"))
-	}
-
-	if err := v.Init(version, buildDate, gitCommit, gitTag, gitTreeState); err != nil {
-		log.Error("failed to initialize binary version", "error", err)
-	}
-
-	log.Info(
-		"rootstock starting up",
-		"version", v.ReadAll(),
-		"port", cfg.ServicePort, "env", cfg.ServiceEnv,
-	)
-
-	r := chi.NewRouter()
-	r.Use(middleware.Heartbeat(healthEndpoint))
-
-	r.Handle(metricsEndpoint, promhttp.Handler())
-
-	r.Get(readyEndpoint, func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	})
-
-	r.Get(probeEndpoint, probeHandler(cfg))
-
-	addr := fmt.Sprintf(":%d", cfg.ServicePort)
-	log.Info("server listening", "addr", addr)
-
-	srv := &http.Server{
-		Addr:              addr,
-		Handler:           r,
-		ReadHeaderTimeout: readHeaderTimeout,
-		ReadTimeout:       readTimeout,
-		WriteTimeout:      writeTimeout,
-		IdleTimeout:       idleTimeout,
-	}
-
-	if err := srv.ListenAndServe(); err != nil {
-		log.Error("server failed", log.KeyError, err)
-		os.Exit(1)
 	}
 }

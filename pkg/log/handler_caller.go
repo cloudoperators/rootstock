@@ -17,7 +17,7 @@ const (
 	funcKey     = "func"
 	fileKey     = "file"
 
-	callstackOffset = 7
+	callstackOffset = 6
 )
 
 type CallerHandler struct {
