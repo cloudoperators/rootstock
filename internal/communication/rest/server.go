@@ -39,7 +39,20 @@ type Server interface {
 	Stop(context.Context)
 }
 
-func New(port int, logger log.MinInterface) Server {
+func New(port int, logger log.MinInterface, redfishUsername, redfishPassword string, scrapeTimeout time.Duration) Server {
+	s := &server{
+		server: &http.Server{
+			Addr:              fmt.Sprintf(":%d", port),
+			ReadHeaderTimeout: serverTimeout,
+			WriteTimeout:      serverTimeout,
+			IdleTimeout:       serverTimeout,
+		},
+		log:             logger,
+		redfishUsername: redfishUsername,
+		redfishPassword: redfishPassword,
+		scrapeTimeout:   scrapeTimeout,
+	}
+
 	r := chi.NewRouter()
 	r.Use(middleware.Heartbeat(healthEndpoint))
 
@@ -49,24 +62,20 @@ func New(port int, logger log.MinInterface) Server {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	r.Get(probeEndpoint, probeHandler())
+	r.Get(probeEndpoint, s.probeHandler())
 
-	return &server{
-		server: &http.Server{
-			Addr:              fmt.Sprintf(":%d", port),
-			Handler:           r,
-			ReadHeaderTimeout: serverTimeout,
-			WriteTimeout:      serverTimeout,
-			IdleTimeout:       serverTimeout,
-		},
-		log: logger,
-	}
+	s.server.Handler = r
+
+	return s
 }
 
 type server struct {
-	server *http.Server
-	log    log.MinInterface
-	wg     sync.WaitGroup
+	server          *http.Server
+	log             log.MinInterface
+	wg              sync.WaitGroup
+	redfishUsername string
+	redfishPassword string
+	scrapeTimeout   time.Duration
 }
 
 func (s *server) ListenAndServe() {
@@ -105,12 +114,12 @@ func (s *server) Stop(ctx context.Context) {
 
 // probeHandler creates an HTTP handler for the /probe endpoint that dynamically
 // probes PDUs based on the 'target' query parameter using Prometheus collector
-func probeHandler() http.HandlerFunc {
+func (s *server) probeHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		target := req.URL.Query().Get("target")
 		if target == "" {
 			http.Error(w, "target parameter is required", http.StatusBadRequest)
-			log.Warn("probe request missing target parameter")
+			s.log.Warn("probe request missing target parameter")
 
 			return
 		}
@@ -119,26 +128,32 @@ func probeHandler() http.HandlerFunc {
 		pduID := req.URL.Query().Get("labels")
 		if pduID == "" {
 			http.Error(w, "labels parameter is required", http.StatusBadRequest)
-			log.Warn("probe request missing labels parameter")
+			s.log.Warn("probe request missing labels parameter")
 
 			return
 		}
 
-		log.Info("probing target", "target", target, "pduID", pduID)
+		s.log.Info("probing target", "target", target, "pduID", pduID)
 
 		// Parse target URL
 		targetURL, err := url.Parse(target)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("invalid target URL: %v", err), http.StatusBadRequest)
-			log.Error("invalid target URL", "target", target, log.KeyError, err)
+			s.log.Error("invalid target URL", "target", target, log.KeyError, err)
 
 			return
 		}
 
-		// Use default logger for this request
-		redfishClient := redfish.NewClient(targetURL, log.Default(), "redfishPassword", "redfishUsername", 30*time.Second)
+		// Create redfish client with configured credentials
+		redfishClient := redfish.NewClient(
+			targetURL,
+			s.log,
+			s.redfishUsername,
+			s.redfishPassword,
+			s.scrapeTimeout,
+		)
 
-		log.Info("Using PDU ID from labels parameter", "pduID", pduID)
+		s.log.Info("Using PDU ID from labels parameter", "pduID", pduID)
 		// Create a temporary collector for this target
 		collector := prom.NewCollector(redfishClient, pduID)
 
@@ -147,8 +162,12 @@ func probeHandler() http.HandlerFunc {
 
 		err = registry.Register(collector)
 		if err != nil {
-			http.Error(w, fmt.Sprintf("can not register prometheus collector: %v", err), http.StatusInternalServerError)
-			log.Error("can not register prometheus collector", log.KeyError, err)
+			http.Error(
+				w,
+				fmt.Sprintf("can not register prometheus collector: %v", err),
+				http.StatusInternalServerError,
+			)
+			s.log.Error("can not register prometheus collector", log.KeyError, err)
 
 			return
 		}
