@@ -42,6 +42,7 @@ linters:
     - tagalign
     - mnd
     - wsl_v5
+    - gci
   settings:
     cyclop:
       # Relaxed to accommodate the metric-emitting Collect loop.
