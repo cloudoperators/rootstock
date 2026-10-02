@@ -68,8 +68,8 @@ make lint
 This runs golangci-lint against the full codebase using the configuration in
 `.golangci.yaml` at the repo root.
 
-The `conventions` job in CI runs the same linting on every pull request against
-`main`.
+CI runs golangci-lint on every pull request against `main`; Markdown formatting
+and `go mod tidy` are currently only run by the local `make lint` target.
 
 ## Cobra CLI
 
