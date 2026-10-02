@@ -18,10 +18,6 @@ const (
 	collectorTimeout = 25 * time.Second
 )
 
-const (
-	CollectorTimeout = 25 * time.Second
-)
-
 type Collector struct {
 	mu            sync.Mutex
 	redfishClient redfish.Client

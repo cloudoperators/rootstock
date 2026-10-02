@@ -1,6 +1,7 @@
 # Prometheus Integration
 
 ## Table of Contents
+
 - [1. Overview](#1-overview)
   - [Architecture](#architecture)
   - [Design Principles](#design-principles)
@@ -19,11 +20,15 @@
 
 ## 1. Overview
 
-Rootstock will provide multiple functionalities regarding data center power reporting in the future. One of these functionalities is acting as a **Prometheus exporter** that probes Power Distribution Units (PDUs) to expose power and energy metrics.
+Rootstock will provide multiple functionalities regarding data center power
+reporting in the future. One of these functionalities is acting as a
+**Prometheus exporter** that probes Power Distribution Units (PDUs) to expose
+power and energy metrics.
 
 ### Architecture
 
-The integration follows an **active probing model** where Prometheus triggers on-demand queries to PDU devices:
+The integration follows an **active probing model** where Prometheus triggers
+on-demand queries to PDU devices:
 
 ```
 ┌─────────────┐         ┌──────────────┐         ┌───────────────┐         ┌─────────┐
@@ -37,10 +42,15 @@ The integration follows an **active probing model** where Prometheus triggers on
 
 ### Design Principles
 
-- **Active Probing**: Metrics are fetched from PDU Prometheus scrapes (for the POC we won't implement background collection)
-- **Custom Collector**: Implements `prometheus.Collector` interface for dynamic, on-demand metric generation
-- **Redfish Integration**: Uses Redfish session-based authentication to query PDU power metrics
-- **OpenTelemetry Future**: While this implementation focuses on Prometheus native exposition, OpenTelemetry Collector integration is planned for broader telemetry vendor support
+- **Active Probing**: Metrics are fetched from PDU Prometheus scrapes (for the
+  POC we won't implement background collection)
+- **Custom Collector**: Implements `prometheus.Collector` interface for dynamic,
+  on-demand metric generation
+- **Redfish Integration**: Uses Redfish session-based authentication to query
+  PDU power metrics
+- **OpenTelemetry Future**: While this implementation focuses on Prometheus
+  native exposition, OpenTelemetry Collector integration is planned for broader
+  telemetry vendor support
 
 ## 2. Components
 
@@ -48,15 +58,21 @@ The integration follows an **active probing model** where Prometheus triggers on
 
 **Location**: `internal/collectors/prometheus/collector.go`
 
-The collector implements the `prometheus.Collector` interface with two required methods:
+The collector implements the `prometheus.Collector` interface with two required
+methods:
 
 #### `Describe(ch chan<- *prometheus.Desc)`
-Registers metric descriptors with Prometheus. Called once during collector registration.
+
+Registers metric descriptors with Prometheus. Called once during collector
+registration.
 
 #### `Collect(ch chan<- prometheus.Metric)`
-Probes the PDU via Redfish API and sends fresh metrics to Prometheus. Called on **every scrape**.
+
+Probes the PDU via Redfish API and sends fresh metrics to Prometheus. Called on
+**every scrape**.
 
 **Probing Flow**:
+
 ```
 1. Prometheus scrapes the /metrics HTTP endpoint
 2. Prometheus registry triggers collector.Collect()
@@ -71,26 +87,30 @@ Probes the PDU via Redfish API and sends fresh metrics to Prometheus. Called on 
 ```
 
 **Key Characteristics**:
+
 - **Stateless**: No metric caching between scrapes
 - **Synchronous**: Scrape duration includes PDU query time
 - **Thread-safe**: Mutex prevents concurrent probes to same PDU
 
 ### 2.2 Metric Definitions
 
-The collector exposes the following **gauge metrics** for power monitoring (all labeled with `pdu_id`). This list will grow as additional metrics are implemented:
+The collector exposes the following **gauge metrics** for power monitoring (all
+labeled with `pdu_id`). This list will grow as additional metrics are
+implemented:
 
-| Metric Name | Type | Description | Unit | Labels |
-|------------|------|-------------|------|--------|
-| `pdu_power_watts` | Gauge | Real power consumption | Watts (W) | `pdu_id` |
-| `pdu_apparent_va` | Gauge | Apparent power | Volt-Amperes (VA) | `pdu_id` |
-| `pdu_reactive_var` | Gauge | Reactive power | Volt-Amperes Reactive (VAR) | `pdu_id` |
-| `pdu_power_factor` | Gauge | Power factor (efficiency ratio) | Dimensionless (0-1) | `pdu_id` |
+| Metric Name        | Type  | Description                     | Unit                        | Labels   |
+| ------------------ | ----- | ------------------------------- | --------------------------- | -------- |
+| `pdu_power_watts`  | Gauge | Real power consumption          | Watts (W)                   | `pdu_id` |
+| `pdu_apparent_va`  | Gauge | Apparent power                  | Volt-Amperes (VA)           | `pdu_id` |
+| `pdu_reactive_var` | Gauge | Reactive power                  | Volt-Amperes Reactive (VAR) | `pdu_id` |
+| `pdu_power_factor` | Gauge | Power factor (efficiency ratio) | Dimensionless (0-1)         | `pdu_id` |
 
 ### 2.3 Redfish Client Integration
 
 **Location**: `internal/redfish/client.go`
 
 The Redfish client handles:
+
 - Session management (login/logout) with X-Auth-Token
 - HTTP requests to Redfish API endpoints
 - JSON response parsing
@@ -107,7 +127,9 @@ r.Handle(metricsEndpoint, promhttp.Handler())
 ```
 
 **Available Endpoints**:
-- `GET /metrics` - Prometheus exposition format (includes Go runtime metrics + PDU metrics)
+
+- `GET /metrics` - Prometheus exposition format (includes Go runtime metrics +
+  PDU metrics)
 - `GET /healthz` - Liveness probe (returns 200 OK)
 - `GET /ready` - Readiness probe
 - `GET /probe` - **Not yet implemented** - Future: Dynamic target probing
@@ -120,14 +142,14 @@ Additional endpoints will be added as new features are implemented.
 
 ```yaml
 scrape_configs:
-  - job_name: 'rootstock-pdu'
+  - job_name: "rootstock-pdu"
     scrape_interval: 5m
     scrape_timeout: 10s
     static_configs:
-      - targets: ['localhost:8080']
+      - targets: ["localhost:8080"]
         labels:
-          environment: 'production'
-          datacenter: 'dc1'
+          environment: "production"
+          datacenter: "dc1"
 ```
 
 ## 4. Future Enhancements
@@ -138,7 +160,7 @@ Implement `/probe?target=<pdu-id>`:
 
 ```yaml
 scrape_configs:
-  - job_name: 'pdu-probe'
+  - job_name: "pdu-probe"
     metrics_path: /probe
     static_configs:
       - targets: [pdu-01, pdu-02, pdu-03]
@@ -154,4 +176,3 @@ scrape_configs:
 - **Caching**: Which is part of the design, not in the POC
 - **Concurrent Collection**: Worker pool for multi-PDU deployments
 - **Context Timeouts**: Proper deadline management
-
