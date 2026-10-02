@@ -16,7 +16,6 @@ import (
 	"github.com/cloudoperators/rootstock/internal/redfish"
 	"github.com/cloudoperators/rootstock/internal/shutdown"
 	"github.com/cloudoperators/rootstock/pkg/log"
-
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/prometheus/client_golang/prometheus"
@@ -39,7 +38,9 @@ type Server interface {
 	Stop(context.Context)
 }
 
-func New(port int, logger log.MinInterface, redfishUsername, redfishPassword string, scrapeTimeout time.Duration) Server {
+func New(
+	port int, logger log.MinInterface, redfishUsername, redfishPassword string, scrapeTimeout time.Duration,
+) Server {
 	s := &server{
 		server: &http.Server{
 			Addr:              fmt.Sprintf(":%d", port),
