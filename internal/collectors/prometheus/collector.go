@@ -105,7 +105,7 @@ func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 	// Note: prometheus.Collector interface doesn't accept context as parameter,
 	// so we create one here with a reasonable timeout. The HTTP client's timeout
 	// (configured in NewClient) provides the ultimate backstop.
-	ctx, cancel := context.WithTimeout(context.Background(), CollectorTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), collectorTimeout)
 	defer cancel()
 
 	// Fetch PDU metrics from Redfish API
