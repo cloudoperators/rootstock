@@ -65,12 +65,57 @@ Core functionality that must be implemented:
 
 Since rootstock will be installed into every datacenter, it has to be able to
 process all devices within 1 datacenter. Notice, that the longterm plan for
-rootstock includes further types of devices like servers, routers, and other.
-Hence, rootstock must be able to continuously scrape metrics for hundreds of
-devices of various types.
+rootstock includes metric processing of further types of devices like servers,
+routers, and other. Hence, rootstock must be able to continuously scrape and or
+process metrics from hundreds of devices of various types.
 
-We assume that
+Until proven wrong, we assume that vertical scaling is sufficient. Scalability
+is achieved mainly by adding concurrency for long running processes. Concretely,
+`scrapers` and `data-processors` are implemented through workers in dedicated
+coroutines.
+
+TODO: implement
 
 ### 2.3 Security
 
+#### 2.3.1 Device access (PDUs)
+
+TODO: specify
+
+#### 2.3.2 SCI prometheus access
+
+To secure the endpoints for prometheus pull-based scraping, we use a kubernetes
+role that restricts access to this endpoint solely to requests originating from
+the prometheus namespace.
+
+TODO: implement
+
+#### 2.3.3. SCI Netbox access
+
+TODO: specify
+
+#### 2.3.4 Other consumer access
+
+TODO: specify
+
 ### 2.4 Observability
+
+Rootstock itself will emit observability metrics to report its working
+conditions:
+
+- \# monitored redfish PDUs
+- processing time
+- queue length
+
+## 3. Service structure
+
+![design](package_architecture.svg)
+
+In general, rootstock is implemented as a cobra CLI. Internallly, it splits into
+3 layers: scraping, processing, and metric emission.
+
+### 3.1 Scraping layer
+
+### 3.2 Processing layer
+
+### 3.1 Emissions layer
