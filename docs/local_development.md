@@ -49,7 +49,7 @@ golangci-lint --version   # should report 2.13.2
 ### prettier installation
 
 For the installation of `prettier`, `node` needs to be present on the machine.
-For concrete installation documnentation see
+For concrete installation documentation see
 [prettier](https://prettier.io/docs/install).
 
 ## Running linters
