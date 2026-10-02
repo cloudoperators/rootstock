@@ -27,7 +27,7 @@ same config.
 
 The recommended way is via the official install script:
 
-```bash
+```shell
 curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh \
   | sh -s -- -b $(go env GOPATH)/bin v2.13.2
 ```
@@ -36,21 +36,26 @@ Homebrew installs the latest release, which may differ from the pinned version,
 so prefer the script above. If you do use Homebrew, check the version
 afterwards:
 
-```bash
+```shell
 brew install golangci-lint
 ```
 
 Verify you have the pinned version:
 
-```bash
+```shell
 golangci-lint --version   # should report 2.13.2
 ```
 
 ### prettier installation
 
-For the installation of `prettier`, `node` needs to be present on the machine.
-For concrete installation documnentation see
-[prettier](https://prettier.io/docs/install).
+For the installation of `prettier` run
+
+```shell
+brew install prettier
+```
+
+Alternatively, you can use the
+[installation documnentation](https://prettier.io/docs/install).
 
 ## Running linters
 
