@@ -33,7 +33,7 @@ reset := \033[0m
 
 .PHONY: build test test-unit test-integration test-contract test-performance \
         mockup-start mockup-stop \
-        lint lint-go conventions scan \
+        lint lint-go lint-md conventions scan \
         generate docker-build \
         help
 
@@ -86,9 +86,14 @@ mockup-stop: ## Stop the DMTF Redfish mockup server
 
 # Code quality
 lint-go: ## Run golangci-lint on Go code
-	golangci-lint run ./...
+	golangci-lint run ./... --fix
 
-lint: lint-go ## Run all linters (alias)
+lint-md: ## Run prettier for markdown files
+	prettier --prose-wrap always --write "**/*.md"
+
+lint: lint-go lint-md ## Run all linters (alias)
+	go mod tidy
+
 
 conventions: ## Check formatting conventions - markdown, shell, go (TODO: prettier + shellcheck)
 	@echo "TODO: run prettier on markdown files"

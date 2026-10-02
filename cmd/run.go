@@ -128,7 +128,18 @@ func dynamicRunServer(l log.FullInterface) {
 		server.Stop(shutdown.GetContext())
 	}
 
-	server = rest.New(port.Value(), l.New(log.WithName("run")))
-	l.Info("starting HTTP server", "port", port.Value(), "pw", redfishPassword)
+	password := ""
+	if redfishPassword != nil {
+		password = *redfishPassword
+	}
+
+	server = rest.New(
+		port.Value(),
+		l,
+		redfishUsername.Value(),
+		password,
+		scrapeTimeoutDefault,
+	)
+	l.Info("starting HTTP server", "port", port.Value(), "username", redfishUsername.Value())
 	server.ListenAndServe()
 }
