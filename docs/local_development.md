@@ -2,6 +2,70 @@
 
 This document describes how to get the local rootstock setup to work.
 
+- [Local development](#local-development)
+  - [Prerequisites](#prerequisites)
+    - [golangci-lint installation](#golangci-lint-installation)
+    - [prettier installation](#prettier-installation)
+  - [Running linters](#running-linters)
+  - [Cobra CLI](#cobra-cli)
+  - [Configuration inputs](#configuration-inputs)
+  - [1-time config preparation](#1-time-config-preparation)
+  - [run rootstock locally](#run-rootstock-locally)
+
+## Prerequisites
+
+- [Go](https://golang.org/dl/) 1.26+
+- [golangci-lint](https://golangci-lint.run/) for Go linting
+- [prettier](https://prettier.io/docs/install) for markdown linting
+
+### golangci-lint installation
+
+Install **golangci-lint v2.13.2** — this is the exact version CI runs (pinned in
+`.github/workflows/ci.yaml`). Using the same version locally guarantees your
+results match CI; a different version can report different findings against the
+same config.
+
+The recommended way is via the official install script:
+
+```bash
+curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh \
+  | sh -s -- -b $(go env GOPATH)/bin v2.13.2
+```
+
+Homebrew installs the latest release, which may differ from the pinned version,
+so prefer the script above. If you do use Homebrew, check the version
+afterwards:
+
+```bash
+brew install golangci-lint
+```
+
+Verify you have the pinned version:
+
+```bash
+golangci-lint --version   # should report 2.13.2
+```
+
+### prettier installation
+
+For the installation of `prettier`, `node` needs to be present on the machine.
+For concrete installation documnentation see
+[prettier](https://prettier.io/docs/install).
+
+## Running linters
+
+To run linters and tidy the `go.mod` file, run
+
+```bash
+make lint
+```
+
+This runs golangci-lint against the full codebase using the configuration in
+`.golangci.yaml` at the repo root.
+
+The `conventions` job in CI runs the same linting on every pull request against
+`main`.
+
 ## Cobra CLI
 
 Rootstock is a [cobra cli](https://github.com/spf13/cobra). That means that its
