@@ -1,10 +1,13 @@
 ## Description
+
 <!--
-Please do not leave this blank 
-This PR [adds/removes/fixes/replaces] the [feature/bug/etc]. 
+Please do not leave this blank
+This PR [adds/removes/fixes/replaces] the [feature/bug/etc].
 -->
 
-Please include a summary of the changes and the related issue. Please also include relevant motivation and context. List any dependencies that are required for this change.
+Please include a summary of the changes and the related issue. Please also
+include relevant motivation and context. List any dependencies that are required
+for this change.
 
 ## What type of PR is this? (check all applicable)
 
@@ -22,10 +25,11 @@ Please include a summary of the changes and the related issue. Please also inclu
 
 ## Related Tickets & Documents
 
-<!-- 
+<!--
 Please use this format link issue numbers: Fixes #123
-https://docs.github.com/en/free-pro-team@latest/github/managing-your-work-on-github/linking-a-pull-request-to-an-issue#linking-a-pull-request-to-an-issue-using-a-keyword 
+https://docs.github.com/en/free-pro-team@latest/github/managing-your-work-on-github/linking-a-pull-request-to-an-issue#linking-a-pull-request-to-an-issue-using-a-keyword
 -->
+
 - Related Issue # (issue)
 - Closes # (issue)
 - Fixes # (issue)
@@ -39,7 +43,9 @@ https://docs.github.com/en/free-pro-team@latest/github/managing-your-work-on-git
 - [ ] 🙋 no, because I need help
 - [ ] Separate ticket for tests # (issue/pr)
 
-Please describe the tests that you ran to verify your changes. Provide instructions so we can reproduce. Please also list any relevant details for your test configuration
+Please describe the tests that you ran to verify your changes. Provide
+instructions so we can reproduce. Please also list any relevant details for your
+test configuration
 
 ## Added to documentation?
 
