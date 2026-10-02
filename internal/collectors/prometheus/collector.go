@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	CollectorTimeout = 25 * time.Second
+	collectorTimeout = 25 * time.Second
 )
 
 type Collector struct {
