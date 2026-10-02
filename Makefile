@@ -122,9 +122,14 @@ prometheus-collector-stop: ## Stop and remove Prometheus container
 	docker stop prometheus || true
 	docker rm prometheus || true
 
+
 # Run the go binary with the redfish config necessary for prometheus local test
-run-redfish: build
-	REDFISH_USERNAME="admin" REDFISH_PASSWORD="admin" ./bin/rootstock
+run-redfish: build ## Build and run the rootstock binary with redfish credentials for prometheus testing
+	@mkdir -p tmp
+	@echo "admin" > tmp/redfish_password
+	REDFISH_USERNAME="admin" REDFISH_PASSWORD="admin" ./bin/rootstock run \
+		--config-folder tmp \
+		--redfish-credentials-file redfish_password
 
 # Setup Prometheus locally and run the binary 
 prometheus-local-run: prometheus-local-setup run-redfish
