@@ -1,5 +1,24 @@
 # Design
 
+- [Design](#design)
+  - [1. Overview](#1-overview)
+    - [1.1 Background](#11-background)
+    - [1.2 Problem statement](#12-problem-statement)
+    - [1.3 Scope](#13-scope)
+  - [2. Requirements](#2-requirements)
+    - [2.1 Functional Requirements](#21-functional-requirements)
+    - [2.2 Scalability](#22-scalability)
+    - [2.3 Security](#23-security)
+      - [2.3.1 Device access (PDUs)](#231-device-access-pdus)
+      - [2.3.2 SCI prometheus access](#232-sci-prometheus-access)
+      - [2.3.3. SCI Netbox access](#233-sci-netbox-access)
+      - [2.3.4 Other consumer access](#234-other-consumer-access)
+    - [2.4 Observability](#24-observability)
+  - [3. Service structure](#3-service-structure)
+    - [3.1 Scraping layer](#31-scraping-layer)
+    - [3.2 Processing layer](#32-processing-layer)
+    - [3.1 Emissions layer](#31-emissions-layer)
+
 ## 1. Overview
 
 ### 1.1 Background
