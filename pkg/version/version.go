@@ -13,6 +13,10 @@ import (
 const (
 	maxCommitLength = 7
 	versionElements = 5
+	vMajor          = 1
+	vMinor          = 2
+	vPatch          = 3
+	vSuffix         = 4
 
 	errMsg = "failed to cast %q version in semantic version %q to int: %w"
 )
@@ -42,20 +46,22 @@ func Init(semVersion, buildDate, gitCommit, gitTag, gitTreeState string) error {
 
 	var err error
 
-	serviceVersion.major, err = strconv.Atoi(matches[1])
+	serviceVersion.major, err = strconv.Atoi(matches[vMajor])
 	if err != nil {
 		return fmt.Errorf(errMsg, "major", semVersion, err)
 	}
-	serviceVersion.minor, err = strconv.Atoi(matches[2])
+
+	serviceVersion.minor, err = strconv.Atoi(matches[vMinor])
 	if err != nil {
 		return fmt.Errorf(errMsg, "minor", semVersion, err)
 	}
-	serviceVersion.patch, err = strconv.Atoi(matches[3])
+
+	serviceVersion.patch, err = strconv.Atoi(matches[vPatch])
 	if err != nil {
 		return fmt.Errorf(errMsg, "patch", semVersion, err)
 	}
 
-	serviceVersion.suffix = matches[4]
+	serviceVersion.suffix = matches[vSuffix]
 
 	return nil
 }

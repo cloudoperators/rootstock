@@ -31,12 +31,12 @@ MOCKUP_CONTAINER := redfish-mockup
 green := \033[1;32m[+]
 reset := \033[0m
 
-.PHONY: build test test-integration test-contract test-performance \
+.PHONY: build test test-unit test-integration test-contract test-performance \
         mockup-start mockup-stop \
         prometheus-collector-start prometheus-collector-stop \
         prometheus-local-setup prometheus-local-cleanup prometheus-local-run \
         run-redfish \
-        lint conventions scan \
+        lint lint-go conventions scan \
         generate docker-build \
         help
 
@@ -50,16 +50,18 @@ build: ## Compile a static server binary to bin/
 			-a \
 			-o bin/$(BINARY) \
 			-ldflags "$(LDFLAGS)" \
-			./cmd/server
+			.
 
 # Tests
 
-test: ## Run unit tests with coverage report
+test-unit: ## Run unit tests with race detection and coverage
 	@echo "$(green) unit testing$(reset)"
-	CGO_ENABLED=1 go test ./... -parallel=10 -timeout=10m \
-		-covermode=count \
+	CGO_ENABLED=1 go test ./... -race -parallel=10 -timeout=10m \
+		-covermode=atomic \
 		-coverprofile=coverage.out
 	go tool cover -func=coverage.out -o=coverage.out
+
+test: test-unit ## Alias for test-unit
 
 test-integration: mockup-start ## Start mockup server, run integration tests, stop server
 	@echo "$(green) integration testing$(reset)"
@@ -86,13 +88,15 @@ mockup-stop: ## Stop the DMTF Redfish mockup server
 	@MOCKUP_CONTAINER=$(MOCKUP_CONTAINER) hack/mockup-stop.sh
 
 # Code quality
-lint: ## Run golangci-lint
+lint-go: ## Run golangci-lint on Go code
 	golangci-lint run ./...
+
+lint: lint-go ## Run all linters (alias)
 
 conventions: ## Check formatting conventions - markdown, shell, go (TODO: prettier + shellcheck)
 	@echo "TODO: run prettier on markdown files"
 	@echo "TODO: run shellcheck on shell scripts"
-	$(MAKE) lint
+	$(MAKE) lint-go
 
 scan: ## Run security vulnerability scan
 	@echo "TODO: CodeQL scanning runs in CI via GitHub Actions shared-codeql workflow"

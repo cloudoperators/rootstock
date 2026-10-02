@@ -1,0 +1,75 @@
+# SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Greenhouse contributors
+# SPDX-License-Identifier: Apache-2.0
+
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+
+  conventions:
+    name: Conventions
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: v2.13.2
+      - name: TODO - Markdown linting
+        run: echo "TODO - run prettier on markdown files"
+      - name: TODO - Shell linting
+        run: echo "TODO - run shellcheck on shell scripts"
+
+  code-scans:
+    name: Code Scans
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Run code scans
+        run: make scan
+
+  unit-tests:
+    name: Unit Tests
+    uses: cloudoperators/common/.github/workflows/shared-go-test.yaml@main
+    with:
+      test-target: test-unit
+
+  build:
+    name: Build
+    uses: cloudoperators/common/.github/workflows/shared-go-build.yaml@main
+
+  contract-tests:
+    name: Contract Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Run contract tests
+        run: make test-contract
+
+  file-generation:
+    name: File Generation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Run file generation
+        run: make generate
