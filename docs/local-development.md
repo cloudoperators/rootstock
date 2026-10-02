@@ -1,4 +1,5 @@
 # SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Greenhouse contributors
+
 # SPDX-License-Identifier: Apache-2.0
 
 # Local Development
@@ -13,8 +14,9 @@ This guide covers tooling needed for local development on rootstock.
 ## Installing golangci-lint
 
 Install **golangci-lint v2.13.2** — this is the exact version CI runs (pinned in
-`.github/workflows/ci.yaml`). Using the same version locally guarantees your results
-match CI; a different version can report different findings against the same config.
+`.github/workflows/ci.yaml`). Using the same version locally guarantees your
+results match CI; a different version can report different findings against the
+same config.
 
 The recommended way is via the official install script:
 
@@ -23,8 +25,9 @@ curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install
   | sh -s -- -b $(go env GOPATH)/bin v2.13.2
 ```
 
-Homebrew installs the latest release, which may differ from the pinned version, so
-prefer the script above. If you do use Homebrew, check the version afterwards:
+Homebrew installs the latest release, which may differ from the pinned version,
+so prefer the script above. If you do use Homebrew, check the version
+afterwards:
 
 ```bash
 brew install golangci-lint
@@ -44,6 +47,8 @@ Run Go linting locally before opening a PR:
 make lint-go
 ```
 
-This runs golangci-lint against the full codebase using the configuration in `.golangci.yaml` at the repo root.
+This runs golangci-lint against the full codebase using the configuration in
+`.golangci.yaml` at the repo root.
 
-The `conventions` job in CI runs the same linting on every pull request against `main`.
+The `conventions` job in CI runs the same linting on every pull request against
+`main`.
