@@ -10,7 +10,6 @@ import (
 
 	"github.com/cloudoperators/rootstock/internal/redfish"
 	"github.com/cloudoperators/rootstock/pkg/log"
-
 	"github.com/prometheus/client_golang/prometheus"
 )
 
