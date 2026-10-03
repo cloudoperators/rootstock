@@ -13,11 +13,29 @@
       - [2.3.2 SCI prometheus access](#232-sci-prometheus-access)
       - [2.3.3. SCI Netbox access](#233-sci-netbox-access)
       - [2.3.4 Other consumer access](#234-other-consumer-access)
-    - [2.4 Observability](#24-observability)
+    - [2.4 SLOs, Validations, Metrics \& Alerts](#24-slos-validations-metrics--alerts)
+      - [2.4.1 SLOs](#241-slos)
+      - [2.4.2 Performance testsuites](#242-performance-testsuites)
+      - [2.4.3 Health \& Readiness probes](#243-health--readiness-probes)
+      - [2.4.4 Observability metrics](#244-observability-metrics)
+      - [2.4.5 Alerts](#245-alerts)
   - [3. Service structure](#3-service-structure)
     - [3.1 Scraping layer](#31-scraping-layer)
+      - [3.1.1 Redfish manager](#311-redfish-manager)
+      - [3.1.2 Redfish scraper](#312-redfish-scraper)
+      - [3.1.1 SNMP collector](#311-snmp-collector)
     - [3.2 Processing layer](#32-processing-layer)
-    - [3.1 Emissions layer](#31-emissions-layer)
+      - [3.2.1 Ingestion queue](#321-ingestion-queue)
+      - [3.2.2 Processor](#322-processor)
+    - [3.3 Emissions layer](#33-emissions-layer)
+      - [3.3.1 Result queue](#331-result-queue)
+      - [3.3.2 Prometheus Collector](#332-prometheus-collector)
+      - [3.3.2 Otel Exporters](#332-otel-exporters)
+  - [4. Communication interfaces](#4-communication-interfaces)
+    - [4.1. HTTP server endpoints (rootstock)](#41-http-server-endpoints-rootstock)
+      - [4.1.1 Metrics](#411-metrics)
+      - [4.1.2 Health and Readiness](#412-health-and-readiness)
+    - [4.2. Redfish server interface](#42-redfish-server-interface)
 
 ## 1. Overview
 
@@ -101,6 +119,8 @@ TODO: implement
 
 TODO: specify
 
+- credentail injection via vault
+
 #### 2.3.2 SCI prometheus access
 
 To secure the endpoints for prometheus pull-based scraping, we use a kubernetes
@@ -117,7 +137,29 @@ TODO: specify
 
 TODO: specify
 
-### 2.4 Observability
+- access keys
+- certificates
+
+### 2.4 SLOs, Validations, Metrics & Alerts
+
+To ensure that rootstock works reliably, we define SLOs and suitable validation
+instruments (testsuites, runtime metrics, alerts).
+
+#### 2.4.1 SLOs
+
+TODO
+
+#### 2.4.2 Performance testsuites
+
+TODO
+
+#### 2.4.3 Health & Readiness probes
+
+TODO
+
+#### 2.4.4 Observability metrics
+
+TODO: update
 
 Rootstock itself will emit observability metrics to report its working
 conditions:
@@ -125,6 +167,10 @@ conditions:
 - \# monitored redfish PDUs
 - processing time
 - queue length
+
+#### 2.4.5 Alerts
+
+TODO
 
 ## 3. Service structure
 
@@ -135,6 +181,78 @@ In general, rootstock is implemented as a cobra CLI. Internallly, it splits into
 
 ### 3.1 Scraping layer
 
+TODO: add details on implementation
+
+#### 3.1.1 Redfish manager
+
+TODO: add details on implementation
+
+#### 3.1.2 Redfish scraper
+
+TODO: add details on implementation
+
+#### 3.1.1 SNMP collector
+
+TODO: add details on implementation
+
 ### 3.2 Processing layer
 
-### 3.1 Emissions layer
+TODO: add details on implementation
+
+#### 3.2.1 Ingestion queue
+
+TODO: add details on implementation
+
+#### 3.2.2 Processor
+
+TODO: add details on implementation
+
+### 3.3 Emissions layer
+
+TODO: add details on implementation
+
+#### 3.3.1 Result queue
+
+TODO: add details on implementation
+
+#### 3.3.2 Prometheus Collector
+
+TODO: add details on implementation
+
+- consolidate with [prometheus.md](./prometheus.md)
+
+#### 3.3.2 Otel Exporters
+
+TODO: add details on implementation
+
+## 4. Communication interfaces
+
+### 4.1. HTTP server endpoints (rootstock)
+
+#### 4.1.1 Metrics
+
+TODO: refine
+
+```text
+GET /metrics?target=<host>
+```
+
+**Description:** Main endpoint for Prometheus scraping using multi-target
+pattern.
+
+**Response:** Prometheus exposition format with PDU metrics
+
+#### 4.1.2 Health and Readiness
+
+TODO: refine
+
+```text
+GET /health   # Liveness probe
+GET /ready    # Readiness probe
+```
+
+### 4.2. Redfish server interface
+
+This section specifies the expected REST interface on the redfish device side.
+
+TODO
