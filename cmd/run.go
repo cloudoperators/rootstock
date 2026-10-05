@@ -11,11 +11,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/spf13/cobra"
+
 	"github.com/cloudoperators/rootstock/internal/communication/rest"
 	"github.com/cloudoperators/rootstock/internal/shutdown"
 	"github.com/cloudoperators/rootstock/pkg/log"
 	v "github.com/cloudoperators/rootstock/pkg/version"
-	"github.com/spf13/cobra"
 )
 
 var (

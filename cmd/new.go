@@ -8,11 +8,12 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+
 	"github.com/cloudoperators/rootstock/internal/shutdown"
 	"github.com/cloudoperators/rootstock/pkg/log"
 	v "github.com/cloudoperators/rootstock/pkg/version"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 const (
