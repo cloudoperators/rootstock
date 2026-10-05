@@ -8,10 +8,11 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/cloudoperators/rootstock/internal/shutdown"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+
+	"github.com/cloudoperators/rootstock/internal/shutdown"
 )
 
 const (
