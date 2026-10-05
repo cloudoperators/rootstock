@@ -9,11 +9,12 @@ import (
 	"os"
 	"testing"
 
-	"github.com/cloudoperators/rootstock/pkg/log"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/cloudoperators/rootstock/pkg/log"
 )
 
 func TestMain(m *testing.M) {

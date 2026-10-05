@@ -9,10 +9,11 @@ import (
 	"os"
 	"sync"
 
-	"github.com/cloudoperators/rootstock/pkg/log"
 	"github.com/fsnotify/fsnotify"
 	"github.com/google/uuid"
 	"github.com/spf13/viper"
+
+	"github.com/cloudoperators/rootstock/pkg/log"
 )
 
 const (

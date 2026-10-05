@@ -722,6 +722,11 @@ formatters:
   settings:
     gofumpt:
       module-path: github.com/cloudoperators/rootstock
+    gci:
+      sections:
+        - standard
+        - default
+        - localmodule
   exclusions:
     generated: lax
     paths:

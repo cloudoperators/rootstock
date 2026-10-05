@@ -12,14 +12,15 @@ import (
 	"sync"
 	"time"
 
-	prom "github.com/cloudoperators/rootstock/internal/collectors/prometheus"
-	"github.com/cloudoperators/rootstock/internal/redfish"
-	"github.com/cloudoperators/rootstock/internal/shutdown"
-	"github.com/cloudoperators/rootstock/pkg/log"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+
+	prom "github.com/cloudoperators/rootstock/internal/collectors/prometheus"
+	"github.com/cloudoperators/rootstock/internal/redfish"
+	"github.com/cloudoperators/rootstock/internal/shutdown"
+	"github.com/cloudoperators/rootstock/pkg/log"
 )
 
 const (
