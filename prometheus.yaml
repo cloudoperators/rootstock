@@ -1,0 +1,27 @@
+# SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Greenhouse contributors
+# SPDX-License-Identifier: Apache-2.0
+
+scrape_configs:
+  - job_name: "rootstock"
+    scrape_interval: 30s
+    metrics_path: /probe
+
+    static_configs:
+      - targets:
+          - http://localhost:8000
+        labels:
+          pdu_id: "1"
+      - targets:
+          - http://localhost:8000
+        labels:
+          pdu_id: "2"
+
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+
+      - source_labels: [pdu_id]
+        target_label: __param_labels
+
+      - target_label: __address__
+        replacement: host.docker.internal:9220
