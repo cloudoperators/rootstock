@@ -129,7 +129,7 @@ prometheus-collector-stop: ## Stop and remove Prometheus container
 run-redfish: build ## Build and run the rootstock binary with redfish credentials for prometheus testing
 	@mkdir -p tmp
 	@echo "admin" > tmp/redfish_password
-	REDFISH_USERNAME="admin" REDFISH_PASSWORD="admin" ./bin/rootstock run \
+	./bin/rootstock run \
 		--config-folder tmp \
 		--redfish-credentials-file redfish_password
 
