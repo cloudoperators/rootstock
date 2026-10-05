@@ -6,7 +6,7 @@ To test the Prometheus collector locally you can run the make command
 1. Build the Go binary
 2. Spin up the Redfish mockup server
 3. Spin up local Prometheus collector
-4. Run the Go binary with test Redfish credentials
+4. Run the Go binary with test Redfish credentials (password from file, default username)
 
 The Prometheus collector uses the `prometheus.yaml` config file, which
 configures probing the rootstock service every 30 seconds with 2 targets (PDU
@@ -19,7 +19,7 @@ IDs "1" and "2"). The mock Redfish server returns values stored in the
 - `make prometheus-local-setup` - Only setup (build, start mockup, start
   Prometheus)
 - `make prometheus-local-cleanup` - Teardown (stop and remove Docker containers)
-- `make run-redfish` - Run the rootstock binary with default credentials
+- `make run-redfish` - Run the rootstock binary with default username (password from file, default username)
 
 ## Accessing Services
 
