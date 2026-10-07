@@ -31,10 +31,27 @@ MOCKUP_CONTAINER := redfish-mockup
 green := \033[1;32m[+]
 reset := \033[0m
 
+# Container image / local Kubernetes (kind) settings
+# IMAGE_VERSION is a semver-valid tag parsed from VERSION.yaml without requiring
+# yq (the version package rejects non-semver strings at startup, so we must not
+# use the git-describe fallback that $(VERSION) may produce).
+IMAGE_VERSION  ?= $(shell sed -n 's/^version:[[:space:]]*//p' VERSION.yaml)
+IMG            ?= $(BINARY):$(IMAGE_VERSION)
+KIND_CLUSTER   ?= rootstock-local
+CHART_DIR      := k8s_configuration/chart
+CHART_RELEASE  ?= rootstock
+CHART_NAMESPACE ?= rootstock
+REDFISH_SECRET ?= rootstock-redfish
+REDFISH_PASSWORD ?= admin
+
+
 .PHONY: build test test-unit test-integration test-contract test-performance \
         mockup-start mockup-stop \
         lint lint-go lint-md conventions scan \
         generate docker-build \
+        kind-up kind-load kind-mockup kind-secret kind-deploy kind-verify kind-down \
+        kind-cluster \
+        helm-lint helm-template \
         help
 
 # Build
@@ -108,8 +125,75 @@ scan: ## Run security vulnerability scan
 generate: ## Run code generation (TODO: not yet needed)
 	@echo "TODO: add code generation steps e.g. go generate ./..."
 
-docker-build: ## Build the container image (TODO: Dockerfile not yet written)
-	@echo "TODO: docker build -t $(BINARY):$(VERSION) ."
+docker-build: ## Build the container image (tagged $(IMG))
+	@echo "$(green) building container image $(IMG)$(reset)"
+	docker build \
+		--build-arg VERSION=$(IMAGE_VERSION) \
+		--build-arg GIT_COMMIT=$(GIT_COMMIT) \
+		--build-arg BUILD_DATE=$(BUILD_DATE) \
+		--build-arg GIT_TREE_STATE=$(GIT_TREE_STATE) \
+		-t $(IMG) .
+
+# ---------------------------------------------------------------------------
+# Local Kubernetes deployment via kind + Helm
+# Requires: docker, kind, kubectl, helm
+# One-shot: make kind-up (create cluster, load image, deploy mockup + chart)
+#           make kind-verify (port-forward and probe the running pod)
+#           make kind-down (delete the cluster)
+# ---------------------------------------------------------------------------
+
+helm-lint: ## Lint the Helm chart
+	@echo "$(green) helm lint$(reset)"
+	helm lint $(CHART_DIR) -f $(CHART_DIR)/ci/test-values.yaml
+
+helm-template: ## Render the Helm chart to stdout
+	@echo "$(green) helm template$(reset)"
+	helm template $(CHART_RELEASE) $(CHART_DIR) -f $(CHART_DIR)/ci/test-values.yaml
+
+kind-load: docker-build ## Load the built image into the kind cluster
+	@echo "$(green) loading $(IMG) into kind cluster $(KIND_CLUSTER)$(reset)"
+	kind load docker-image $(IMG) --name $(KIND_CLUSTER)
+
+kind-mockup: ## Build+load and deploy the DMTF Redfish mockup (PDU dataset) into kind
+	@echo "$(green) building and loading redfish mockup image$(reset)"
+	docker build -t rootstock-mockup:latest -f hack/kind/Dockerfile.mockup .
+	kind load docker-image rootstock-mockup:latest --name $(KIND_CLUSTER)
+	@echo "$(green) deploying redfish mockup into kind$(reset)"
+	kubectl --context kind-$(KIND_CLUSTER) create namespace $(CHART_NAMESPACE) \
+		--dry-run=client -o yaml | kubectl --context kind-$(KIND_CLUSTER) apply -f -
+	kubectl --context kind-$(KIND_CLUSTER) -n $(CHART_NAMESPACE) apply -f hack/kind/redfish-mockup.yaml
+	kubectl --context kind-$(KIND_CLUSTER) -n $(CHART_NAMESPACE) rollout status deploy/redfish-mockup --timeout=120s
+
+kind-secret: ## Create the redfish credentials secret in the kind cluster
+	@echo "$(green) creating redfish credentials secret $(REDFISH_SECRET)$(reset)"
+	kubectl --context kind-$(KIND_CLUSTER) -n $(CHART_NAMESPACE) create secret generic $(REDFISH_SECRET) \
+		--from-literal=redfish_password="$(REDFISH_PASSWORD)" \
+		--dry-run=client -o yaml | kubectl --context kind-$(KIND_CLUSTER) apply -f -
+
+kind-deploy: kind-secret ## Install/upgrade the rootstock Helm chart in the kind cluster
+	@echo "$(green) deploying rootstock chart into kind$(reset)"
+	helm --kube-context kind-$(KIND_CLUSTER) upgrade --install $(CHART_RELEASE) $(CHART_DIR) \
+		--namespace $(CHART_NAMESPACE) --create-namespace \
+		--set image.repository=$(BINARY) \
+		--set image.tag=$(IMAGE_VERSION) \
+		--set image.pullPolicy=IfNotPresent \
+		--set redfish.existingSecret=$(REDFISH_SECRET) \
+		--wait --timeout 120s
+
+kind-up: kind-cluster kind-load kind-mockup kind-deploy ## Create kind cluster and deploy everything
+	@echo "$(green) rootstock is deployed. Run 'make kind-verify' to probe it.$(reset)"
+
+kind-cluster: ## Create the kind cluster if it does not exist
+	@kind get clusters 2>/dev/null | grep -qx $(KIND_CLUSTER) \
+		|| kind create cluster --name $(KIND_CLUSTER)
+
+kind-verify: ## Port-forward and probe the running rootstock pod
+	@echo "$(green) verifying rootstock in kind$(reset)"
+	hack/kind/verify.sh $(KIND_CLUSTER) $(CHART_NAMESPACE) $(CHART_RELEASE)
+
+kind-down: ## Delete the kind cluster
+	@echo "$(green) deleting kind cluster $(KIND_CLUSTER)$(reset)"
+	kind delete cluster --name $(KIND_CLUSTER)
 
 # Build everything that is necessary for testing prometheus locally
 prometheus-local-setup: build mockup-start prometheus-collector-start

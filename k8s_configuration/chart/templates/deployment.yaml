@@ -1,0 +1,89 @@
+{{/*
+SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Greenhouse contributors
+SPDX-License-Identifier: Apache-2.0
+*/}}
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "rootstock.fullname" . }}
+  labels:
+    {{- include "rootstock.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "rootstock.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        # Roll the pods when the rendered Secret changes (only relevant for the
+        # chart-managed Secret; pre-existing Secrets hot-reload via fsnotify).
+        {{- if not .Values.redfish.existingSecret }}
+        checksum/redfish-secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+        {{- end }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "rootstock.selectorLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "rootstock.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: {{ include "rootstock.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - run
+            - --port={{ .Values.server.port }}
+            - --scrape-timeout={{ .Values.server.scrapeTimeout }}
+            - --redfish-username={{ .Values.redfish.username }}
+            - --config-folder={{ .Values.redfish.configFolder }}
+            - --redfish-credentials-file={{ .Values.redfish.credentialsFileName }}
+          # NOTE: the Redfish password is NEVER passed as an environment
+          # variable. It is read exclusively from the mounted file below.
+          ports:
+            - name: http
+              containerPort: {{ .Values.server.port }}
+              protocol: TCP
+          livenessProbe:
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: redfish-credentials
+              mountPath: {{ .Values.redfish.configFolder }}
+              readOnly: true
+      volumes:
+        - name: redfish-credentials
+          secret:
+            secretName: {{ include "rootstock.redfishSecretName" . }}
+            defaultMode: 0400
+            items:
+              - key: {{ .Values.redfish.secretKey }}
+                path: {{ .Values.redfish.credentialsFileName }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
