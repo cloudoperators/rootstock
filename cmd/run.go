@@ -13,6 +13,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/cloudoperators/rootstock/internal/collectors/cache"
 	"github.com/cloudoperators/rootstock/internal/communication/rest"
 	"github.com/cloudoperators/rootstock/internal/shutdown"
 	"github.com/cloudoperators/rootstock/pkg/log"
@@ -140,6 +141,7 @@ func dynamicRunServer(l log.FullInterface) {
 		redfishUsername.Value(),
 		password,
 		scrapeTimeoutDefault,
+		cache.NewCache(),
 	)
 	l.Info("starting HTTP server", "port", port.Value(), "username", redfishUsername.Value())
 	server.ListenAndServe()

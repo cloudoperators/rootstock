@@ -10,6 +10,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 
+	"github.com/cloudoperators/rootstock/internal/collectors/cache"
 	"github.com/cloudoperators/rootstock/internal/redfish"
 	"github.com/cloudoperators/rootstock/pkg/log"
 )
@@ -23,9 +24,14 @@ type Collector struct {
 	redfishClient redfish.Client
 	pduID         string
 	logger        log.MinInterface
+	cache         *cache.Cache
 
-	peRackPDUMetrics *PERackPDUMetrics
-	peRackPDU        *PERackPDU
+	metricData *RackPDUMetricData
+}
+
+type RackPDUMetricData struct {
+	PERackPDUMetrics *PERackPDUMetrics
+	PERackPDU        *PERackPDU
 }
 
 type PERackPDUMetrics struct {
@@ -40,61 +46,63 @@ type PERackPDU struct {
 	PowerCapacityVA *prometheus.Desc
 }
 
-func NewCollector(redfishClient redfish.Client, pduID string) *Collector {
+func NewCollector(pduID string, c *cache.Cache) *Collector {
 	logger := log.Default()
 
 	return &Collector{
-		redfishClient: redfishClient,
-		pduID:         pduID,
-		logger:        logger,
-		peRackPDUMetrics: &PERackPDUMetrics{
-			Reading: prometheus.NewDesc(
-				"pdu_power_watts",
-				"PDU power consumption in watts",
-				[]string{"pdu_id"},
-				nil,
-			),
-			ApparentVA: prometheus.NewDesc(
-				"apparent_va",
-				"PDU apparent power in VA",
-				[]string{"pdu_id"},
-				nil,
-			),
-			ReactiveVAR: prometheus.NewDesc(
-				"reactive_var",
-				"PDU reactive power in VAR",
-				[]string{"pdu_id"},
-				nil,
-			),
-			PowerFactor: prometheus.NewDesc(
-				"power_factor",
-				"PDU efficiency of apparent power being converted into real power",
-				[]string{"pdu_id"},
-				nil,
-			),
-		},
-		peRackPDU: &PERackPDU{
-			PowerCapacityVA: prometheus.NewDesc(
-				"power_capacity_va",
-				"the maximum power rated as apparent power",
-				[]string{"pdu_id"},
-				nil,
-			),
+		pduID:  pduID,
+		logger: logger,
+		cache:  c,
+		metricData: &RackPDUMetricData{
+			PERackPDUMetrics: &PERackPDUMetrics{
+				Reading: prometheus.NewDesc(
+					"pdu_power_watts",
+					"PDU power consumption in watts",
+					[]string{"pdu_id"},
+					nil,
+				),
+				ApparentVA: prometheus.NewDesc(
+					"apparent_va",
+					"PDU apparent power in VA",
+					[]string{"pdu_id"},
+					nil,
+				),
+				ReactiveVAR: prometheus.NewDesc(
+					"reactive_var",
+					"PDU reactive power in VAR",
+					[]string{"pdu_id"},
+					nil,
+				),
+				PowerFactor: prometheus.NewDesc(
+					"power_factor",
+					"PDU efficiency of apparent power being converted into real power",
+					[]string{"pdu_id"},
+					nil,
+				),
+			},
+			PERackPDU: &PERackPDU{
+				PowerCapacityVA: prometheus.NewDesc(
+					"power_capacity_va",
+					"the maximum power rated as apparent power",
+					[]string{"pdu_id"},
+					nil,
+				),
+			},
 		},
 	}
 }
 
 // Describe implements prometheus.Collector.
 func (c *Collector) Describe(ch chan<- *prometheus.Desc) {
-	ch <- c.peRackPDUMetrics.Reading
+	ch <- c.metricData.PERackPDUMetrics.Reading
 
-	ch <- c.peRackPDUMetrics.ApparentVA
+	ch <- c.metricData.PERackPDUMetrics.ApparentVA
 
-	ch <- c.peRackPDUMetrics.ReactiveVAR
+	ch <- c.metricData.PERackPDUMetrics.ReactiveVAR
 
-	ch <- c.peRackPDUMetrics.PowerFactor
+	ch <- c.metricData.PERackPDUMetrics.PowerFactor
 
-	ch <- c.peRackPDU.PowerCapacityVA
+	ch <- c.metricData.PERackPDU.PowerCapacityVA
 }
 
 // Collect implements prometheus.Collector.
@@ -106,25 +114,29 @@ func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 	// Note: prometheus.Collector interface doesn't accept context as parameter,
 	// so we create one here with a reasonable timeout. The HTTP client's timeout
 	// (configured in NewClient) provides the ultimate backstop.
-	ctx, cancel := context.WithTimeout(context.Background(), collectorTimeout)
+	_, cancel := context.WithTimeout(context.Background(), collectorTimeout)
 	defer cancel()
 
-	// Fetch PDU metrics from Redfish API
-	pduPERackMetrics, err := c.redfishClient.GetPERackPDUMetrics(ctx, c.pduID)
-	if err != nil {
-		c.logger.Error("failed to fetch PDU metrics", log.KeyError, err, "pdu_id", c.pduID)
+	metrics, _ := c.cache.Get(c.pduID)
+	if metrics == nil {
+		c.logger.Error("failed to retrieve metrics from cache", "pdu_id", c.pduID)
 		return
 	}
 
-	c.logger.Info("successfully scraped PDU metrics", "pdu_id", c.pduID)
+	c.logger.Info("successfully retrieved PDU metrics from cache", "pdu_id", c.pduID)
 
-	// Extract metrics from the response
-	// PowerWatts metric
-	if pduPERackMetrics.PowerWatts.Reading != 0 {
+	// Check if metrics structure is valid
+	if metrics.PERackPDUMetrics == nil {
+		c.logger.Error("PERackPDUMetrics is nil in cache", "pdu_id", c.pduID)
+		return
+	}
+
+	// Reading metric
+	if metrics.PERackPDUMetrics.Reading != 0 {
 		metric, err := prometheus.NewConstMetric(
-			c.peRackPDUMetrics.Reading,
+			c.metricData.PERackPDUMetrics.Reading,
 			prometheus.GaugeValue,
-			pduPERackMetrics.PowerWatts.Reading,
+			metrics.PERackPDUMetrics.Reading,
 			c.pduID,
 		)
 		if err != nil {
@@ -135,11 +147,11 @@ func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 	}
 
 	// ApparentVA metric
-	if pduPERackMetrics.PowerWatts.ApparentVA != 0 {
+	if metrics.PERackPDUMetrics.ApparentVA != 0 {
 		metric, err := prometheus.NewConstMetric(
-			c.peRackPDUMetrics.ApparentVA,
+			c.metricData.PERackPDUMetrics.ApparentVA,
 			prometheus.GaugeValue,
-			pduPERackMetrics.PowerWatts.ApparentVA,
+			metrics.PERackPDUMetrics.ApparentVA,
 			c.pduID,
 		)
 		if err != nil {
@@ -150,11 +162,11 @@ func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 	}
 
 	// ReactiveVAR metric
-	if pduPERackMetrics.PowerWatts.ReactiveVAR != 0 {
+	if metrics.PERackPDUMetrics.ReactiveVAR != 0 {
 		metric, err := prometheus.NewConstMetric(
-			c.peRackPDUMetrics.ReactiveVAR,
+			c.metricData.PERackPDUMetrics.ReactiveVAR,
 			prometheus.GaugeValue,
-			pduPERackMetrics.PowerWatts.ReactiveVAR,
+			metrics.PERackPDUMetrics.ReactiveVAR,
 			c.pduID,
 		)
 		if err != nil {
@@ -165,11 +177,11 @@ func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 	}
 
 	// PowerFactor metric
-	if pduPERackMetrics.PowerWatts.PowerFactor != 0 {
+	if metrics.PERackPDUMetrics.PowerFactor != 0 {
 		metric, err := prometheus.NewConstMetric(
-			c.peRackPDUMetrics.PowerFactor,
+			c.metricData.PERackPDUMetrics.PowerFactor,
 			prometheus.GaugeValue,
-			pduPERackMetrics.PowerWatts.PowerFactor,
+			metrics.PERackPDUMetrics.PowerFactor,
 			c.pduID,
 		)
 		if err != nil {
@@ -179,25 +191,18 @@ func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 		}
 	}
 
-	peRackPDU, err := c.redfishClient.GetPERackPDU(ctx, c.pduID)
-	if err != nil {
-		c.logger.Error("failed to fetch PDU metrics", log.KeyError, err, "pdu_id", c.pduID)
-		return
-	}
-
-	if peRackPDU.PowerCapacityVA == 0 {
-		return
-	}
-
-	metric, err := prometheus.NewConstMetric(
-		c.peRackPDU.PowerCapacityVA,
-		prometheus.GaugeValue,
-		peRackPDU.PowerCapacityVA,
-		c.pduID,
-	)
-	if err != nil {
-		c.logger.Error("failed to create PowerCapacityVA metric", log.KeyError, err, "pdu_id", c.pduID)
-	} else {
-		ch <- metric
+	// PowerCapacityVA metric
+	if metrics.PERackPDU != nil && metrics.PERackPDU.PowerCapacityVA != 0 {
+		metric, err := prometheus.NewConstMetric(
+			c.metricData.PERackPDU.PowerCapacityVA,
+			prometheus.GaugeValue,
+			metrics.PERackPDU.PowerCapacityVA,
+			c.pduID,
+		)
+		if err != nil {
+			c.logger.Error("failed to create PowerCapacityVA metric", log.KeyError, err, "pdu_id", c.pduID)
+		} else {
+			ch <- metric
+		}
 	}
 }

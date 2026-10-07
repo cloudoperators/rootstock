@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"net/url"
 	"sync"
 	"time"
 
@@ -17,8 +16,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
+	"github.com/cloudoperators/rootstock/internal/collectors/cache"
 	prom "github.com/cloudoperators/rootstock/internal/collectors/prometheus"
-	"github.com/cloudoperators/rootstock/internal/redfish"
 	"github.com/cloudoperators/rootstock/internal/shutdown"
 	"github.com/cloudoperators/rootstock/pkg/log"
 )
@@ -40,7 +39,7 @@ type Server interface {
 }
 
 func New(
-	port int, logger log.MinInterface, redfishUsername, redfishPassword string, scrapeTimeout time.Duration,
+	port int, logger log.MinInterface, redfishUsername, redfishPassword string, scrapeTimeout time.Duration, cache *cache.Cache,
 ) Server {
 	s := &server{
 		server: &http.Server{
@@ -53,6 +52,7 @@ func New(
 		redfishUsername: redfishUsername,
 		redfishPassword: redfishPassword,
 		scrapeTimeout:   scrapeTimeout,
+		cache:           cache,
 	}
 
 	r := chi.NewRouter()
@@ -78,6 +78,7 @@ type server struct {
 	redfishUsername string
 	redfishPassword string
 	scrapeTimeout   time.Duration
+	cache           *cache.Cache
 }
 
 func (s *server) ListenAndServe() {
@@ -137,32 +138,32 @@ func (s *server) probeHandler() http.HandlerFunc {
 
 		s.log.Info("probing target", "target", target, "pduID", pduID)
 
-		// Parse target URL
-		targetURL, err := url.Parse(target)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("invalid target URL: %v", err), http.StatusBadRequest)
-			s.log.Error("invalid target URL", "target", target, log.KeyError, err)
+		// // Parse target URL
+		// targetURL, err := url.Parse(target)
+		// if err != nil {
+		// 	http.Error(w, fmt.Sprintf("invalid target URL: %v", err), http.StatusBadRequest)
+		// 	s.log.Error("invalid target URL", "target", target, log.KeyError, err)
 
-			return
-		}
+		// 	return
+		// }
 
-		// Create redfish client with configured credentials
-		redfishClient := redfish.NewClient(
-			targetURL,
-			s.log,
-			s.redfishUsername,
-			s.redfishPassword,
-			s.scrapeTimeout,
-		)
+		// // Create redfish client with configured credentials
+		// redfishClient := redfish.NewClient(
+		// 	targetURL,
+		// 	s.log,
+		// 	s.redfishUsername,
+		// 	s.redfishPassword,
+		// 	s.scrapeTimeout,
+		// )
 
 		s.log.Info("Using PDU ID from labels parameter", "pduID", pduID)
 		// Create a temporary collector for this target
-		collector := prom.NewCollector(redfishClient, pduID)
+		collector := prom.NewCollector(pduID, s.cache)
 
 		// Create a temporary registry for this specific scrape
 		registry := prometheus.NewRegistry()
 
-		err = registry.Register(collector)
+		err := registry.Register(collector)
 		if err != nil {
 			http.Error(
 				w,
