@@ -136,7 +136,14 @@ func (s *server) probeHandler() http.HandlerFunc {
 			return
 		}
 
-		s.log.Info("probing target", "target", target, "pduID", pduID)
+		// Read metric collection types from "collect" query parameter
+		collect := req.URL.Query().Get("collect")
+		// if collect == "" {
+		// 	// Default to all metric types if not specified
+		// 	collect = "rackpdu,environmentalsensors"
+		// }
+
+		s.log.Info("probing target", "target", target, "pduID", pduID, "collect", collect)
 
 		// // Parse target URL
 		// targetURL, err := url.Parse(target)
@@ -158,7 +165,7 @@ func (s *server) probeHandler() http.HandlerFunc {
 
 		s.log.Info("Using PDU ID from labels parameter", "pduID", pduID)
 		// Create a temporary collector for this target
-		collector := prom.NewCollector(pduID, s.cache)
+		collector := prom.NewCollector(pduID, collect, s.cache)
 
 		// Create a temporary registry for this specific scrape
 		registry := prometheus.NewRegistry()

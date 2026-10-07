@@ -23,6 +23,7 @@ type Collector struct {
 	mu            sync.Mutex
 	redfishClient redfish.Client
 	pduID         string
+	collect       string
 	logger        log.MinInterface
 	cache         *cache.Cache
 
@@ -46,13 +47,14 @@ type PERackPDU struct {
 	PowerCapacityVA *prometheus.Desc
 }
 
-func NewCollector(pduID string, c *cache.Cache) *Collector {
+func NewCollector(pduID string, collect string, c *cache.Cache) *Collector {
 	logger := log.Default()
 
 	return &Collector{
-		pduID:  pduID,
-		logger: logger,
-		cache:  c,
+		pduID:   pduID,
+		collect: collect,
+		logger:  logger,
+		cache:   c,
 		metricData: &RackPDUMetricData{
 			PERackPDUMetrics: &PERackPDUMetrics{
 				Reading: prometheus.NewDesc(
@@ -117,7 +119,19 @@ func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 	_, cancel := context.WithTimeout(context.Background(), collectorTimeout)
 	defer cancel()
 
-	metrics, _ := c.cache.Get(c.pduID)
+	switch c.collect {
+	case "rackpdu":
+		c.collectRackPDU(ch)
+	case "environmentalsensors":
+		c.collectEnvironmentalSensors(ch)
+	default:
+		c.collectRackPDU(ch)
+		c.collectEnvironmentalSensors(ch)
+	}
+}
+
+func (c *Collector) collectRackPDU(ch chan<- prometheus.Metric) {
+	metrics, _ := c.cache.GetRackPDU(c.pduID)
 	if metrics == nil {
 		c.logger.Error("failed to retrieve metrics from cache", "pdu_id", c.pduID)
 		return
@@ -205,4 +219,9 @@ func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 			ch <- metric
 		}
 	}
+}
+
+func (c *Collector) collectEnvironmentalSensors(ch chan<- prometheus.Metric) {
+	// TODO
+	c.cache.GeEnvironmentalSensorsData(c.pduID)
 }

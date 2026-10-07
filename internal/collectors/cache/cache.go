@@ -6,9 +6,13 @@ import (
 	"github.com/cloudoperators/rootstock/pkg/log"
 )
 
-type MetricData struct {
+type RackPDUMetricData struct {
 	PERackPDUMetrics *PERackPDUMetrics
 	PERackPDU        *PERackPDU
+}
+
+type EnvironmentalSensorsData struct {
+	// TODO
 }
 
 type PERackPDUMetrics struct {
@@ -27,23 +31,25 @@ type Cache struct {
 	mu     sync.RWMutex
 	logger log.MinInterface
 
-	metricData map[string]MetricData
+	rackPDUMData             map[string]RackPDUMetricData
+	environmentalSensorsData map[string]EnvironmentalSensorsData
 }
 
 func NewCache() *Cache {
 	logger := log.Default()
 
 	return &Cache{
-		logger:     logger,
-		metricData: make(map[string]MetricData),
+		logger:                   logger,
+		rackPDUMData:             make(map[string]RackPDUMetricData),
+		environmentalSensorsData: make(map[string]EnvironmentalSensorsData),
 	}
 }
 
-func (c *Cache) Get(key string) (*MetricData, error) {
+func (c *Cache) GetRackPDU(key string) (*RackPDUMetricData, error) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
-	metricData, exists := c.metricData[key]
+	metricData, exists := c.rackPDUMData[key]
 	if !exists {
 		return nil, nil
 	}
@@ -51,9 +57,28 @@ func (c *Cache) Get(key string) (*MetricData, error) {
 	return &metricData, nil
 }
 
-func (c *Cache) Set(key string, metricData *MetricData) {
+func (c *Cache) SetRackPDU(key string, metricData *RackPDUMetricData) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	c.metricData[key] = *metricData
+	c.rackPDUMData[key] = *metricData
+}
+
+func (c *Cache) GeEnvironmentalSensorsData(key string) (*EnvironmentalSensorsData, error) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	metricData, exists := c.environmentalSensorsData[key]
+	if !exists {
+		return nil, nil
+	}
+
+	return &metricData, nil
+}
+
+func (c *Cache) SeEnvironmentalSensorsData(key string, metricData *EnvironmentalSensorsData) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.environmentalSensorsData[key] = *metricData
 }
