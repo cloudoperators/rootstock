@@ -19,7 +19,7 @@ type RackPDUMetricData struct {
 }
 
 type EnvironmentalSensorsData struct {
-	// TODO: define environmental sensors data structure
+	// Environmental sensors data structure will be defined when implementing environmental sensor metrics collection
 }
 
 type PERackPDUMetrics struct {
@@ -34,7 +34,7 @@ type PERackPDU struct {
 	PowerCapacityVA float64
 }
 
-type Cache struct {
+type cacheImpl struct {
 	mu     sync.RWMutex
 	logger log.MinInterface
 
@@ -42,50 +42,54 @@ type Cache struct {
 	environmentalSensorsData map[string]EnvironmentalSensorsData
 }
 
-func NewCache() *Cache {
-	logger := log.Default()
+type Cache interface {
+	GetRackPDU(string) (*RackPDUMetricData, error)
+	SetRackPDU(string, *RackPDUMetricData)
+	GeEnvironmentalSensorsData(string) (*EnvironmentalSensorsData, error)
+	SeEnvironmentalSensorsData(string, *EnvironmentalSensorsData)
+}
 
-	return &Cache{
+func NewCache(logger log.MinInterface) Cache {
+	return &cacheImpl{
 		logger:                   logger,
+		mu:                       sync.RWMutex{},
 		rackPDUMData:             make(map[string]RackPDUMetricData),
 		environmentalSensorsData: make(map[string]EnvironmentalSensorsData),
 	}
 }
 
-func (c *Cache) GetRackPDU(key string) (*RackPDUMetricData, error) {
+func (c *cacheImpl) GetRackPDU(key string) (*RackPDUMetricData, error) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
 	metricData, exists := c.rackPDUMData[key]
 	if !exists {
-		c.logger.Error("cache  for rack PDU not found", log.KeyError, errCacheNotFound)
-		return nil, fmt.Errorf("For rack PDU:%w", errCacheNotFound)
+		return nil, fmt.Errorf("rack PDU %s: %w", key, errCacheNotFound)
 	}
 
 	return &metricData, nil
 }
 
-func (c *Cache) SetRackPDU(key string, metricData *RackPDUMetricData) {
+func (c *cacheImpl) SetRackPDU(key string, metricData *RackPDUMetricData) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	c.rackPDUMData[key] = *metricData
 }
 
-func (c *Cache) GeEnvironmentalSensorsData(key string) (*EnvironmentalSensorsData, error) {
+func (c *cacheImpl) GeEnvironmentalSensorsData(key string) (*EnvironmentalSensorsData, error) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
 	metricData, exists := c.environmentalSensorsData[key]
 	if !exists {
-		c.logger.Error("cache for environmental sensors not found", log.KeyError, errCacheNotFound)
-		return nil, fmt.Errorf("For environmental sensors:%w", errCacheNotFound)
+		return nil, fmt.Errorf("environmental sensors %s: %w", key, errCacheNotFound)
 	}
 
 	return &metricData, nil
 }
 
-func (c *Cache) SeEnvironmentalSensorsData(key string, metricData *EnvironmentalSensorsData) {
+func (c *cacheImpl) SeEnvironmentalSensorsData(key string, metricData *EnvironmentalSensorsData) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
