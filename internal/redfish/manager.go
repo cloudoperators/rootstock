@@ -4,24 +4,31 @@
 package redfish
 
 import (
+	"context"
 	"sync"
 	"time"
+
+	"github.com/cloudoperators/rootstock/pkg/log"
 )
 
 type Manager struct {
-	devices  map[string]*device
-	mu       sync.RWMutex
-	interval time.Duration //how often each device should be scraped
+	devices     map[string]*device
+	mu          sync.RWMutex
+	interval    time.Duration //how often each device should be scraped
+	workerCount int
+	timeout     time.Duration
+	logger      log.MinInterface
 }
 
 // takes the list of IPs, creates a device for each one and puts then in the map
-func NewManager(ips []string, credentials Auth, interval time.Duration) *Manager {
+func NewManager(configs []DeviceConfig, credentials Auth, interval time.Duration, workerCount int, timeout time.Duration, logger log.MinInterface) *Manager {
 	devices := make(map[string]*device)
 
-	for _, ip := range ips {
-		devices[ip] = &device{
-			deviceID: ip,
-			ip:       ip,
+	for _, cfg := range configs {
+		devices[cfg.IP] = &device{
+			deviceID: cfg.IP,
+			ip:       cfg.IP,
+			pduID:    cfg.PDUID,
 			auth:     credentials,
 		}
 	}
@@ -29,6 +36,9 @@ func NewManager(ips []string, credentials Auth, interval time.Duration) *Manager
 	return &Manager{
 		devices:  devices,
 		interval: interval,
+		workerCount: workerCount,
+		timeout: timeout,
+		logger: logger,
 	}
 }
 
@@ -64,5 +74,12 @@ func (m *Manager) scrapeResult(deviceID string, timestamp time.Time, result Scra
 		d.consecutiveFailures = nil
 	} else {
 		d.consecutiveFailures = append(d.consecutiveFailures, result)
+	}
+}
+
+func (m *Manager) StartWorker(ctx context.Context) {
+	for range m.workerCount {
+		s := newScraper(m)
+		go s.run(ctx)
 	}
 }

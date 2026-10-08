@@ -16,11 +16,19 @@ type ScrapeResult struct {
 	Err        error
 }
 
+
+type DeviceConfig struct {
+    IP    string
+    PDUID string
+}
+
 type device struct {
 	deviceID            string
 	ip                  string
+	pduID				string
 	auth                Auth
 	lastScraped         time.Time
 	currentlyScraped    bool
 	consecutiveFailures []ScrapeResult
 }
+
