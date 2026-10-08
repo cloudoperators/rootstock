@@ -3,11 +3,10 @@
 
 package redfish
 
-import {
-	"fmt"
+import (
 	"testing"
 	"time"
-}
+)
 
 func TestNewManager(t *testing.T) {
 	ips := []string{"10.0.0.1", "10.0.0.2"}
@@ -29,7 +28,7 @@ func TestNewManager(t *testing.T) {
 			t.Errorf("expected ip %s, got %s", ip, d.ip)
 		}
 		if d.currentlyScraped {
-			t.Errorf("new device should be currently scraped")
+			t.Errorf("new device should NOT be currently scraped")
 		}
 	}
 }
