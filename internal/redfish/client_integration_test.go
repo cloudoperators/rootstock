@@ -44,35 +44,35 @@ func newTestClient(t *testing.T) redfish.Client {
 	return redfish.NewClient(base, logger, "admin", "password", 10*time.Second)
 }
 
-// TestLogin verifies that Login() reaches the API, sends credentials,
-// and successfully parses the X-Auth-Token from the response headers.
+// TestLogin verifies that Login() is a no-op under basic authentication
+// (no Redfish session is created; credentials are sent per request).
 func TestLogin(t *testing.T) {
-	t.Logf("  %-22s: POST /redfish/v1/SessionService/Sessions", "endpoint")
+	t.Logf("  %-22s: basic auth, no session endpoint", "auth")
 	client := newTestClient(t)
 	ctx := context.Background()
 	if err := client.Login(ctx); err != nil {
 		t.Fatalf("Login failed: %v", err)
 	}
 	defer client.Close(ctx)
-	t.Logf("  %-22s: session created, X-Auth-Token received", "result")
+	t.Logf("  %-22s: Login no-op returned nil", "result")
 }
 
-// TestLoginAndClose verifies the full session lifecycle:
-// Login creates a session, Close deletes it.
+// TestLoginAndClose verifies the Login/Close lifecycle is a safe no-op pair
+// under basic authentication (nothing to create, nothing to tear down).
 func TestLoginAndClose(t *testing.T) {
-	t.Logf("  %-22s: POST sessions → DELETE session", "flow")
+	t.Logf("  %-22s: Login no-op → Close no-op", "flow")
 	client := newTestClient(t)
 	ctx := context.Background()
 
 	if err := client.Login(ctx); err != nil {
 		t.Fatalf("Login failed: %v", err)
 	}
-	t.Logf("  %-22s: session created", "login")
+	t.Logf("  %-22s: no-op", "login")
 
 	if err := client.Close(ctx); err != nil {
 		t.Fatalf("Close failed: %v", err)
 	}
-	t.Logf("  %-22s: session deleted", "close")
+	t.Logf("  %-22s: no-op", "close")
 }
 
 // TestGetPowerEquipment verifies that GetPowerEquipment returns a valid response

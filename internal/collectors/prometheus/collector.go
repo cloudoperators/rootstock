@@ -15,13 +15,16 @@ import (
 )
 
 const (
-	collectorTimeout = 25 * time.Second
+	// collectorTimeout is kept as a fallback for callers that don't supply a
+	// scrape timeout. Prefer passing scrapeTimeout to NewCollector directly.
+	collectorTimeout = 60 * time.Second
 )
 
 type Collector struct {
 	mu            sync.Mutex
 	redfishClient redfish.Client
 	pduID         string
+	scrapeTimeout time.Duration
 	logger        log.MinInterface
 
 	peRackPDUMetrics *PERackPDUMetrics
@@ -40,12 +43,21 @@ type PERackPDU struct {
 	PowerCapacityVA *prometheus.Desc
 }
 
-func NewCollector(redfishClient redfish.Client, pduID string) *Collector {
+func NewCollector(redfishClient redfish.Client, pduID string, scrapeTimeout time.Duration) *Collector {
 	logger := log.Default()
+
+	timeout := collectorTimeout
+	if scrapeTimeout > 0 {
+		// Cover two sequential Redfish calls (Metrics + PDU object).
+		// Each individual call is bounded by the HTTP client's scrapeTimeout;
+		// the context here caps the total wall-clock budget for the whole probe.
+		timeout = scrapeTimeout * 2
+	}
 
 	return &Collector{
 		redfishClient: redfishClient,
 		pduID:         pduID,
+		scrapeTimeout: timeout,
 		logger:        logger,
 		peRackPDUMetrics: &PERackPDUMetrics{
 			Reading: prometheus.NewDesc(
@@ -102,11 +114,10 @@ func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	// Create a context with timeout for the API call
-	// Note: prometheus.Collector interface doesn't accept context as parameter,
-	// so we create one here with a reasonable timeout. The HTTP client's timeout
-	// (configured in NewClient) provides the ultimate backstop.
-	ctx, cancel := context.WithTimeout(context.Background(), collectorTimeout)
+	// Create a context with timeout covering both Redfish calls in this probe
+	// (GetPERackPDUMetrics + GetPERackPDU). The HTTP client's per-request
+	// timeout (scrapeTimeout) provides the backstop for each individual call.
+	ctx, cancel := context.WithTimeout(context.Background(), c.scrapeTimeout)
 	defer cancel()
 
 	// Fetch PDU metrics from Redfish API

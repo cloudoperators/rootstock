@@ -35,6 +35,8 @@ reset := \033[0m
         mockup-start mockup-stop \
         lint lint-go lint-md conventions scan \
         generate docker-build \
+        prometheus-local-setup prometheus-local-cleanup prometheus-local-run \
+        prometheus-collector-start prometheus-collector-stop prometheus-mock-start prometheus-mock-stop run-redfish \
         help
 
 # Build
@@ -117,23 +119,31 @@ prometheus-local-setup: build mockup-start prometheus-collector-start
 # Stop and remove docker images for the prometheus local setup
 prometheus-local-cleanup: mockup-stop prometheus-collector-stop
 
-prometheus-collector-start: ## Start Prometheus in Docker to scrape rootstock metrics
+prometheus-collector-start: ## Start Prometheus in Docker to scrape rootstock metrics (real hardware)
 	docker run -d --name prometheus -p 9090:9090 -v $(CURDIR)/prometheus.yaml:/etc/prometheus/prometheus.yml prom/prometheus:latest
+
+prometheus-mock-start: mockup-start ## Start Prometheus in Docker using mock PDU data (fallback)
+	docker run -d --name prometheus -p 9090:9090 -v $(CURDIR)/prometheus-mock.yaml:/etc/prometheus/prometheus.yml prom/prometheus:latest
 
 prometheus-collector-stop: ## Stop and remove Prometheus container
 	docker stop prometheus || true
 	docker rm prometheus || true
 
+prometheus-mock-stop: mockup-stop prometheus-collector-stop ## Stop mock PDU and Prometheus containers
+
 
 # Run the go binary with the redfish config necessary for prometheus local test
-run-redfish: build ## Build and run the rootstock binary with redfish credentials for prometheus testing
+run-redfish: ## Run the rootstock server with redfish credentials for prometheus testing
 	@mkdir -p tmp
-	@echo "admin" > tmp/redfish_password
-	./bin/rootstock run \
+	@test -f tmp/redfish_password || { echo "ERROR: create tmp/redfish_password with the PDU password first"; exit 1; }
+	@test -n "$$REDFISH_USERNAME" || { echo "ERROR: export REDFISH_USERNAME=<your-pdu-username> first"; exit 1; }
+	go run main.go run \
+		--redfish-credentials-file redfish_password \
 		--config-folder tmp \
-		--redfish-credentials-file redfish_password
+		--log-format text \
+		--scrape-timeout 120s
 
-# Setup Prometheus locally and run the binary 
+# Setup Prometheus locally and run the binary
 prometheus-local-run: prometheus-local-setup run-redfish
 
 # Help

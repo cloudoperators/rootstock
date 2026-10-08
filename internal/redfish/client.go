@@ -4,11 +4,9 @@
 package redfish
 
 import (
-	"bytes"
 	"context"
 	"crypto/tls"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -16,6 +14,27 @@ import (
 
 	"github.com/cloudoperators/rootstock/pkg/log"
 )
+
+// FlexID unmarshals a Redfish "Id" field that may be either a JSON string
+// ("Metrics") or a JSON number (1) depending on the vendor firmware.
+// The Panduit G6 returns numeric IDs; the DMTF mock returns string IDs.
+type FlexID string
+
+func (f *FlexID) UnmarshalJSON(b []byte) error {
+	// Try string first (DMTF mock, most vendors)
+	var s string
+	if err := json.Unmarshal(b, &s); err == nil {
+		*f = FlexID(s)
+		return nil
+	}
+	// Fall back to number (Panduit G6 firmware)
+	var n json.Number
+	if err := json.Unmarshal(b, &n); err != nil {
+		return fmt.Errorf("Id field: expected string or number, got %s", b)
+	}
+	*f = FlexID(n.String())
+	return nil
+}
 
 // talk to the PDU over HTTP.
 // Open an HTTP connection to a PDU hostname
@@ -44,9 +63,6 @@ type ClientImpl struct {
 
 	username string // Authentication username
 	password string // Authentication password
-
-	authToken  string // Session authentication token (X-Auth-Token)
-	sessionURL string // Session URL for logout
 
 	logger  log.MinInterface // Structured logger for debugging and audit
 	timeout time.Duration
@@ -80,7 +96,7 @@ type Link struct {
 type RackPDU struct {
 	ODataID         string `json:"@odata.id"`
 	ODataType       string `json:"@odata.type"`
-	ID              string `json:"Id"`
+	ID              FlexID `json:"Id"`
 	Name            string `json:"Name"`
 	EquipmentType   string `json:"EquipmentType"`
 	FirmwareVersion string `json:"FirmwareVersion"`
@@ -144,6 +160,11 @@ func NewClient(baseURL *url.URL, logger log.MinInterface, username, password str
 			Transport: &http.Transport{
 				// PDUs ship with self-signed certificates, so certificate verification is intentionally skipped.
 				TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec // G402: self-signed PDU certs
+				// Force Connection: close so the PDU frees its connection slot after each
+				// request. Embedded PDU firmware (e.g. Panduit G6) allows very few
+				// simultaneous connections; keeping them open causes subsequent scrapes
+				// to hit the limit and hang.
+				DisableKeepAlives: true,
 			},
 		},
 		baseURL:  baseURL,
@@ -154,88 +175,20 @@ func NewClient(baseURL *url.URL, logger log.MinInterface, username, password str
 	}
 }
 
-// Login creates redfish session.
-func (c *ClientImpl) Login(ctx context.Context) error {
-	payload := map[string]string{
-		"UserName": c.username,
-		"Password": c.password,
-	}
-
-	body, err := json.Marshal(payload)
-	if err != nil {
-		return fmt.Errorf("marshal login request: %w", err)
-	}
-
-	loginURL := c.baseURL.ResolveReference(&url.URL{Path: "/redfish/v1/SessionService/Sessions"})
-
-	req, err := http.NewRequestWithContext(
-		ctx,
-		http.MethodPost,
-		loginURL.String(),
-		bytes.NewReader(body),
-	)
-	if err != nil {
-		return err
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return fmt.Errorf("create Redfish session: %w", err)
-	}
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			c.logger.Warn("failed to close response body", "error", err)
-		}
-	}()
-
-	token := resp.Header.Get("X-Auth-Token")
-	if token == "" {
-		return errors.New("login response did not contain X-Auth-Token")
-	}
-
-	sessionURL := resp.Header.Get("Location")
-	if sessionURL == "" {
-		return errors.New("login response did not contain session Location")
-	}
-
-	c.authToken = token
-	c.sessionURL = sessionURL
-
-	c.logger.Info("Redfish session created")
-
+// Login is a no-op for basic authentication.
+//
+// The Panduit G6 (and the Redfish data endpoints generally) accept HTTP Basic
+// Auth on every request, so there is no session to establish. Credentials are
+// attached per request in get(). The method is kept to satisfy the Client
+// interface and the existing call sites.
+func (c *ClientImpl) Login(_ context.Context) error {
 	return nil
 }
 
-// Close terminates redfish session.
-func (c *ClientImpl) Close(ctx context.Context) error {
-	if c.sessionURL == "" || c.authToken == "" {
-		return nil // No session to clean up
-	}
-
-	sessionURL := c.baseURL.ResolveReference(&url.URL{Path: c.sessionURL})
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, sessionURL.String(), http.NoBody)
-	if err != nil {
-		return err
-	}
-
-	req.Header.Set("X-Auth-Token", c.authToken)
-
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return fmt.Errorf("close Redfish session: %w", err)
-	}
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			c.logger.Warn("failed to close response body", "error", err)
-		}
-	}()
-
-	c.authToken = ""
-	c.sessionURL = ""
-
+// Close is a no-op for basic authentication.
+//
+// There is no Redfish session to tear down when using Basic Auth.
+func (c *ClientImpl) Close(_ context.Context) error {
 	return nil
 }
 
@@ -247,9 +200,8 @@ func (c *ClientImpl) get(ctx context.Context, path string, result any) error {
 		return err
 	}
 
-	if c.authToken != "" {
-		req.Header.Set("X-Auth-Token", c.authToken)
-	}
+	// PDUs accept HTTP Basic Auth on every request; no session token is used.
+	req.SetBasicAuth(c.username, c.password)
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {

@@ -46,8 +46,11 @@ func New(
 		server: &http.Server{
 			Addr:              fmt.Sprintf(":%d", port),
 			ReadHeaderTimeout: serverTimeout,
-			WriteTimeout:      serverTimeout,
-			IdleTimeout:       serverTimeout,
+			// WriteTimeout must cover a full probe scrape (two Redfish calls) plus
+			// overhead. The collector context is scrapeTimeout*2 (one budget per
+			// Redfish call), so the write deadline must be at least that long.
+			WriteTimeout: scrapeTimeout*2 + serverTimeout,
+			IdleTimeout:  serverTimeout,
 		},
 		log:             logger,
 		redfishUsername: redfishUsername,
@@ -157,7 +160,7 @@ func (s *server) probeHandler() http.HandlerFunc {
 
 		s.log.Info("Using PDU ID from labels parameter", "pduID", pduID)
 		// Create a temporary collector for this target
-		collector := prom.NewCollector(redfishClient, pduID)
+		collector := prom.NewCollector(redfishClient, pduID, s.scrapeTimeout)
 
 		// Create a temporary registry for this specific scrape
 		registry := prometheus.NewRegistry()

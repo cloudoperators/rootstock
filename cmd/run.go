@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -106,7 +107,7 @@ func registerCredentialsWatchAndRunServer() {
 	err := InitFileConfig(
 		file,
 		func(content []byte) error {
-			newPassword := string(content)
+			newPassword := strings.TrimSpace(string(content))
 			if redfishPassword != nil && *redfishPassword == newPassword {
 				return nil
 			}
@@ -134,12 +135,18 @@ func dynamicRunServer(l log.FullInterface) {
 		password = *redfishPassword
 	}
 
+	sTimeout, err := time.ParseDuration(scrapeTimeout.Value())
+	if err != nil {
+		l.Error("failed to parse scrape timeout, using default", log.KeyError, err)
+		sTimeout = scrapeTimeoutDefault
+	}
+
 	server = rest.New(
 		port.Value(),
 		l,
 		redfishUsername.Value(),
 		password,
-		scrapeTimeoutDefault,
+		sTimeout,
 	)
 	l.Info("starting HTTP server", "port", port.Value(), "username", redfishUsername.Value())
 	server.ListenAndServe()
