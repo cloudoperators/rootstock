@@ -9,31 +9,30 @@ import (
 )
 
 type Manager struct {
-	devices 	map[string]*device
-	mu			sync.RWMutex
-	interval	time.Duration //how often each device should be scraped
+	devices  map[string]*device
+	mu       sync.RWMutex
+	interval time.Duration //how often each device should be scraped
 }
 
-//takes the list of IPs, creates a device for each one and puts then in the map
-func NewManager(ips []string, credentials auth, interval time.Duration) *Manager {
+// takes the list of IPs, creates a device for each one and puts then in the map
+func NewManager(ips []string, credentials Auth, interval time.Duration) *Manager {
 	devices := make(map[string]*device)
 
 	for _, ip := range ips {
 		devices[ip] = &device{
-			deviceID:	ip,
-			ip:		 	ip,
-			auth: 		credentials,
+			deviceID: ip,
+			ip:       ip,
+			auth:     credentials,
 		}
 	}
 
 	return &Manager{
-		devices:	devices,
-		interval:	interval,
+		devices:  devices,
+		interval: interval,
 	}
 }
 
-
-//worker calls this to get its next job
+// worker calls this to get its next job
 func (m *Manager) getScrapeJob() *device {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -48,7 +47,7 @@ func (m *Manager) getScrapeJob() *device {
 	return nil
 }
 
-//worker calls this after finising. Updates the device.
+// worker calls this after finising. Updates the device.
 func (m *Manager) scrapeResult(deviceID string, timestamp time.Time, result ScrapeResult) {
 	m.mu.Lock()
 	defer m.mu.Unlock()

@@ -5,22 +5,22 @@ package redfish
 
 import "time"
 
-type auth struct {
-	username string
-	password string
+type Auth struct {
+	Username string
+	Password string
 }
 
 // ScrapeResult holds the outcome of a single scrape attempt against a device.
 type ScrapeResult struct {
 	StatusCode int
-	Err		   error
+	Err        error
 }
 
 type device struct {
-	deviceID 			string
-	ip       			string
-	auth	 			auth
-	lastScraped			time.Time
-	currentlyScraped	bool
-	consecutiveFailures	[]ScrapeResult
+	deviceID            string
+	ip                  string
+	auth                Auth
+	lastScraped         time.Time
+	currentlyScraped    bool
+	consecutiveFailures []ScrapeResult
 }

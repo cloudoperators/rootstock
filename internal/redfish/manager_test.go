@@ -10,8 +10,8 @@ import (
 
 func TestNewManager(t *testing.T) {
 	ips := []string{"10.0.0.1", "10.0.0.2"}
-	credentials := auth{username: "admin", password: "pass"}
-	interval := 30 *time.Second
+	credentials := Auth{Username: "admin", Password: "pass"}
+	interval := 30 * time.Second
 
 	m := NewManager(ips, credentials, interval)
 
@@ -22,7 +22,7 @@ func TestNewManager(t *testing.T) {
 	for _, ip := range ips {
 		d, exists := m.devices[ip]
 		if !exists {
-			t.Errorf("expected device for IP %s, not found", ip)
+			t.Fatalf("expected device for IP %s, not found", ip)
 		}
 		if d.ip != ip {
 			t.Errorf("expected ip %s, got %s", ip, d.ip)
@@ -33,9 +33,6 @@ func TestNewManager(t *testing.T) {
 	}
 }
 
-//Manager with one device, never scraped before
-//getScrapeJob returns a due device
-//more tests to follow
-
-
-
+// Manager with one device, never scraped before
+// getScrapeJob returns a due device
+// more tests to follow
