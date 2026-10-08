@@ -4,10 +4,14 @@
 package cache
 
 import (
+	"errors"
+	"fmt"
 	"sync"
 
 	"github.com/cloudoperators/rootstock/pkg/log"
 )
+
+var errCacheNotFound = errors.New("cache not found")
 
 type RackPDUMetricData struct {
 	PERackPDUMetrics *PERackPDUMetrics
@@ -54,7 +58,8 @@ func (c *Cache) GetRackPDU(key string) (*RackPDUMetricData, error) {
 
 	metricData, exists := c.rackPDUMData[key]
 	if !exists {
-		return nil, nil //nolint:nilnil // returning nil data with nil error is intentional for cache miss
+		c.logger.Error("cache  for rack PDU not found", log.KeyError, errCacheNotFound)
+		return nil, fmt.Errorf("For rack PDU:%w", errCacheNotFound)
 	}
 
 	return &metricData, nil
@@ -73,7 +78,8 @@ func (c *Cache) GeEnvironmentalSensorsData(key string) (*EnvironmentalSensorsDat
 
 	metricData, exists := c.environmentalSensorsData[key]
 	if !exists {
-		return nil, nil //nolint:nilnil // returning nil data with nil error is intentional for cache miss
+		c.logger.Error("cache for environmental sensors not found", log.KeyError, errCacheNotFound)
+		return nil, fmt.Errorf("For environmental sensors:%w", errCacheNotFound)
 	}
 
 	return &metricData, nil
