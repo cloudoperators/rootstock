@@ -8,14 +8,14 @@ import (
 	"testing"
 )
 
-func TestCache_SetAndGet(t *testing.T) {
+func TestCache_SetAndGetRackPDU(t *testing.T) {
 	t.Parallel()
 
 	cache := NewCache()
 	pduID := "pdu-1"
 
 	// Create test metric data
-	testData := &MetricData{
+	testData := &RackPDUMetricData{
 		PERackPDUMetrics: &PERackPDUMetrics{
 			DataSourceURI: "/redfish/v1/PowerEquipment/RackPDUs/1/Metrics",
 			Reading:       1234.56,
@@ -28,43 +28,48 @@ func TestCache_SetAndGet(t *testing.T) {
 		},
 	}
 
-	// Test Set
-	cache.Set(pduID, testData)
+	// Test SetRackPDU
+	cache.SetRackPDU(pduID, testData)
 
-	// Test Get
-	retrieved, err := cache.Get(pduID)
+	// Test GetRackPDU
+	retrieved, err := cache.GetRackPDU(pduID)
 	if err != nil {
-		t.Fatalf("Get() returned error: %v", err)
+		t.Fatalf("GetRackPDU() returned error: %v", err)
 	}
 
 	if retrieved == nil {
-		t.Fatal("Get() returned nil")
+		t.Fatal("GetRackPDU() returned nil")
 	}
 
 	// Verify PERackPDUMetrics
 	if retrieved.PERackPDUMetrics == nil {
 		t.Fatal("retrieved.PERackPDUMetrics is nil")
 	}
+
 	if retrieved.PERackPDUMetrics.DataSourceURI != testData.PERackPDUMetrics.DataSourceURI {
 		t.Errorf("DataSourceURI = %v, want %v",
 			retrieved.PERackPDUMetrics.DataSourceURI,
 			testData.PERackPDUMetrics.DataSourceURI)
 	}
+
 	if retrieved.PERackPDUMetrics.Reading != testData.PERackPDUMetrics.Reading {
 		t.Errorf("Reading = %v, want %v",
 			retrieved.PERackPDUMetrics.Reading,
 			testData.PERackPDUMetrics.Reading)
 	}
+
 	if retrieved.PERackPDUMetrics.ApparentVA != testData.PERackPDUMetrics.ApparentVA {
 		t.Errorf("ApparentVA = %v, want %v",
 			retrieved.PERackPDUMetrics.ApparentVA,
 			testData.PERackPDUMetrics.ApparentVA)
 	}
+
 	if retrieved.PERackPDUMetrics.ReactiveVAR != testData.PERackPDUMetrics.ReactiveVAR {
 		t.Errorf("ReactiveVAR = %v, want %v",
 			retrieved.PERackPDUMetrics.ReactiveVAR,
 			testData.PERackPDUMetrics.ReactiveVAR)
 	}
+
 	if retrieved.PERackPDUMetrics.PowerFactor != testData.PERackPDUMetrics.PowerFactor {
 		t.Errorf("PowerFactor = %v, want %v",
 			retrieved.PERackPDUMetrics.PowerFactor,
@@ -75,6 +80,7 @@ func TestCache_SetAndGet(t *testing.T) {
 	if retrieved.PERackPDU == nil {
 		t.Fatal("retrieved.PERackPDU is nil")
 	}
+
 	if retrieved.PERackPDU.PowerCapacityVA != testData.PERackPDU.PowerCapacityVA {
 		t.Errorf("PowerCapacityVA = %v, want %v",
 			retrieved.PERackPDU.PowerCapacityVA,
@@ -88,9 +94,9 @@ func TestCache_GetNonExistentKey(t *testing.T) {
 	cache := NewCache()
 
 	// Get non-existent key
-	retrieved, err := cache.Get("non-existent")
+	retrieved, err := cache.GetRackPDU("non-existent")
 	if err != nil {
-		t.Fatalf("Get() returned error: %v", err)
+		t.Fatalf("GetRackPDU() returned error: %v", err)
 	}
 
 	// Should return nil for non-existent key
@@ -106,25 +112,25 @@ func TestCache_Update(t *testing.T) {
 	pduID := "pdu-1"
 
 	// Initial data
-	initialData := &MetricData{
+	initialData := &RackPDUMetricData{
 		PERackPDUMetrics: &PERackPDUMetrics{
 			Reading: 100.0,
 		},
 	}
-	cache.Set(pduID, initialData)
+	cache.SetRackPDU(pduID, initialData)
 
 	// Update with new data
-	updatedData := &MetricData{
+	updatedData := &RackPDUMetricData{
 		PERackPDUMetrics: &PERackPDUMetrics{
 			Reading: 200.0,
 		},
 	}
-	cache.Set(pduID, updatedData)
+	cache.SetRackPDU(pduID, updatedData)
 
 	// Verify update
-	retrieved, err := cache.Get(pduID)
+	retrieved, err := cache.GetRackPDU(pduID)
 	if err != nil {
-		t.Fatalf("Get() returned error: %v", err)
+		t.Fatalf("GetRackPDU() returned error: %v", err)
 	}
 
 	if retrieved.PERackPDUMetrics.Reading != 200.0 {
@@ -145,19 +151,19 @@ func TestCache_MultipleKeys(t *testing.T) {
 	}
 
 	for pduID, reading := range pdus {
-		data := &MetricData{
+		data := &RackPDUMetricData{
 			PERackPDUMetrics: &PERackPDUMetrics{
 				Reading: reading,
 			},
 		}
-		cache.Set(pduID, data)
+		cache.SetRackPDU(pduID, data)
 	}
 
 	// Verify all PDUs
 	for pduID, expectedReading := range pdus {
-		retrieved, err := cache.Get(pduID)
+		retrieved, err := cache.GetRackPDU(pduID)
 		if err != nil {
-			t.Fatalf("Get(%s) returned error: %v", pduID, err)
+			t.Fatalf("GetRackPDU(%s) returned error: %v", pduID, err)
 		}
 
 		if retrieved.PERackPDUMetrics.Reading != expectedReading {
@@ -176,31 +182,35 @@ func TestCache_ConcurrentAccess(t *testing.T) {
 	pduID := "pdu-concurrent"
 
 	var wg sync.WaitGroup
+
 	concurrency := 100
 
 	// Concurrent writes
 	wg.Add(concurrency)
-	for i := 0; i < concurrency; i++ {
+
+	for i := range concurrency {
 		go func(value float64) {
 			defer wg.Done()
-			data := &MetricData{
+
+			data := &RackPDUMetricData{
 				PERackPDUMetrics: &PERackPDUMetrics{
 					Reading: value,
 				},
 			}
-			cache.Set(pduID, data)
+			cache.SetRackPDU(pduID, data)
 		}(float64(i))
 	}
+
 	wg.Wait()
 
 	// Verify cache is still functional
-	retrieved, err := cache.Get(pduID)
+	retrieved, err := cache.GetRackPDU(pduID)
 	if err != nil {
-		t.Fatalf("Get() after concurrent writes returned error: %v", err)
+		t.Fatalf("GetRackPDU() after concurrent writes returned error: %v", err)
 	}
 
 	if retrieved == nil {
-		t.Fatal("Get() returned nil after concurrent writes")
+		t.Fatal("GetRackPDU() returned nil after concurrent writes")
 	}
 
 	// Just verify we got some value (any of the concurrent writes)
@@ -215,59 +225,107 @@ func TestCache_ConcurrentReadWrite(t *testing.T) {
 	cache := NewCache()
 
 	var wg sync.WaitGroup
+
 	iterations := 100
 
 	// Initialize some data
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		pduID := "pdu-" + string(rune('0'+i))
-		data := &MetricData{
+		data := &RackPDUMetricData{
 			PERackPDUMetrics: &PERackPDUMetrics{
 				Reading: float64(i * 100),
 			},
 		}
-		cache.Set(pduID, data)
+		cache.SetRackPDU(pduID, data)
 	}
 
 	// Concurrent reads and writes
 	wg.Add(iterations * 2)
 
 	// Readers
-	for i := 0; i < iterations; i++ {
+	for i := range iterations {
 		go func(idx int) {
 			defer wg.Done()
+
 			pduID := "pdu-" + string(rune('0'+(idx%10)))
-			_, err := cache.Get(pduID)
+
+			_, err := cache.GetRackPDU(pduID)
 			if err != nil {
-				t.Errorf("Concurrent Get() failed: %v", err)
+				t.Errorf("Concurrent GetRackPDU() failed: %v", err)
 			}
 		}(i)
 	}
 
 	// Writers
-	for i := 0; i < iterations; i++ {
+	for i := range iterations {
 		go func(idx int) {
 			defer wg.Done()
+
 			pduID := "pdu-" + string(rune('0'+(idx%10)))
-			data := &MetricData{
+			data := &RackPDUMetricData{
 				PERackPDUMetrics: &PERackPDUMetrics{
 					Reading: float64(idx),
 				},
 			}
-			cache.Set(pduID, data)
+			cache.SetRackPDU(pduID, data)
 		}(i)
 	}
 
 	wg.Wait()
 
 	// Verify cache integrity
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		pduID := "pdu-" + string(rune('0'+i))
-		retrieved, err := cache.Get(pduID)
+
+		retrieved, err := cache.GetRackPDU(pduID)
 		if err != nil {
-			t.Errorf("Final Get(%s) failed: %v", pduID, err)
+			t.Errorf("Final GetRackPDU(%s) failed: %v", pduID, err)
 		}
+
 		if retrieved == nil {
-			t.Errorf("Final Get(%s) returned nil", pduID)
+			t.Errorf("Final GetRackPDU(%s) returned nil", pduID)
 		}
+	}
+}
+
+func TestCache_EnvironmentalSensorsData(t *testing.T) {
+	t.Parallel()
+
+	cache := NewCache()
+	sensorID := "sensor-1"
+
+	// Create test environmental sensor data
+	testData := &EnvironmentalSensorsData{
+		// Currently empty as per TODO in cache.go
+	}
+
+	// Test Set
+	cache.SeEnvironmentalSensorsData(sensorID, testData)
+
+	// Test Get
+	retrieved, err := cache.GeEnvironmentalSensorsData(sensorID)
+	if err != nil {
+		t.Fatalf("GeEnvironmentalSensorsData() returned error: %v", err)
+	}
+
+	if retrieved == nil {
+		t.Fatal("GeEnvironmentalSensorsData() returned nil")
+	}
+}
+
+func TestCache_EnvironmentalSensorsData_NonExistent(t *testing.T) {
+	t.Parallel()
+
+	cache := NewCache()
+
+	// Get non-existent sensor
+	retrieved, err := cache.GeEnvironmentalSensorsData("non-existent")
+	if err != nil {
+		t.Fatalf("GeEnvironmentalSensorsData() returned error: %v", err)
+	}
+
+	// Should return nil for non-existent key
+	if retrieved != nil {
+		t.Error("Expected nil for non-existent sensor key")
 	}
 }

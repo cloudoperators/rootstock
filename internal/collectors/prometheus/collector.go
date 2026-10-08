@@ -11,7 +11,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/cloudoperators/rootstock/internal/collectors/cache"
-	"github.com/cloudoperators/rootstock/internal/redfish"
 	"github.com/cloudoperators/rootstock/pkg/log"
 )
 
@@ -20,12 +19,11 @@ const (
 )
 
 type Collector struct {
-	mu            sync.Mutex
-	redfishClient redfish.Client
-	pduID         string
-	collect       string
-	logger        log.MinInterface
-	cache         *cache.Cache
+	mu      sync.Mutex
+	pduID   string
+	collect string
+	logger  log.MinInterface
+	cache   *cache.Cache
 
 	metricData *RackPDUMetricData
 }
@@ -124,9 +122,11 @@ func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 		c.collectRackPDU(ch)
 	case "environmentalsensors":
 		c.collectEnvironmentalSensors(ch)
-	default:
+	case "rackpdu,environmentalsensors":
 		c.collectRackPDU(ch)
 		c.collectEnvironmentalSensors(ch)
+	default:
+		return
 	}
 }
 

@@ -16,7 +16,7 @@ func TestCollector_Describe(t *testing.T) {
 	t.Parallel()
 
 	c := cache.NewCache()
-	collector := NewCollector("pdu-test", c)
+	collector := NewCollector("pdu-test", "rackpdu", c)
 
 	ch := make(chan *prometheus.Desc, 10)
 	done := make(chan struct{})
@@ -45,7 +45,7 @@ func TestCollector_Collect_EmptyCache(t *testing.T) {
 	t.Parallel()
 
 	c := cache.NewCache()
-	collector := NewCollector("pdu-nonexistent", c)
+	collector := NewCollector("pdu-nonexistent", "rackpdu", c)
 
 	ch := make(chan prometheus.Metric, 10)
 	done := make(chan struct{})
@@ -76,7 +76,7 @@ func TestCollector_Collect_WithMetrics(t *testing.T) {
 	pduID := "pdu-1"
 
 	// Populate cache
-	testData := &cache.MetricData{
+	testData := &cache.RackPDUMetricData{
 		PERackPDUMetrics: &cache.PERackPDUMetrics{
 			DataSourceURI: "/redfish/v1/PowerEquipment/RackPDUs/1/Metrics",
 			Reading:       1234.56,
@@ -88,9 +88,9 @@ func TestCollector_Collect_WithMetrics(t *testing.T) {
 			PowerCapacityVA: 5000.0,
 		},
 	}
-	c.Set(pduID, testData)
+	c.SetRackPDU(pduID, testData)
 
-	collector := NewCollector(pduID, c)
+	collector := NewCollector(pduID, "rackpdu", c)
 
 	ch := make(chan prometheus.Metric, 10)
 	done := make(chan struct{})
@@ -149,7 +149,7 @@ func TestCollector_Collect_WithZeroValues(t *testing.T) {
 	pduID := "pdu-zero"
 
 	// Populate cache with zero values
-	testData := &cache.MetricData{
+	testData := &cache.RackPDUMetricData{
 		PERackPDUMetrics: &cache.PERackPDUMetrics{
 			Reading:     0.0,
 			ApparentVA:  0.0,
@@ -160,9 +160,9 @@ func TestCollector_Collect_WithZeroValues(t *testing.T) {
 			PowerCapacityVA: 0.0,
 		},
 	}
-	c.Set(pduID, testData)
+	c.SetRackPDU(pduID, testData)
 
-	collector := NewCollector(pduID, c)
+	collector := NewCollector(pduID, "rackpdu", c)
 
 	ch := make(chan prometheus.Metric, 10)
 	done := make(chan struct{})
@@ -193,7 +193,7 @@ func TestCollector_Collect_WithPartialMetrics(t *testing.T) {
 	pduID := "pdu-partial"
 
 	// Populate cache with only some metrics
-	testData := &cache.MetricData{
+	testData := &cache.RackPDUMetricData{
 		PERackPDUMetrics: &cache.PERackPDUMetrics{
 			Reading:     1234.56,
 			ApparentVA:  0.0, // Zero - should not emit
@@ -204,9 +204,9 @@ func TestCollector_Collect_WithPartialMetrics(t *testing.T) {
 			PowerCapacityVA: 5000.0,
 		},
 	}
-	c.Set(pduID, testData)
+	c.SetRackPDU(pduID, testData)
 
-	collector := NewCollector(pduID, c)
+	collector := NewCollector(pduID, "rackpdu", c)
 
 	ch := make(chan prometheus.Metric, 10)
 	done := make(chan struct{})
@@ -238,15 +238,15 @@ func TestCollector_Collect_NilPERackPDU(t *testing.T) {
 	pduID := "pdu-nil"
 
 	// Populate cache with nil PERackPDU
-	testData := &cache.MetricData{
+	testData := &cache.RackPDUMetricData{
 		PERackPDUMetrics: &cache.PERackPDUMetrics{
 			Reading: 1234.56,
 		},
 		PERackPDU: nil, // Nil - should not panic
 	}
-	c.Set(pduID, testData)
+	c.SetRackPDU(pduID, testData)
 
-	collector := NewCollector(pduID, c)
+	collector := NewCollector(pduID, "rackpdu", c)
 
 	ch := make(chan prometheus.Metric, 10)
 	done := make(chan struct{})
@@ -277,18 +277,19 @@ func TestCollector_ThreadSafety(t *testing.T) {
 	c := cache.NewCache()
 	pduID := "pdu-concurrent"
 
-	testData := &cache.MetricData{
+	testData := &cache.RackPDUMetricData{
 		PERackPDUMetrics: &cache.PERackPDUMetrics{
 			Reading: 1234.56,
 		},
 	}
-	c.Set(pduID, testData)
+	c.SetRackPDU(pduID, testData)
 
-	collector := NewCollector(pduID, c)
+	collector := NewCollector(pduID, "rackpdu", c)
 
 	// Run multiple Collect calls concurrently
 	done := make(chan struct{})
-	for i := 0; i < 10; i++ {
+
+	for range 10 {
 		go func() {
 			ch := make(chan prometheus.Metric, 10)
 			collector.Collect(ch)
@@ -296,12 +297,13 @@ func TestCollector_ThreadSafety(t *testing.T) {
 			// Drain channel
 			for range ch {
 			}
+
 			done <- struct{}{}
 		}()
 	}
 
 	// Wait for all goroutines
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		<-done
 	}
 }

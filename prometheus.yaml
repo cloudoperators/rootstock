@@ -10,11 +10,13 @@ scrape_configs:
       - targets:
           - http://localhost:8000
         labels:
-          pdu_id: "1"
+          pdu_id: "pdu01"
+          collect: "rackpdu,environmentalsensors"
       - targets:
           - http://localhost:8000
         labels:
-          pdu_id: "2"
+          pdu_id: "pdu02"
+          collect: "rackpdu"
 
     relabel_configs:
       - source_labels: [__address__]
@@ -22,6 +24,9 @@ scrape_configs:
 
       - source_labels: [pdu_id]
         target_label: __param_labels
+
+      - source_labels: [collect]
+        target_label: __param_collect
 
       - target_label: __address__
         replacement: host.docker.internal:9220

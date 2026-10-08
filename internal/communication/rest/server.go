@@ -138,10 +138,10 @@ func (s *server) probeHandler() http.HandlerFunc {
 
 		// Read metric collection types from "collect" query parameter
 		collect := req.URL.Query().Get("collect")
-		// if collect == "" {
-		// 	// Default to all metric types if not specified
-		// 	collect = "rackpdu,environmentalsensors"
-		// }
+		if collect == "" {
+			// Default to all metric types if not specified
+			collect = "rackpdu,environmentalsensors"
+		}
 
 		s.log.Info("probing target", "target", target, "pduID", pduID, "collect", collect)
 

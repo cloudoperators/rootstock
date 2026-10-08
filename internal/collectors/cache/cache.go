@@ -15,7 +15,7 @@ type RackPDUMetricData struct {
 }
 
 type EnvironmentalSensorsData struct {
-	// TODO
+	// TODO: define environmental sensors data structure
 }
 
 type PERackPDUMetrics struct {
@@ -54,7 +54,7 @@ func (c *Cache) GetRackPDU(key string) (*RackPDUMetricData, error) {
 
 	metricData, exists := c.rackPDUMData[key]
 	if !exists {
-		return nil, nil
+		return nil, nil //nolint:nilnil // returning nil data with nil error is intentional for cache miss
 	}
 
 	return &metricData, nil
@@ -73,7 +73,7 @@ func (c *Cache) GeEnvironmentalSensorsData(key string) (*EnvironmentalSensorsDat
 
 	metricData, exists := c.environmentalSensorsData[key]
 	if !exists {
-		return nil, nil
+		return nil, nil //nolint:nilnil // returning nil data with nil error is intentional for cache miss
 	}
 
 	return &metricData, nil
