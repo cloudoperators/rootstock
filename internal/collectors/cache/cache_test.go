@@ -4,14 +4,25 @@
 package cache
 
 import (
+	"errors"
 	"sync"
 	"testing"
+
+	"github.com/cloudoperators/rootstock/pkg/log"
 )
+
+var logger log.MinInterface
+
+func init() {
+	// Initialize the logger for tests
+	log.SetDefaultLogger(log.WithLevel(log.InfoLvl.String()))
+	logger = log.Default()
+}
 
 func TestCache_SetAndGetRackPDU(t *testing.T) {
 	t.Parallel()
 
-	cache := NewCache()
+	cache := NewCache(logger)
 	pduID := "pdu-1"
 
 	// Create test metric data
@@ -91,24 +102,29 @@ func TestCache_SetAndGetRackPDU(t *testing.T) {
 func TestCache_GetNonExistentKey(t *testing.T) {
 	t.Parallel()
 
-	cache := NewCache()
+	cache := NewCache(logger)
 
 	// Get non-existent key
 	retrieved, err := cache.GetRackPDU("non-existent")
-	if err != nil {
-		t.Fatalf("GetRackPDU() returned error: %v", err)
+	if err == nil {
+		t.Fatal("GetRackPDU() expected error for non-existent key, got nil")
 	}
 
-	// Should return nil for non-existent key
+	// Should return nil and error for non-existent key
 	if retrieved != nil {
 		t.Error("Expected nil for non-existent key")
+	}
+
+	// Verify error is errCacheNotFound
+	if !errors.Is(err, errCacheNotFound) {
+		t.Errorf("Expected errCacheNotFound, got: %v", err)
 	}
 }
 
 func TestCache_Update(t *testing.T) {
 	t.Parallel()
 
-	cache := NewCache()
+	cache := NewCache(logger)
 	pduID := "pdu-1"
 
 	// Initial data
@@ -141,7 +157,7 @@ func TestCache_Update(t *testing.T) {
 func TestCache_MultipleKeys(t *testing.T) {
 	t.Parallel()
 
-	cache := NewCache()
+	cache := NewCache(logger)
 
 	// Add multiple PDUs
 	pdus := map[string]float64{
@@ -178,7 +194,7 @@ func TestCache_MultipleKeys(t *testing.T) {
 func TestCache_ConcurrentAccess(t *testing.T) {
 	t.Parallel()
 
-	cache := NewCache()
+	cache := NewCache(logger)
 	pduID := "pdu-concurrent"
 
 	var wg sync.WaitGroup
@@ -222,7 +238,7 @@ func TestCache_ConcurrentAccess(t *testing.T) {
 func TestCache_ConcurrentReadWrite(t *testing.T) {
 	t.Parallel()
 
-	cache := NewCache()
+	cache := NewCache(logger)
 
 	var wg sync.WaitGroup
 
@@ -291,7 +307,7 @@ func TestCache_ConcurrentReadWrite(t *testing.T) {
 func TestCache_EnvironmentalSensorsData(t *testing.T) {
 	t.Parallel()
 
-	cache := NewCache()
+	cache := NewCache(logger)
 	sensorID := "sensor-1"
 
 	// Create test environmental sensor data
@@ -316,16 +332,21 @@ func TestCache_EnvironmentalSensorsData(t *testing.T) {
 func TestCache_EnvironmentalSensorsData_NonExistent(t *testing.T) {
 	t.Parallel()
 
-	cache := NewCache()
+	cache := NewCache(logger)
 
 	// Get non-existent sensor
 	retrieved, err := cache.GeEnvironmentalSensorsData("non-existent")
-	if err != nil {
-		t.Fatalf("GeEnvironmentalSensorsData() returned error: %v", err)
+	if err == nil {
+		t.Fatal("GeEnvironmentalSensorsData() expected error for non-existent key, got nil")
 	}
 
-	// Should return nil for non-existent key
+	// Should return nil and error for non-existent key
 	if retrieved != nil {
 		t.Error("Expected nil for non-existent sensor key")
+	}
+
+	// Verify error is errCacheNotFound
+	if !errors.Is(err, errCacheNotFound) {
+		t.Errorf("Expected errCacheNotFound, got: %v", err)
 	}
 }
