@@ -13,12 +13,6 @@ import (
 
 var logger log.MinInterface
 
-func init() {
-	// Initialize the logger for tests
-	log.SetDefaultLogger(log.WithLevel(log.InfoLvl.String()))
-	logger = log.Default()
-}
-
 func TestCache_SetAndGetRackPDU(t *testing.T) {
 	t.Parallel()
 
@@ -316,10 +310,10 @@ func TestCache_EnvironmentalSensorsData(t *testing.T) {
 	}
 
 	// Test Set
-	cache.SeEnvironmentalSensorsData(sensorID, testData)
+	cache.SetEnvironmentalSensorsData(sensorID, testData)
 
 	// Test Get
-	retrieved, err := cache.GeEnvironmentalSensorsData(sensorID)
+	retrieved, err := cache.GetEnvironmentalSensorsData(sensorID)
 	if err != nil {
 		t.Fatalf("GeEnvironmentalSensorsData() returned error: %v", err)
 	}
@@ -335,7 +329,7 @@ func TestCache_EnvironmentalSensorsData_NonExistent(t *testing.T) {
 	cache := NewCache(logger)
 
 	// Get non-existent sensor
-	retrieved, err := cache.GeEnvironmentalSensorsData("non-existent")
+	retrieved, err := cache.GetEnvironmentalSensorsData("non-existent")
 	if err == nil {
 		t.Fatal("GeEnvironmentalSensorsData() expected error for non-existent key, got nil")
 	}

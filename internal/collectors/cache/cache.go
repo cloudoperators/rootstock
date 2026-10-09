@@ -43,10 +43,14 @@ type cacheImpl struct {
 }
 
 type Cache interface {
+	// GetRackPDU returns rack PDU data from the cache
 	GetRackPDU(string) (*RackPDUMetricData, error)
+	// SetRackPDU saves rack PDU data in the cache
 	SetRackPDU(string, *RackPDUMetricData)
-	GeEnvironmentalSensorsData(string) (*EnvironmentalSensorsData, error)
-	SeEnvironmentalSensorsData(string, *EnvironmentalSensorsData)
+	// GeEnvironmentalSensorsData gets environmental sensors data in the cache
+	GetEnvironmentalSensorsData(string) (*EnvironmentalSensorsData, error)
+	// SetEnvironmentalSensorsData sets environmtal sensors data in the cache
+	SetEnvironmentalSensorsData(string, *EnvironmentalSensorsData)
 }
 
 func NewCache(logger log.MinInterface) Cache {
@@ -77,7 +81,7 @@ func (c *cacheImpl) SetRackPDU(key string, metricData *RackPDUMetricData) {
 	c.rackPDUMData[key] = *metricData
 }
 
-func (c *cacheImpl) GeEnvironmentalSensorsData(key string) (*EnvironmentalSensorsData, error) {
+func (c *cacheImpl) GetEnvironmentalSensorsData(key string) (*EnvironmentalSensorsData, error) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
@@ -89,7 +93,7 @@ func (c *cacheImpl) GeEnvironmentalSensorsData(key string) (*EnvironmentalSensor
 	return &metricData, nil
 }
 
-func (c *cacheImpl) SeEnvironmentalSensorsData(key string, metricData *EnvironmentalSensorsData) {
+func (c *cacheImpl) SetEnvironmentalSensorsData(key string, metricData *EnvironmentalSensorsData) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
