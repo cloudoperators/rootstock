@@ -8,8 +8,12 @@ on:
     branches:
       - main
 
-jobs:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
 
+
+jobs:
   variables:
     name: Variables
     runs-on: ubuntu-latest
