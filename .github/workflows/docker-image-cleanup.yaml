@@ -1,0 +1,13 @@
+name: Daily Image Cleanup
+on:
+  schedule:
+    - cron: '50 13 * * *'
+    #     - cron: '30 1 * * *'
+  workflow_dispatch:
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+      - uses: dataaxiom/ghcr-cleanup-action@v1
