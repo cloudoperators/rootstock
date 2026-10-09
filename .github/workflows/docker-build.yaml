@@ -25,6 +25,11 @@ on:
         description: 'Version that will be used for the docker image'
         required: true
         type: string
+      release:
+        description: 'is set to true for releases'
+        required: false
+        type: boolean
+        default: false
       platforms:
         description: 'Target platform that the image will be built for'
         required: false
