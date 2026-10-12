@@ -10,7 +10,8 @@ and this project adheres to
 
 ### Features
 
-- **tooling**: Test local
+- **tooling**: Add changelog generator in
+  [#84](https://github.com/cloudoperators/rootstock/pull/84)
 
 **Full Changelog**: https://github.com/cloudoperators/rootstock/commits/0.1.0
 
