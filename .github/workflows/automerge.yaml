@@ -1,0 +1,150 @@
+# SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Greenhouse contributors
+# SPDX-License-Identifier: Apache-2.0
+
+name: Automerge
+
+on:
+  check_run:
+    types: [completed]
+  pull_request_review:
+    types: [submitted]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: PR number to merge
+        required: true
+        type: string
+
+env:
+  TARGET_BRANCH: main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  check-eligibility:
+    runs-on: ubuntu-latest
+    outputs:
+      eligible: ${{ steps.check.outputs.eligible }}
+      pr_number: ${{ steps.check.outputs.pr_number }}
+      pr_title: ${{ steps.check.outputs.pr_title }}
+      pr_body: ${{ steps.check.outputs.pr_body }}
+      pr_url: ${{ steps.check.outputs.pr_url }}
+      head_ref: ${{ steps.check.outputs.head_ref }}
+    steps:
+      - name: Check PR eligibility
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EVENT_NAME: ${{ github.event_name }}
+          DISPATCH_PR: ${{ inputs.pr_number }}
+          REVIEW_PR: ${{ github.event.pull_request.number }}
+          CHECK_CONCLUSION: ${{ github.event.check_run.conclusion }}
+          CHECK_PRS: ${{ toJson(github.event.check_run.check_suite.pull_requests) }}
+        run: |
+          case "$EVENT_NAME" in
+            workflow_dispatch)
+              PR_NUMBER="$DISPATCH_PR"
+              ;;
+            pull_request_review)
+              PR_NUMBER="$REVIEW_PR"
+              ;;
+            check_run)
+              if [ "$CHECK_CONCLUSION" != "success" ]; then
+                echo "eligible=false" >> "$GITHUB_OUTPUT"
+                exit 0
+              fi
+              PR_NUMBER=$(echo "$CHECK_PRS" \
+                | jq -r 'if length > 0 then .[0].number else empty end')
+              ;;
+          esac
+
+          if [ -z "$PR_NUMBER" ]; then
+            echo "eligible=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          PR=$(gh pr view "$PR_NUMBER" \
+            --json number,title,body,headRefName,baseRefName,mergeStateStatus,reviewDecision,url)
+
+          BASE=$(echo "$PR" | jq -r .baseRefName)
+          STATE=$(echo "$PR" | jq -r .mergeStateStatus)
+          REVIEW=$(echo "$PR" | jq -r '.reviewDecision // empty')
+
+          if [ "$BASE" != "$TARGET_BRANCH" ] \
+            || [ "$STATE" != "CLEAN" ] \
+            || [ "$REVIEW" = "CHANGES_REQUESTED" ] \
+            || [ "$REVIEW" = "REVIEW_REQUIRED" ]; then
+            echo "eligible=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          {
+            echo "eligible=true"
+            echo "pr_number=$(echo "$PR" | jq -r .number)"
+            echo "pr_title=$(echo "$PR" | jq -r .title)"
+            echo "pr_url=$(echo "$PR" | jq -r .url)"
+            echo "head_ref=$(echo "$PR" | jq -r .headRefName)"
+            printf 'pr_body<<__BODY__\n'
+            echo "$PR" | jq -r '.body // ""'
+            printf '__BODY__\n'
+          } >> "$GITHUB_OUTPUT"
+
+  update-changelog:
+    needs: check-eligibility
+    if: needs.check-eligibility.outputs.eligible == 'true'
+    uses: ./.github/workflows/changelog.yaml
+    with:
+      head_ref: ${{ needs.check-eligibility.outputs.head_ref }}
+      pr_number: ${{ needs.check-eligibility.outputs.pr_number }}
+      pr_title: ${{ needs.check-eligibility.outputs.pr_title }}
+      pr_body: ${{ needs.check-eligibility.outputs.pr_body }}
+      pr_url: ${{ needs.check-eligibility.outputs.pr_url }}
+    secrets: inherit
+
+  merge:
+    needs: [check-eligibility, update-changelog]
+    if: needs.check-eligibility.outputs.eligible == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Merge PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr merge "${{ needs.check-eligibility.outputs.pr_number }}" \
+            --squash \
+            --delete-branch
+
+  release:
+    needs: [check-eligibility, merge]
+    if: needs.check-eligibility.outputs.eligible == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ env.TARGET_BRANCH }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: git-cliff
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPO: ${{ github.repository }}
+        run: |
+          NEXT_VERSION=$(git cliff --bumped-version)
+          RELEASE_NOTES=$(git cliff --unreleased --strip all)
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "$NEXT_VERSION" -m "Release $NEXT_VERSION"
+          git push origin "$NEXT_VERSION"
+
+          gh release create "$NEXT_VERSION" \
+            --title "Release $NEXT_VERSION" \
+            --notes "$RELEASE_NOTES"
