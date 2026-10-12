@@ -1,0 +1,80 @@
+# SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Greenhouse contributors
+# SPDX-License-Identifier: Apache-2.0
+
+name: Update Changelog
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+  workflow_call:
+    inputs:
+      head_ref:
+        type: string
+        required: true
+      pr_number:
+        type: string
+        required: true
+      pr_title:
+        type: string
+        required: true
+      pr_body:
+        type: string
+        required: false
+        default: ""
+      pr_url:
+        type: string
+        required: true
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  changelog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.head_ref || github.head_ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: git-cliff
+
+      - name: Generate changelog entry from PR
+        env:
+          PR_TITLE: ${{ inputs.pr_title || github.event.pull_request.title }}
+          PR_BODY: ${{ inputs.pr_body || github.event.pull_request.body }}
+          PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number }}
+          PR_URL: ${{ inputs.pr_url || github.event.pull_request.html_url }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPO: ${{ github.repository }}
+        run: |
+          touch CHANGELOG.md
+          if [ -n "$PR_BODY" ]; then
+            COMMIT_MSG=$(printf '%s\n\n%s\n\nPR-Number: %s\nPR-Url: %s' "$PR_TITLE" "$PR_BODY" "$PR_NUMBER" "$PR_URL")
+          else
+            COMMIT_MSG=$(printf '%s\n\nPR-Number: %s\nPR-Url: %s' "$PR_TITLE" "$PR_NUMBER" "$PR_URL")
+          fi
+          MAIN_COMMIT_SHORT=4251bdc5
+          git cliff \
+            --with-commit "$COMMIT_MSG" \
+            --bump \
+            --output CHANGELOG.md \
+            ${MAIN_COMMIT_SHORT}..${MAIN_COMMIT_SHORT}
+
+      - name: Prettify code
+        uses: creyD/prettier_action@v4.6
+        with:
+          prettier_options: --prose-wrap always --write CHANGELOG.md
+          no_commit: true
+
+      - name: Commit changelog
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: update CHANGELOG.md [skip ci]"
+          commit_options: "--signoff"
+          file_pattern: CHANGELOG.md
