@@ -32,6 +32,7 @@ jobs:
       pr_body: ${{ steps.check.outputs.pr_body }}
       pr_url: ${{ steps.check.outputs.pr_url }}
       head_ref: ${{ steps.check.outputs.head_ref }}
+      base_sha: ${{ steps.check.outputs.base_sha }}
     steps:
       - name: Check PR eligibility
         id: check
@@ -66,7 +67,7 @@ jobs:
           fi
 
           PR=$(gh pr view "$PR_NUMBER" \
-            --json number,title,body,headRefName,baseRefName,mergeStateStatus,reviewDecision,url)
+            --json number,title,body,headRefName,baseRefName,baseRefOid,mergeStateStatus,reviewDecision,url)
 
           BASE=$(echo "$PR" | jq -r .baseRefName)
           STATE=$(echo "$PR" | jq -r .mergeStateStatus)
@@ -86,6 +87,7 @@ jobs:
             echo "pr_title=$(echo "$PR" | jq -r .title)"
             echo "pr_url=$(echo "$PR" | jq -r .url)"
             echo "head_ref=$(echo "$PR" | jq -r .headRefName)"
+            echo "base_sha=$(echo "$PR" | jq -r .baseRefOid)"
             printf 'pr_body<<__BODY__\n'
             echo "$PR" | jq -r '.body // ""'
             printf '__BODY__\n'
@@ -101,6 +103,7 @@ jobs:
       pr_title: ${{ needs.check-eligibility.outputs.pr_title }}
       pr_body: ${{ needs.check-eligibility.outputs.pr_body }}
       pr_url: ${{ needs.check-eligibility.outputs.pr_url }}
+      base_sha: ${{ needs.check-eligibility.outputs.base_sha }}
     secrets: inherit
 
   merge:
@@ -116,8 +119,36 @@ jobs:
             --squash \
             --delete-branch
 
-  release:
+  bump-version:
     needs: [check-eligibility, merge]
+    if: needs.check-eligibility.outputs.eligible == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ env.TARGET_BRANCH }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: git-cliff
+
+      - name: Bump version in VERSION.yaml
+        run: |
+          NEXT_VERSION=$(git cliff --bumped-version)
+          VERSION="${NEXT_VERSION#v}"
+          sed -i "s/^version:.*/version: ${VERSION}/" VERSION.yaml
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add VERSION.yaml
+          git diff --staged --quiet || \
+            git commit --signoff -m "chore(release): bump version to ${VERSION} [skip ci]"
+          git push origin "${{ env.TARGET_BRANCH }}"
+
+  release:
+    needs: [check-eligibility, bump-version]
     if: needs.check-eligibility.outputs.eligible == 'true'
     runs-on: ubuntu-latest
     steps:

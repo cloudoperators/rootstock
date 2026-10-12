@@ -25,6 +25,9 @@ on:
       pr_url:
         type: string
         required: true
+      base_sha:
+        type: string
+        required: true
 
 permissions:
   contents: write
@@ -52,6 +55,7 @@ jobs:
           PR_URL: ${{ inputs.pr_url || github.event.pull_request.html_url }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPO: ${{ github.repository }}
+          BASE_SHA: ${{ inputs.base_sha || github.event.pull_request.base.sha }}
         run: |
           touch CHANGELOG.md
           if [ -n "$PR_BODY" ]; then
@@ -59,12 +63,11 @@ jobs:
           else
             COMMIT_MSG=$(printf '%s\n\nPR-Number: %s\nPR-Url: %s' "$PR_TITLE" "$PR_NUMBER" "$PR_URL")
           fi
-          MAIN_COMMIT_SHORT=4251bdc5
           git cliff \
             --with-commit "$COMMIT_MSG" \
             --bump \
             --output CHANGELOG.md \
-            ${MAIN_COMMIT_SHORT}..${MAIN_COMMIT_SHORT}
+            ${BASE_SHA}..${BASE_SHA}
 
       - name: Prettify code
         uses: creyD/prettier_action@v4.6
