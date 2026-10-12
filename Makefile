@@ -7,10 +7,17 @@ BINARY         := rootstock
 OS             := $(shell go env GOOS)
 ARCH           := $(shell go env GOARCH)
 
-VERSION        := $(shell command -v yq > /dev/null 2>&1 \
-	&& yq -r '.version' VERSION.yaml \
-	|| git describe --tags --always --dirty 2>/dev/null \
-	|| echo "dev")
+## Auto Detect Platform
+ifeq ($(PLATFORM),)
+	ifneq ($(filter arm%,$(ARCH)),)
+		PLATFORM = linux/arm64
+	else
+		PLATFORM = linux/amd64
+	endif
+endif
+
+## Version setting
+VERSION ?= $(shell sed -n 's/^version:[[:space:]]*//p' VERSION.yaml)
 GIT_COMMIT     := $(shell git rev-parse HEAD)
 GIT_TREE_STATE := $(shell if [ -z "`git status --porcelain`" ]; then echo "clean"; else echo "dirty"; fi)
 BUILD_DATE     := $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
@@ -21,6 +28,8 @@ override LDFLAGS += \
 	-X main.gitCommit=$(GIT_COMMIT) \
 	-X main.gitTreeState=$(GIT_TREE_STATE)
 
+
+IMAGE ?= ghcr.io/cloudoperators/rootstock:dev-$(USER)
 
 # Integration test mockup server
 # Requires pdu-mockup data at testdata/pdu-mockup (already added to the repo).
@@ -35,20 +44,27 @@ MOCKUP_CONTAINER := redfish-mockup
 .PHONY: build test test-unit test-integration test-contract test-performance \
         mockup-start mockup-stop \
         lint lint-go lint-md conventions scan \
-        generate docker-build \
-				generate-changelog generate-version get-version \
+        docker-build \
+				generate generate-changelog generate-version \
+				get-version \
         help
 
 # Build
 
+build: GIT_COMMIT  = $(shell git rev-parse HEAD)
+build: GIT_STATE   = $(shell if [ -z "$$(git status --porcelain)" ]; then echo clean; else echo dirty; fi)
+build: BUILD_DATE  = $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
+build: LDFLAGS     = "-s -w \
+											-X main.version=$(VERSION) \
+											-X main.gitCommit=$(GIT_COMMIT) \
+											-X main.gitTreeState=$(GIT_STATE) \
+											-X main.buildDate=$(BUILD_DATE)"
 build: ## Compile a static server binary to bin/
 	@echo "$(green) building binary$(reset)"
-	CGO_ENABLED=0 GOOS=$(OS) GOARCH=$(ARCH) \
-		go build \
+	CGO_ENABLED=0 go build \
 			-installsuffix 'static' \
-			-a \
-			-o bin/$(BINARY) \
-			-ldflags "$(LDFLAGS)" \
+			-ldflags $(LDFLAGS) \
+			-o bin/rootstock \
 			.
 
 # Tests
@@ -116,8 +132,19 @@ generate-version: ## Bump version in VERSION.yaml
 generate-changelog: ## Update the local CHANGELOG.md file
 	@hack/update_changelog.sh
 
-docker-build: ## Build the container image (TODO: Dockerfile not yet written)
-	@echo "TODO: docker build -t $(BINARY):$(VERSION) ."
+get-version: ## Prints out the current version as presented in the VERSION.yaml file
+	@echo $(VERSION)
+
+docker-build: ## Build the container image for rootstock
+	@echo "$(green) building docker image$(reset)"
+	docker build \
+		--build-arg GOCACHE=$(shell go env GOCACHE) \
+		--build-arg GOMODCACHE=$(shell go env GOMODCACHE) \
+		--build-arg VERSION=$(VERSION) \
+		--platform $(PLATFORM) \
+		-t ${IMAGE} \
+		-f Dockerfile \
+		.
 
 # Build everything that is necessary for testing prometheus locally
 prometheus-local-setup: build mockup-start prometheus-collector-start
