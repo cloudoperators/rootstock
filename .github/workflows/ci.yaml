@@ -26,6 +26,7 @@ jobs:
         id: version
         run: |
           version=$(make get-version)
+          echo "version: $version"
           echo "VERSION=${version}" >> "$GITHUB_OUTPUT"
 
   conventions:
