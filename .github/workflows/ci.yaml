@@ -42,7 +42,7 @@ jobs:
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v9
         with:
-          version: v2.13.2
+          version: v2.14.0
       - name: TODO - Markdown linting
         run: echo "TODO - run prettier on markdown files"
       - name: TODO - Shell linting
