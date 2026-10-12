@@ -18,15 +18,15 @@ jobs:
     name: Variables
     runs-on: ubuntu-latest
     outputs:
-      version: ${{ steps.lookupVersion.outputs.result }}
+      version: ${{ steps.version.outputs.result }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
       - name: Get version from VERSION.yaml
-        id: lookupVersion
-        uses: mikefarah/yq@master
-        with:
-          cmd: yq '.version' 'VERSION.yaml'
+        id: version
+        run: |
+          version=$(make get-version)
+          echo "VERSION=${version}" >> "$GITHUB_OUTPUT"
 
   conventions:
     name: Conventions

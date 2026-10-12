@@ -33,6 +33,7 @@ VERSION ?= $(shell sed -n 's/^version:[[:space:]]*//p' VERSION.yaml)
         mockup-start mockup-stop \
         lint lint-go lint-md conventions scan \
         generate docker-build \
+				get-version \
         help
 
 # Build
@@ -111,6 +112,9 @@ scan: ## Run security vulnerability scan
 # Release
 generate: ## Run code generation (TODO: not yet needed)
 	@echo "TODO: add code generation steps e.g. go generate ./..."
+
+get-version: ## Prints out the current version as presented in the VERSION.yaml file
+	@echo $(VERSION)
 
 docker-build: ## Build the container image for rootstock
 	@echo "$(green) building docker image$(reset)"
