@@ -105,7 +105,7 @@ scan: ## Run security vulnerability scan
 	@echo "TODO: add local scanning tool here?"
 
 # Release
-generate: generate-changelog lint-md ## Run code generation (TODO: not yet needed)
+generate: ## Run code generation (TODO: not yet needed)
 	@echo "$(green) file generation$(reset)"
 
 generate-changelog: ## Update the local CHANGELOG.md file

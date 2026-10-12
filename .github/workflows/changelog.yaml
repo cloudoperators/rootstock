@@ -57,7 +57,6 @@ jobs:
           GITHUB_REPO: ${{ github.repository }}
           BASE_SHA: ${{ inputs.base_sha || github.event.pull_request.base.sha }}
         run: |
-          touch CHANGELOG.md
           if [ -n "$PR_BODY" ]; then
             commit_msg=$(printf '%s\n\n%s\n\nPR-Number: %s\nPR-Url: %s' "$PR_TITLE" "$PR_BODY" "$PR_NUMBER" "$PR_URL")
           else
@@ -65,7 +64,8 @@ jobs:
           fi
           make generate-changelog \
             COMMIT_MSG="${commit_msg}" \
-            BASE_COMMIT="${BASE_SHA}"
+            BASE_COMMIT="${BASE_SHA}" \
+            DEBUG=true
 
       - name: Prettify code
         uses: creyD/prettier_action@v4.6
