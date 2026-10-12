@@ -1,24 +1,10 @@
 # SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Greenhouse contributors
 # SPDX-License-Identifier: Apache-2.0
 
+green := \033[1;32m[+]
+reset := \033[0m
 
-BINARY         := rootstock
-OS             := $(shell go env GOOS)
-ARCH           := $(shell go env GOARCH)
-VERSION        := $(shell command -v yq > /dev/null 2>&1 \
-	&& yq -r '.version' VERSION.yaml \
-	|| git describe --tags --always --dirty 2>/dev/null \
-	|| echo "dev")
-GIT_COMMIT     := $(shell git rev-parse HEAD)
-GIT_TREE_STATE := $(shell if [ -z "`git status --porcelain`" ]; then echo "clean"; else echo "dirty"; fi)
-BUILD_DATE     := $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
-
-override LDFLAGS += \
-	-X main.version=$(VERSION) \
-	-X main.buildDate=$(BUILD_DATE) \
-	-X main.gitCommit=$(GIT_COMMIT) \
-	-X main.gitTreeState=$(GIT_TREE_STATE)
-
+IMAGE ?= ghcr.io/cloudoperators/rootstock:dev-$(USER)
 
 # Integration test mockup server
 # Requires pdu-mockup data at testdata/pdu-mockup (already added to the repo).
@@ -28,25 +14,44 @@ PDU_MOCKUP_PATH  ?= $(CURDIR)/testdata/pdu-mockup
 MOCKUP_PORT      ?= 8000
 MOCKUP_CONTAINER := redfish-mockup
 
-green := \033[1;32m[+]
-reset := \033[0m
+
+## Auto Detect Platform
+UNAME_P   := $(shell uname -p)
+ifeq ($(PLATFORM),)
+ifeq ($(UNAME_P),x86_64)
+	PLATFORM = linux/amd64
+endif
+ifneq ($(filter arm%,$(UNAME_P)),)
+	PLATFORM = linux/arm64
+endif
+endif
+
+## Version setting
+VERSION ?= $(shell sed -n 's/^version:[[:space:]]*//p' VERSION.yaml)
 
 .PHONY: build test test-unit test-integration test-contract test-performance \
         mockup-start mockup-stop \
         lint lint-go lint-md conventions scan \
         generate docker-build \
+				get-version \
         help
 
 # Build
 
+build: GIT_COMMIT  = $(shell git rev-parse HEAD)
+build: GIT_STATE   = $(shell if [ -z "$$(git status --porcelain)" ]; then echo clean; else echo dirty; fi)
+build: BUILD_DATE  = $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
+build: LDFLAGS     = "-s -w \
+											-X main.version=$(VERSION) \
+											-X main.gitCommit=$(GIT_COMMIT) \
+											-X main.gitTreeState=$(GIT_STATE) \
+											-X main.buildDate=$(BUILD_DATE)"
 build: ## Compile a static server binary to bin/
 	@echo "$(green) building binary$(reset)"
-	CGO_ENABLED=0 GOOS=$(OS) GOARCH=$(ARCH) \
-		go build \
+	CGO_ENABLED=0 go build \
 			-installsuffix 'static' \
-			-a \
-			-o bin/$(BINARY) \
-			-ldflags "$(LDFLAGS)" \
+			-ldflags $(LDFLAGS) \
+			-o bin/rootstock \
 			.
 
 # Tests
@@ -108,8 +113,19 @@ scan: ## Run security vulnerability scan
 generate: ## Run code generation (TODO: not yet needed)
 	@echo "TODO: add code generation steps e.g. go generate ./..."
 
-docker-build: ## Build the container image (TODO: Dockerfile not yet written)
-	@echo "TODO: docker build -t $(BINARY):$(VERSION) ."
+get-version: ## Prints out the current version as presented in the VERSION.yaml file
+	@echo $(VERSION)
+
+docker-build: ## Build the container image for rootstock
+	@echo "$(green) building docker image$(reset)"
+	docker build \
+		--build-arg GOCACHE=$(shell go env GOCACHE) \
+		--build-arg GOMODCACHE=$(shell go env GOMODCACHE) \
+		--build-arg VERSION=$(VERSION) \
+		--platform $(PLATFORM) \
+		-t ${IMAGE} \
+		-f Dockerfile \
+		.
 
 # Build everything that is necessary for testing prometheus locally
 prometheus-local-setup: build mockup-start prometheus-collector-start
