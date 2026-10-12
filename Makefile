@@ -27,10 +27,7 @@ endif
 endif
 
 ## Version setting
-VERSION ?= $(shell \
-		command -v yq > /dev/null 2>&1 && yq -r '.version' VERSION.yaml \
-		|| echo "0.0.0-$$(git rev-parse --short HEAD)" \
-)
+VERSION ?= $(shell sed -n 's/^version:[[:space:]]*//p' VERSION.yaml)
 
 .PHONY: build test test-unit test-integration test-contract test-performance \
         mockup-start mockup-stop \

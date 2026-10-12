@@ -9,9 +9,6 @@ ARG TARGETOS
 ARG TARGETARCH
 
 ARG VERSION
-ARG BUILD_DATE
-ARG GIT_COMMIT
-ARG GIT_TREE_STATE
 
 WORKDIR /src
 
@@ -27,7 +24,8 @@ RUN --mount=type=cache,target=${GOMODCACHE} \
         GOFIPS140=certified \
         CGO_ENABLED=0 \
         GOOS=${TARGETOS} \
-        GOARCH=${TARGETARCH}
+        GOARCH=${TARGETARCH} \
+        VERSION=${VERSION}
 
 
 ##########################################################################################
