@@ -10,6 +10,8 @@ and this project adheres to
 
 ### Features
 
+- **tooling**: Add a docker build (#78) by
+  [@blackhat-jan](https://github.com/blackhat-jan)
 - **tooling**: Add changelog generator in
   [#84](https://github.com/cloudoperators/rootstock/pull/84)
 
