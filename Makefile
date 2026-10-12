@@ -1,10 +1,12 @@
 # SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Greenhouse contributors
 # SPDX-License-Identifier: Apache-2.0
 
-
+green := \033[1;32m[+]
+reset := \033[0m
 BINARY         := rootstock
 OS             := $(shell go env GOOS)
 ARCH           := $(shell go env GOARCH)
+
 VERSION        := $(shell command -v yq > /dev/null 2>&1 \
 	&& yq -r '.version' VERSION.yaml \
 	|| git describe --tags --always --dirty 2>/dev/null \
@@ -28,13 +30,13 @@ PDU_MOCKUP_PATH  ?= $(CURDIR)/testdata/pdu-mockup
 MOCKUP_PORT      ?= 8000
 MOCKUP_CONTAINER := redfish-mockup
 
-green := \033[1;32m[+]
-reset := \033[0m
+
 
 .PHONY: build test test-unit test-integration test-contract test-performance \
         mockup-start mockup-stop \
         lint lint-go lint-md conventions scan \
         generate docker-build \
+				generate-changelog generate-version get-version \
         help
 
 # Build
@@ -105,11 +107,14 @@ scan: ## Run security vulnerability scan
 	@echo "TODO: add local scanning tool here?"
 
 # Release
-generate: ## Run code generation (TODO: not yet needed)
-	@echo "$(green) file generation$(reset)"
+generate: ## run general all file generation
+	@echo "TODO: add proper generation here"
+
+generate-version: ## Bump version in VERSION.yaml
+	@hack/bump_version.sh
 
 generate-changelog: ## Update the local CHANGELOG.md file
-	./hack/update_changelog.sh
+	@hack/update_changelog.sh
 
 docker-build: ## Build the container image (TODO: Dockerfile not yet written)
 	@echo "TODO: docker build -t $(BINARY):$(VERSION) ."
