@@ -13,7 +13,22 @@ The chart is a standard `application` chart and is compatible with
 [Greenhouse](https://github.com/cloudoperators/greenhouse) plugins (see
 `k8s_configuration/plugindefinition.yaml`).
 
-## TL;DR
+## Local testing on kind
+
+From the repository root, the Makefile wires up a full local environment
+(builds the image, deploys an in-cluster DMTF Redfish mockup pre-loaded with
+`testdata/pdu-mockup`, creates the credentials Secret, and installs the chart):
+
+```bash
+make kind-up      # create cluster + build/load image + mockup + deploy chart
+make kind-verify  # port-forward and probe the running pod
+make kind-down    # delete the cluster
+```
+
+`helm test rootstock -n rootstock` runs an in-cluster smoke test against
+`/healthz` and `/ready`.
+
+**alternatively**
 
 ```bash
 # Self-contained (inline password, chart renders the Secret):
@@ -27,7 +42,7 @@ helm install rootstock k8s_configuration/chart \
   --set redfish.existingSecret=rootstock-redfish
 ```
 
-## Secrets: the Redfish password is read from a file, never an env var
+## Secrets: the Redfish password
 
 rootstock reads the Redfish password **only** from a mounted file
 (`--config-folder <dir>` + `--redfish-credentials-file <name>`, i.e.
@@ -89,18 +104,3 @@ Key options:
 
 rootstock serves `/healthz`, `/ready`, `/metrics`, and the multi-target
 `/probe?target=<redfish-url>&labels=<pdu_id>` on `server.port`.
-
-## Local testing on kind
-
-From the repository root, the Makefile wires up a full local environment
-(builds the image, deploys an in-cluster DMTF Redfish mockup pre-loaded with
-`testdata/pdu-mockup`, creates the credentials Secret, and installs the chart):
-
-```bash
-make kind-up      # create cluster + build/load image + mockup + deploy chart
-make kind-verify  # port-forward and probe the running pod
-make kind-down    # delete the cluster
-```
-
-`helm test rootstock -n rootstock` runs an in-cluster smoke test against
-`/healthz` and `/ready`.

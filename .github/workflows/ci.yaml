@@ -8,14 +8,32 @@ on:
     branches:
       - main
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+
 jobs:
+  variables:
+    name: Variables
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.lookupVersion.outputs.result }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Get version from VERSION.yaml
+        id: lookupVersion
+        uses: mikefarah/yq@master
+        with:
+          cmd: yq '.version' 'VERSION.yaml'
 
   conventions:
     name: Conventions
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
@@ -34,7 +52,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Run code scans
         run: make scan
 
@@ -45,15 +63,26 @@ jobs:
       test-target: test-unit
 
   build:
-    name: Build
-    uses: cloudoperators/common/.github/workflows/shared-go-build.yaml@main
+    permissions:
+      contents: read
+      packages: write
+      # This is used to complete the identity challenge
+      # with sigstore/fulcio when running outside of PRs.
+      id-token: write
+      security-events: write
+    secrets: inherit
+    uses: ./.github/workflows/docker-build.yaml
+    needs:
+      - variables
+    with:
+      version: ${{ needs.variables.outputs.version }}-pr-${{ github.event.number }}
 
   contract-tests:
     name: Contract Tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
@@ -66,7 +95,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Set up Go
         uses: actions/setup-go@v5
         with:

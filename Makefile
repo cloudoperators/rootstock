@@ -5,20 +5,23 @@
 BINARY         := rootstock
 OS             := $(shell go env GOOS)
 ARCH           := $(shell go env GOARCH)
-VERSION        := $(shell command -v yq > /dev/null 2>&1 \
-	&& yq -r '.version' VERSION.yaml \
-	|| git describe --tags --always --dirty 2>/dev/null \
-	|| echo "dev")
-GIT_COMMIT     := $(shell git rev-parse HEAD)
-GIT_TREE_STATE := $(shell if [ -z "`git status --porcelain`" ]; then echo "clean"; else echo "dirty"; fi)
-BUILD_DATE     := $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
 
-override LDFLAGS += \
-	-X main.version=$(VERSION) \
-	-X main.buildDate=$(BUILD_DATE) \
-	-X main.gitCommit=$(GIT_COMMIT) \
-	-X main.gitTreeState=$(GIT_TREE_STATE)
+## Version setting
+# Single source of truth: VERSION.yaml via yq, with a git-based fallback for
+# environments without yq. The version package accepts a leading
+# <major>.<minor>.<patch> followed by an arbitrary suffix, so the "0.0.0-<sha>"
+# fallback and CI's "<version>-pr-<n>" are both valid.
+VERSION ?= $(shell \
+		command -v yq > /dev/null 2>&1 && yq -r '.version' VERSION.yaml \
+		|| echo "0.0.0-$$(git rev-parse --short HEAD)" \
+)
 
+# Build toolchain knobs. Overridable so the Dockerfile can cross-compile and
+# enforce FIPS, e.g. make build GOOS=linux GOARCH=arm64 GOFIPS140=certified.
+GOOS       ?= $(OS)
+GOARCH     ?= $(ARCH)
+CGO_ENABLED ?= 0
+GOFIPS140  ?=
 
 # Integration test mockup server
 # Requires pdu-mockup data at testdata/pdu-mockup (already added to the repo).
@@ -32,11 +35,8 @@ green := \033[1;32m[+]
 reset := \033[0m
 
 # Container image / local Kubernetes (kind) settings
-# IMAGE_VERSION is a semver-valid tag parsed from VERSION.yaml without requiring
-# yq (the version package rejects non-semver strings at startup, so we must not
-# use the git-describe fallback that $(VERSION) may produce).
-IMAGE_VERSION  ?= $(shell sed -n 's/^version:[[:space:]]*//p' VERSION.yaml)
-IMG            ?= $(BINARY):$(IMAGE_VERSION)
+IMAGE          ?= ghcr.io/cloudoperators/rootstock:dev-$(USER)
+IMG            ?= $(BINARY):$(VERSION)
 KIND_CLUSTER   ?= rootstock-local
 CHART_DIR      := k8s_configuration/chart
 CHART_RELEASE  ?= rootstock
@@ -56,14 +56,21 @@ REDFISH_PASSWORD ?= admin
 
 # Build
 
+build: GIT_COMMIT = $(shell git rev-parse HEAD)
+build: GIT_STATE  = $(shell if [ -z "$$(git status --porcelain)" ]; then echo clean; else echo dirty; fi)
+build: BUILD_DATE = $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
+build: LDFLAGS    = "-s -w \
+							-X main.version=$(VERSION) \
+							-X main.gitCommit=$(GIT_COMMIT) \
+							-X main.gitTreeState=$(GIT_STATE) \
+							-X main.buildDate=$(BUILD_DATE)"
 build: ## Compile a static server binary to bin/
 	@echo "$(green) building binary$(reset)"
-	CGO_ENABLED=0 GOOS=$(OS) GOARCH=$(ARCH) \
+	CGO_ENABLED=$(CGO_ENABLED) GOOS=$(GOOS) GOARCH=$(GOARCH) GOFIPS140=$(GOFIPS140) \
 		go build \
 			-installsuffix 'static' \
-			-a \
+			-ldflags $(LDFLAGS) \
 			-o bin/$(BINARY) \
-			-ldflags "$(LDFLAGS)" \
 			.
 
 # Tests
@@ -128,11 +135,12 @@ generate: ## Run code generation (TODO: not yet needed)
 docker-build: ## Build the container image (tagged $(IMG))
 	@echo "$(green) building container image $(IMG)$(reset)"
 	docker build \
-		--build-arg VERSION=$(IMAGE_VERSION) \
-		--build-arg GIT_COMMIT=$(GIT_COMMIT) \
-		--build-arg BUILD_DATE=$(BUILD_DATE) \
-		--build-arg GIT_TREE_STATE=$(GIT_TREE_STATE) \
-		-t $(IMG) .
+		--build-arg GOCACHE=$(shell go env GOCACHE) \
+		--build-arg GOMODCACHE=$(shell go env GOMODCACHE) \
+		--build-arg VERSION=$(VERSION) \
+		-t $(IMG) \
+		-f Dockerfile \
+		.
 
 # ---------------------------------------------------------------------------
 # Local Kubernetes deployment via kind + Helm
@@ -175,7 +183,7 @@ kind-deploy: kind-secret ## Install/upgrade the rootstock Helm chart in the kind
 	helm --kube-context kind-$(KIND_CLUSTER) upgrade --install $(CHART_RELEASE) $(CHART_DIR) \
 		--namespace $(CHART_NAMESPACE) --create-namespace \
 		--set image.repository=$(BINARY) \
-		--set image.tag=$(IMAGE_VERSION) \
+		--set image.tag=$(VERSION) \
 		--set image.pullPolicy=IfNotPresent \
 		--set redfish.existingSecret=$(REDFISH_SECRET) \
 		--wait --timeout 120s

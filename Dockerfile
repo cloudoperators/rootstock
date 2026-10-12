@@ -1,42 +1,50 @@
 # SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Greenhouse contributors
 # SPDX-License-Identifier: Apache-2.0
 
-# Build the rootstock binary.
-FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:1.26 AS builder
+##########################################################################################
+# Builder image
+##########################################################################################
+FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:1.27.1 AS builder
 
+ARG GOCACHE="/root/.cache/go-build"
+ARG GOMODCACHE="/go/pkg/mod"
 ARG TARGETOS
 ARG TARGETARCH
-ARG VERSION=0.0.1
-ARG GIT_COMMIT=""
-ARG BUILD_DATE="1970-01-01T00:00:00Z"
-ARG GIT_TREE_STATE="clean"
 
-ENV CGO_ENABLED=0
+ARG VERSION
+ARG BUILD_DATE
+ARG GIT_COMMIT
+ARG GIT_TREE_STATE
 
-WORKDIR /workspace
+WORKDIR /src
 
-# Cache dependencies first.
-COPY go.mod go.sum ./
-RUN --mount=type=cache,target=/go/pkg/mod go mod download
 
-# Copy the rest of the sources and build a static binary.
 COPY . .
-RUN --mount=type=cache,target=/go/pkg/mod \
-    --mount=type=cache,target=/root/.cache/go-build \
-    GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH:-amd64} \
-    go build \
-      -installsuffix 'static' \
-      -a \
-      -o /workspace/bin/rootstock \
-      -ldflags "-X main.version=${VERSION} -X main.buildDate=${BUILD_DATE} -X main.gitCommit=${GIT_COMMIT} -X main.gitTreeState=${GIT_TREE_STATE}" \
-      .
 
-# Use distroless as a minimal, non-root base image.
-# Refer to https://github.com/GoogleContainerTools/distroless for more details.
-FROM --platform=${BUILDPLATFORM:-linux/amd64} gcr.io/distroless/static:nonroot
+RUN --mount=type=cache,target=${GOMODCACHE} \
+      go mod download
+
+RUN --mount=type=cache,target=${GOMODCACHE} \
+    --mount=type=cache,target=${GOCACHE} \
+      make build \
+        GOFIPS140=certified \
+        CGO_ENABLED=0 \
+        GOOS=${TARGETOS} \
+        GOARCH=${TARGETARCH}
+
+
+##########################################################################################
+# Final image
+##########################################################################################
+FROM gcr.io/distroless/static:nonroot
+
 LABEL source_repository="https://github.com/cloudoperators/rootstock"
 WORKDIR /
-COPY --from=builder /workspace/bin/rootstock /rootstock
-USER 65532:65532
+COPY --from=builder /src/bin/rootstock rootstock
+USER 65531:65531
+
+
+# FIPS mode: always enforce strict FIPS 140 compliance at runtime
+ENV GODEBUG=fips140=only
 
 ENTRYPOINT ["/rootstock"]
