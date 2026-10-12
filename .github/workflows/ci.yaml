@@ -18,7 +18,7 @@ jobs:
     name: Variables
     runs-on: ubuntu-latest
     outputs:
-      version: ${{ steps.version.outputs.result }}
+      version: ${{ steps.version.outputs.version }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -27,7 +27,7 @@ jobs:
         run: |
           version=$(make get-version)
           echo "version: $version"
-          echo "VERSION=${version}" >> "$GITHUB_OUTPUT"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
 
   conventions:
     name: Conventions
