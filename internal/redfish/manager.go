@@ -11,17 +11,29 @@ import (
 	"github.com/cloudoperators/rootstock/pkg/log"
 )
 
-type Manager struct {
+type Manager interface {
+	// StartWorker launches the configured number of scraper workers.
+	StartWorker(ctx context.Context)
+}
+
+type manager struct {
 	devices     map[string]*device
 	mu          sync.RWMutex
-	interval    time.Duration //how often each device should be scraped
+	interval    time.Duration // how often each device should be scraped
 	workerCount int
 	timeout     time.Duration
 	logger      log.MinInterface
 }
 
 // takes the list of IPs, creates a device for each one and puts then in the map
-func NewManager(configs []DeviceConfig, credentials Auth, interval time.Duration, workerCount int, timeout time.Duration, logger log.MinInterface) *Manager {
+func NewManager(
+	configs []DeviceConfig,
+	credentials Auth,
+	interval time.Duration,
+	workerCount int,
+	timeout time.Duration,
+	logger log.MinInterface,
+) Manager {
 	devices := make(map[string]*device)
 
 	for _, cfg := range configs {
@@ -32,17 +44,17 @@ func NewManager(configs []DeviceConfig, credentials Auth, interval time.Duration
 		}
 	}
 
-	return &Manager{
-		devices:  devices,
-		interval: interval,
+	return &manager{
+		devices:     devices,
+		interval:    interval,
 		workerCount: workerCount,
-		timeout: timeout,
-		logger: logger,
+		timeout:     timeout,
+		logger:      logger,
 	}
 }
 
 // worker calls this to get its next job
-func (m *Manager) getScrapeJob() *device {
+func (m *manager) getScrapeJob() *device {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -57,7 +69,7 @@ func (m *Manager) getScrapeJob() *device {
 }
 
 // worker calls this after finising. Updates the device.
-func (m *Manager) scrapeResult(deviceID string, timestamp time.Time, result ScrapeResult) {
+func (m *manager) scrapeResult(deviceID string, timestamp time.Time, result ScrapeResult) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -76,7 +88,7 @@ func (m *Manager) scrapeResult(deviceID string, timestamp time.Time, result Scra
 	}
 }
 
-func (m *Manager) StartWorker(ctx context.Context) {
+func (m *manager) StartWorker(ctx context.Context) {
 	for range m.workerCount {
 		s := newScraper(m)
 		go s.run(ctx)

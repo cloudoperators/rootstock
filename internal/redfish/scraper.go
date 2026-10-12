@@ -6,13 +6,13 @@ package redfish
 import "context"
 
 type Scraper struct {
-	manager *Manager
+	manager *manager
 }
 
-func newScraper(manager *Manager) *Scraper {
+func newScraper(manager *manager) *Scraper {
 	return &Scraper{manager: manager}
 }
 
-func (s *Scraper) run(_ context.Context) {
+func (*Scraper) run(_ context.Context) {
 	// implement scraper logic
 }

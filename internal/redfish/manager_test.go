@@ -4,20 +4,32 @@
 package redfish
 
 import (
-	"fmt"
+	"errors"
 	"testing"
 	"time"
 
 	"github.com/cloudoperators/rootstock/pkg/log"
 )
 
-func newTestManager(ips ...string) *Manager {
+func newTestManager(ips ...string) *manager {
 	configs := make([]DeviceConfig, len(ips))
 	for i, ip := range ips {
 		configs[i] = DeviceConfig{IP: ip}
 	}
 
-	return NewManager(configs, Auth{Username: "admin", Password: "pass"}, 30*time.Second, 2, 5*time.Second, log.Default())
+	m, ok := NewManager(
+		configs,
+		Auth{Username: "admin", Password: "pass"},
+		30*time.Second,
+		2,
+		5*time.Second,
+		log.Default(),
+	).(*manager)
+	if !ok {
+		panic("unexpected manager type")
+	}
+
+	return m
 }
 
 func TestNewManager(t *testing.T) {
@@ -86,8 +98,8 @@ func TestGetScrapeJobSkipsRecentlyScraped(t *testing.T) {
 func TestScrapeResultSuccessClearsFailures(t *testing.T) {
 	m := newTestManager("10.0.0.1")
 	m.devices["10.0.0.1"].consecutiveFailures = []ScrapeResult{
-		{Err: fmt.Errorf("timeout")},
-		{Err: fmt.Errorf("timeout")},
+		{Err: errors.New("timeout")},
+		{Err: errors.New("timeout")},
 	}
 
 	m.scrapeResult("10.0.0.1", time.Now(), ScrapeResult{Err: nil})
@@ -105,8 +117,8 @@ func TestScrapeResultSuccessClearsFailures(t *testing.T) {
 func TestScrapeResultAccumulatesFailures(t *testing.T) {
 	m := newTestManager("10.0.0.1")
 
-	m.scrapeResult("10.0.0.1", time.Now(), ScrapeResult{Err: fmt.Errorf("connection refused")})
-	m.scrapeResult("10.0.0.1", time.Now(), ScrapeResult{Err: fmt.Errorf("timeout")})
+	m.scrapeResult("10.0.0.1", time.Now(), ScrapeResult{Err: errors.New("connection refused")})
+	m.scrapeResult("10.0.0.1", time.Now(), ScrapeResult{Err: errors.New("timeout")})
 
 	d := m.devices["10.0.0.1"]
 	if len(d.consecutiveFailures) != 2 {
