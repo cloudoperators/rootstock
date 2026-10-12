@@ -16,19 +16,16 @@ type ScrapeResult struct {
 	Err        error
 }
 
-
+// DeviceConfig is the input configuration for a single device from the static list.
 type DeviceConfig struct {
-    IP    string
-    PDUID string
+	IP string
 }
 
 type device struct {
 	deviceID            string
 	ip                  string
-	pduID				string
 	auth                Auth
 	lastScraped         time.Time
 	currentlyScraped    bool
 	consecutiveFailures []ScrapeResult
 }
-

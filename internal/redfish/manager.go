@@ -28,7 +28,6 @@ func NewManager(configs []DeviceConfig, credentials Auth, interval time.Duration
 		devices[cfg.IP] = &device{
 			deviceID: cfg.IP,
 			ip:       cfg.IP,
-			pduID:    cfg.PDUID,
 			auth:     credentials,
 		}
 	}
