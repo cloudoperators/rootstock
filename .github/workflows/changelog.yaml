@@ -59,15 +59,13 @@ jobs:
         run: |
           touch CHANGELOG.md
           if [ -n "$PR_BODY" ]; then
-            COMMIT_MSG=$(printf '%s\n\n%s\n\nPR-Number: %s\nPR-Url: %s' "$PR_TITLE" "$PR_BODY" "$PR_NUMBER" "$PR_URL")
+            commit_msg=$(printf '%s\n\n%s\n\nPR-Number: %s\nPR-Url: %s' "$PR_TITLE" "$PR_BODY" "$PR_NUMBER" "$PR_URL")
           else
-            COMMIT_MSG=$(printf '%s\n\nPR-Number: %s\nPR-Url: %s' "$PR_TITLE" "$PR_NUMBER" "$PR_URL")
+            commit_msg=$(printf '%s\n\nPR-Number: %s\nPR-Url: %s' "$PR_TITLE" "$PR_NUMBER" "$PR_URL")
           fi
-          git cliff \
-            --with-commit "$COMMIT_MSG" \
-            --bump \
-            --output CHANGELOG.md \
-            ${BASE_SHA}..${BASE_SHA}
+          make generate-changelog \
+            COMMIT_MSG="${commit_msg}" \
+            BASE_COMMIT="${BASE_SHA}"
 
       - name: Prettify code
         uses: creyD/prettier_action@v4.6

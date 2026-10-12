@@ -105,8 +105,11 @@ scan: ## Run security vulnerability scan
 	@echo "TODO: add local scanning tool here?"
 
 # Release
-generate: ## Run code generation (TODO: not yet needed)
-	@echo "TODO: add code generation steps e.g. go generate ./..."
+generate: generate-changelog lint-md ## Run code generation (TODO: not yet needed)
+	@echo "$(green) file generation$(reset)"
+
+generate-changelog: ## Update the local CHANGELOG.md file
+	./hack/update_changelog.sh
 
 docker-build: ## Build the container image (TODO: Dockerfile not yet written)
 	@echo "TODO: docker build -t $(BINARY):$(VERSION) ."
