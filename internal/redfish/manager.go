@@ -59,7 +59,17 @@ func (m *manager) getScrapeJob() *device {
 	defer m.mu.Unlock()
 
 	for _, d := range m.devices {
-		if !d.currentlyScraped && time.Since(d.lastScraped) >= m.interval {
+		nbfailures := len(d.consecutiveFailures)
+
+		if nbfailures >= 10 {
+			m.logger.Error("device repeatedly failing, resetting", "device", d.deviceID)
+			d.consecutiveFailures = nil
+			nbfailures = 0
+		}
+
+		waitTime := max(time.Duration(nbfailures)*m.interval, m.interval)
+
+		if !d.currentlyScraped && time.Since(d.lastScraped) >= waitTime {
 			d.currentlyScraped = true
 			return d
 		}
