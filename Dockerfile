@@ -31,7 +31,10 @@ RUN --mount=type=cache,target=${GOMODCACHE} \
         CGO_ENABLED=0 \
         GOOS=${TARGETOS} \
         GOARCH=${TARGETARCH} \
-        VERSION=${VERSION}
+        VERSION=${VERSION} \
+        GIT_COMMIT=${GIT_COMMIT} \
+        GIT_TREE_STATE=${GIT_TREE_STATE} \
+        BUILD_DATE=${BUILD_DATE}
 
 
 ##########################################################################################

@@ -101,6 +101,19 @@ jobs:
             type=sha,enable=true,format=short,prefix=,enable=${{ inputs.release }}
             type=edge,branch=main,enable=${{ inputs.release }}
 
+      # Compute git build metadata on the runner (the image build context
+      # excludes .git, so these must be injected as build-args).
+      - name: Compute build metadata
+        id: buildmeta
+        run: |
+          echo "git_commit=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "git_tree_state=clean" >> "$GITHUB_OUTPUT"
+          else
+            echo "git_tree_state=dirty" >> "$GITHUB_OUTPUT"
+          fi
+          echo "build_date=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_OUTPUT"
+
       # Build and push Docker image with Buildx (don't push on PR)
       # https://github.com/docker/build-push-action
       - name: Build and push Docker image
@@ -118,6 +131,9 @@ jobs:
           #  cache-to: type=gha,mode=max
           build-args: |
             VERSION=${{ inputs.version }}
+            GIT_COMMIT=${{ steps.buildmeta.outputs.git_commit }}
+            GIT_TREE_STATE=${{ steps.buildmeta.outputs.git_tree_state }}
+            BUILD_DATE=${{ steps.buildmeta.outputs.build_date }}
           platforms: ${{ inputs.platforms }}
 
       # Sign the resulting Docker image digest except on PRs.

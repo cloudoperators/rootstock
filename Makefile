@@ -70,13 +70,17 @@ REDFISH_PASSWORD ?= admin
 
 # Build
 
-build: GIT_COMMIT = $(shell git rev-parse HEAD)
-build: GIT_STATE  = $(shell if [ -z "$$(git status --porcelain)" ]; then echo clean; else echo dirty; fi)
-build: BUILD_DATE = $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
+# Build metadata stamped into the binary via -ldflags. Each is overridable so
+# the Dockerfile can inject host-computed values (the container build context
+# excludes .git, so git must not be shelled out from inside the image).
+GIT_COMMIT     ?= $(shell git rev-parse HEAD 2>/dev/null)
+GIT_TREE_STATE ?= $(shell if [ -z "$$(git status --porcelain 2>/dev/null)" ]; then echo clean; else echo dirty; fi)
+BUILD_DATE     ?= $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
+
 build: LDFLAGS    = "-s -w \
 							-X main.version=$(VERSION) \
 							-X main.gitCommit=$(GIT_COMMIT) \
-							-X main.gitTreeState=$(GIT_STATE) \
+							-X main.gitTreeState=$(GIT_TREE_STATE) \
 							-X main.buildDate=$(BUILD_DATE)"
 build: ## Compile a static server binary to bin/
 	@echo "$(green) building binary$(reset)"
@@ -155,6 +159,9 @@ docker-build: ## Build the container image for rootstock
 		--build-arg GOCACHE=$(shell go env GOCACHE) \
 		--build-arg GOMODCACHE=$(shell go env GOMODCACHE) \
 		--build-arg VERSION=$(VERSION) \
+		--build-arg GIT_COMMIT=$(GIT_COMMIT) \
+		--build-arg GIT_TREE_STATE=$(GIT_TREE_STATE) \
+		--build-arg BUILD_DATE=$(BUILD_DATE) \
 		--platform $(PLATFORM) \
 		-t ${IMAGE} \
 		-f Dockerfile \
