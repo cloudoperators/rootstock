@@ -55,8 +55,8 @@ There are two mutually exclusive ways to provide the password:
 
 | Mode | Values | Use case |
 | --- | --- | --- |
-| **Existing Secret** | `redfish.existingSecret: <name>` | Production, Greenhouse (`valueFrom.secret`), CI with a pre-created Secret. Recommended. |
-| **Inline** | `redfish.password: <value>` | Self-contained / local (kind) runs. The chart renders a Secret for you. |
+| **Existing Secret** | `redfish.existingSecret: <name>` | Production, CI with a pre-created Secret. Recommended when the Secret is managed outside the chart. |
+| **Inline** | `redfish.password: <value>` | Self-contained / local (kind) runs **and Greenhouse** (`valueFrom.secret` feeds the `redfish.password` value). The chart renders a Secret for you. |
 
 In both modes the Secret is mounted at `redfish.configFolder` and the key
 `redfish.secretKey` is projected to the file `redfish.credentialsFileName`
@@ -79,6 +79,9 @@ spec:
 ```
 
 Greenhouse projects that into the pod as the mounted file the chart expects.
+Because the password arrives as the `redfish.password` value (not
+`redfish.existingSecret`), this uses the **Inline** mode above: the chart
+renders the Secret from that value. Leave `redfish.existingSecret` unset.
 
 ## Values
 
