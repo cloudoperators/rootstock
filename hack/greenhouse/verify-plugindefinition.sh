@@ -341,8 +341,8 @@ run_plugin_e2e() {
     yq -i "
       .metadata.namespace = \"${DEMO_ORG}\" |
       .spec.clusterName = \"${REMOTE_CLUSTER}\" |
-      (.spec.optionValues[] | select(.name == \"image.repository\").value) = \"${ROOTSTOCK_IMAGE%%:*}\" |
-      (.spec.optionValues[] | select(.name == \"image.tag\").value) = \"${ROOTSTOCK_IMAGE##*:}\"
+      (.spec.optionValues[] | select(.name == "image.repository").value) = "${ROOTSTOCK_IMAGE%:*}" |
+      (.spec.optionValues[] | select(.name == "image.tag").value) = "${ROOTSTOCK_IMAGE##*:}"
     " "$plugin"
     kubectl --context "$ADMIN_CONTEXT" apply -f "$plugin" \
         || die "kubectl apply of Plugin failed"
