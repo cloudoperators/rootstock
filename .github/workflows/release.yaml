@@ -1,0 +1,42 @@
+# SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Greenhouse contributors
+# SPDX-License-Identifier: Apache-2.0
+
+name: Release
+
+
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+
+  variables:
+    name: Variables
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.lookupVersion.outputs.result }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Get version from VERSION.yaml
+        id: lookupVersion
+        uses: mikefarah/yq@master
+        with:
+          cmd: yq '.version' 'VERSION.yaml'
+
+  build:
+    permissions:
+      contents: read
+      packages: write
+      # This is used to complete the identity challenge
+      # with sigstore/fulcio when running outside of PRs.
+      id-token: write
+      security-events: write
+    secrets: inherit
+    uses: ./.github/workflows/docker-build.yaml
+    needs:
+      - variables
+    with:
+      version: ${{ needs.variables.outputs.version }}

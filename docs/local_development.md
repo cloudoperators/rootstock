@@ -11,6 +11,10 @@ This document describes how to get the local rootstock setup to work.
   - [Configuration inputs](#configuration-inputs)
   - [1-time config preparation](#1-time-config-preparation)
   - [run rootstock locally](#run-rootstock-locally)
+  - [Docker images](#docker-images)
+    - [Local builds](#local-builds)
+    - [PR builds](#pr-builds)
+    - [Release builds](#release-builds)
 
 ## Prerequisites
 
@@ -146,4 +150,61 @@ go run main.go run \
   --redfish-credentials-file tmp/redfish_password \
   --config-folder . \
   --log-format text
+```
+
+## Docker images
+
+For a proper release, the rootstock binary is put into a docker container. The
+container is designed to be a multi-architecture container and can be consumed
+by running
+
+```shell
+image=ghcr.io/cloudoperators/rootstock:latest
+docker run -it --platform linux/amd64 "${image}" version.   # for a specified platform
+docker run -it "${image}" version.                          # for the system platform
+```
+
+### Local builds
+
+You can build the rootstock docker container locally by running either of these
+commands.
+
+```shell
+make docker-build                         # builds for your local architecture
+make docker-build PLATFORM=linux/amd64    # builds for the specified platform
+```
+
+This will result in a local docker image in the format
+`ghcr.io/cloudoperators/rootstock:dev-${D/I-number}`.
+
+### PR builds
+
+During pull-requests, the docker image is built in the ci-validation pipeline
+and released to the github container registry under `ghcr.io/cloudoperators`.
+For pull-requests, the image is tagged as
+`ghcr.io/cloudoperators/rootstock:pr-${pr-number}`. PR images are cleaned up
+periodically and after PRs are merged or closed. However, these images can be
+pulled for investigative purposes by connecting to `ghcr.io` and pulling the
+image as such:
+
+```shell
+# login
+echo "${GITHUB_TOKEN}" | docker login ghcr.io -u "${GITHUB_USERNAME}" --password-stdin
+# pull image
+pr_number=78
+docker pull ghcr.io/cloudoperators/rootstock:pr-${pr_number}
+```
+
+### Release builds
+
+For releases, similarly as for [PR builds](#pr-builds), the rootstock image is
+created in a pipeline. The only difference is, that this time images are not
+cleaned up and each image receives more tags for pulling convenience:
+
+```shell
+ghcr.io/cloudoperators/rootstock:${version}         # e.g. 1.1.0
+ghcr.io/cloudoperators/rootstock:${major}           # e.g. v1
+ghcr.io/cloudoperators/rootstock:${git_hash}        # e.g. a0e012eae7d95f9d961d27e521e84b3493c19190
+ghcr.io/cloudoperators/rootstock:${git_hash_short}  # e.g. a0e012e
+ghcr.io/cloudoperators/rootstock:latest
 ```

@@ -18,15 +18,16 @@ jobs:
     name: Variables
     runs-on: ubuntu-latest
     outputs:
-      version: ${{ steps.lookupVersion.outputs.result }}
+      version: ${{ steps.version.outputs.version }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
       - name: Get version from VERSION.yaml
-        id: lookupVersion
-        uses: mikefarah/yq@master
-        with:
-          cmd: yq '.version' 'VERSION.yaml'
+        id: version
+        run: |
+          version=$(make get-version)
+          echo "version: $version"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
 
   conventions:
     name: Conventions
@@ -41,7 +42,7 @@ jobs:
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v9
         with:
-          version: v2.13.2
+          version: v2.14.0
       - name: TODO - Markdown linting
         run: echo "TODO - run prettier on markdown files"
       - name: TODO - Shell linting

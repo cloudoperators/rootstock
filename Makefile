@@ -1,6 +1,8 @@
 # SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Greenhouse contributors
 # SPDX-License-Identifier: Apache-2.0
 
+green := \033[1;32m[+]
+reset := \033[0m
 
 BINARY         := rootstock
 OS             := $(shell go env GOOS)
@@ -31,12 +33,23 @@ PDU_MOCKUP_PATH  ?= $(CURDIR)/testdata/pdu-mockup
 MOCKUP_PORT      ?= 8000
 MOCKUP_CONTAINER := redfish-mockup
 
-green := \033[1;32m[+]
-reset := \033[0m
+
+## Auto Detect Platform
+UNAME_P   := $(shell uname -p)
+ifeq ($(PLATFORM),)
+ifeq ($(UNAME_P),x86_64)
+	PLATFORM = linux/amd64
+endif
+ifneq ($(filter arm%,$(UNAME_P)),)
+	PLATFORM = linux/arm64
+endif
+endif
 
 # Container image / local Kubernetes (kind) settings
 IMAGE          ?= ghcr.io/cloudoperators/rootstock:dev-$(USER)
-IMG            ?= $(BINARY):$(VERSION)
+# Split IMAGE into repository and tag for the Helm --set flags below.
+IMAGE_REPO     := $(firstword $(subst :, ,$(IMAGE)))
+IMAGE_TAG      := $(lastword $(subst :, ,$(IMAGE)))
 KIND_CLUSTER   ?= rootstock-local
 CHART_DIR      := k8s_configuration/chart
 CHART_RELEASE  ?= rootstock
@@ -52,6 +65,7 @@ REDFISH_PASSWORD ?= admin
         kind-up kind-load kind-mockup kind-secret kind-deploy kind-verify kind-down \
         kind-cluster \
         helm-lint helm-template \
+        get-version \
         help
 
 # Build
@@ -132,13 +146,17 @@ scan: ## Run security vulnerability scan
 generate: ## Run code generation (TODO: not yet needed)
 	@echo "TODO: add code generation steps e.g. go generate ./..."
 
-docker-build: ## Build the container image (tagged $(IMG))
-	@echo "$(green) building container image $(IMG)$(reset)"
+get-version: ## Prints out the current version as presented in the VERSION.yaml file
+	@echo $(VERSION)
+
+docker-build: ## Build the container image for rootstock
+	@echo "$(green) building docker image$(reset)"
 	docker build \
 		--build-arg GOCACHE=$(shell go env GOCACHE) \
 		--build-arg GOMODCACHE=$(shell go env GOMODCACHE) \
 		--build-arg VERSION=$(VERSION) \
-		-t $(IMG) \
+		--platform $(PLATFORM) \
+		-t ${IMAGE} \
 		-f Dockerfile \
 		.
 
@@ -159,8 +177,8 @@ helm-template: ## Render the Helm chart to stdout
 	helm template $(CHART_RELEASE) $(CHART_DIR) -f $(CHART_DIR)/ci/test-values.yaml
 
 kind-load: docker-build ## Load the built image into the kind cluster
-	@echo "$(green) loading $(IMG) into kind cluster $(KIND_CLUSTER)$(reset)"
-	kind load docker-image $(IMG) --name $(KIND_CLUSTER)
+	@echo "$(green) loading $(IMAGE) into kind cluster $(KIND_CLUSTER)$(reset)"
+	kind load docker-image $(IMAGE) --name $(KIND_CLUSTER)
 
 kind-mockup: ## Build+load and deploy the DMTF Redfish mockup (PDU dataset) into kind
 	@echo "$(green) building and loading redfish mockup image$(reset)"
@@ -182,8 +200,8 @@ kind-deploy: kind-secret ## Install/upgrade the rootstock Helm chart in the kind
 	@echo "$(green) deploying rootstock chart into kind$(reset)"
 	helm --kube-context kind-$(KIND_CLUSTER) upgrade --install $(CHART_RELEASE) $(CHART_DIR) \
 		--namespace $(CHART_NAMESPACE) --create-namespace \
-		--set image.repository=$(BINARY) \
-		--set image.tag=$(VERSION) \
+		--set image.repository=$(IMAGE_REPO) \
+		--set image.tag=$(IMAGE_TAG) \
 		--set image.pullPolicy=IfNotPresent \
 		--set redfish.existingSecret=$(REDFISH_SECRET) \
 		--wait --timeout 120s

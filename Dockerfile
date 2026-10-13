@@ -30,7 +30,8 @@ RUN --mount=type=cache,target=${GOMODCACHE} \
         GOFIPS140=certified \
         CGO_ENABLED=0 \
         GOOS=${TARGETOS} \
-        GOARCH=${TARGETARCH}
+        GOARCH=${TARGETARCH} \
+        VERSION=${VERSION}
 
 
 ##########################################################################################
