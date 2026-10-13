@@ -16,7 +16,8 @@ spec:
   restartPolicy: Never
   containers:
     - name: healthz
-      image: curlimages/curl:8.11.1
+      image: {{ .Values.testConnection.image.repository }}:{{ .Values.testConnection.image.tag }}
+      imagePullPolicy: {{ .Values.testConnection.image.pullPolicy }}
       command:
         - /bin/sh
         - -c

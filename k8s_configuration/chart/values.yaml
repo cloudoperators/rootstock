@@ -16,6 +16,16 @@ image:
   digest: ""
   pullPolicy: IfNotPresent
 
+# Image used by the Helm test hook (templates/tests/test-connection.yaml) that
+# curls the /healthz and /ready endpoints. Parameterized so environments that
+# cannot pull from Docker Hub (e.g. a Greenhouse dev-env whose registry mirror
+# rejects Docker-format manifests) can point it at a reachable registry/tag.
+testConnection:
+  image:
+    repository: curlimages/curl
+    tag: "8.11.1"
+    pullPolicy: IfNotPresent
+
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
