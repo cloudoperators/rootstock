@@ -14,8 +14,10 @@ The Redfish password is mounted (never set as an env var) from the Secret
 {{ if .Values.redfish.existingSecret }}
 Using the pre-existing Secret: {{ .Values.redfish.existingSecret }}
 {{- else }}
-Using a chart-managed Secret (redfish.password was supplied inline).
-For production / Greenhouse, prefer redfish.existingSecret instead.
+Using a chart-managed Secret rendered from redfish.password.
+This is also the Greenhouse mode: a Plugin's redfish.password (optionValues
+valueFrom.secret) feeds this value and the chart renders the Secret.
+For an externally-managed Secret, set redfish.existingSecret instead.
 {{- end }}
 
 To reach the exporter locally:
