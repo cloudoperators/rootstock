@@ -21,7 +21,11 @@ import (
 
 var (
 	scrapeTimeoutDefault = 30 * time.Second
-	redfishPassword      *string
+	// scrapeTimeoutValue holds the duration actually used when constructing the
+	// server. It is seeded with the default and overwritten in run() with the
+	// parsed --scrape-timeout flag value.
+	scrapeTimeoutValue = scrapeTimeoutDefault
+	redfishPassword    *string
 
 	port = NewParameter(
 		"port", "PORT", "port",
@@ -61,6 +65,8 @@ func run() *cobra.Command {
 
 				return
 			}
+
+			scrapeTimeoutValue = sTimeout
 
 			logger.Info(
 				"rootstock configurations",
@@ -139,7 +145,7 @@ func dynamicRunServer(l log.FullInterface) {
 		l,
 		redfishUsername.Value(),
 		password,
-		scrapeTimeoutDefault,
+		scrapeTimeoutValue,
 	)
 	l.Info("starting HTTP server", "port", port.Value(), "username", redfishUsername.Value())
 	server.ListenAndServe()
