@@ -186,7 +186,7 @@ so the chart that is pushed and the version Greenhouse pulls always agree.
   automatically.
 - `--with-plugin` requires the `rootstock` image to exist locally
   (`docker image inspect rootstock:<APP_VERSION>`, where `APP_VERSION` is read
-  from `VERSION.yaml`). Build it first with `make build` / `make kind-up`.
+  from `VERSION.yaml`). Build it first with `make docker-build` / `make kind-up`.
 - Cluster/org names and the registry addresses are the pinned-ref defaults; if
   you point at a different `GREENHOUSE_REF` whose Makefile differs, override the
   matching variables above.
