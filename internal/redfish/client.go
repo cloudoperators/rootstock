@@ -124,8 +124,26 @@ type Current struct {
 
 // MainCurrent represents main current power metrics.
 type MainCurrent struct {
-	// 3 phases voltage
-	Line1ToLine2 PowerWatts `json:"Line1ToLine2"` //how many of these
+	PolyPhaseVoltage    PolyPhaseVoltage    `json:"PolyPhaseVoltage"`
+	PolyPhasePowerWatts PolyPhasePowerWatts `json:"PolyPhasePowerWatts"`
+}
+
+// PolyPhaseVoltage returns voltage per phase.
+type PolyPhaseVoltage struct {
+	Line1ToLine2 LineToLine `json:"Line1ToLine2"`
+	Line2ToLine3 LineToLine `json:"Line2ToLine3"`
+	Line3ToLine1 LineToLine `json:"Line3ToLine1"`
+}
+
+type LineToLine struct {
+	Voltage float64 `json:"Reading"`
+}
+
+// PolyPhaseVoltage returns voltage per phase.
+type PolyPhasePowerWatts struct {
+	Line1ToLine2 PowerWatts `json:"Line1ToLine2"`
+	Line2ToLine3 PowerWatts `json:"Line2ToLine3"`
+	Line3ToLine1 PowerWatts `json:"Line3ToLine1"`
 }
 
 // BranchCurrent represents branch current metrics.
