@@ -32,10 +32,16 @@ type Client interface {
 	GetPowerEquipment(context.Context) (*PowerEquipment, error)
 	// GetRackPDUs returns the collection of Rack PDUs.
 	GetRackPDUs(context.Context) (*RackPDUsCollection, error)
-	// GetPERackPDU returns details for a single Rack PDU by ID.
-	GetPERackPDU(context.Context, string) (*RackPDU, error)
-	// GetPERackPDUMetrics returns the metrics for a single Rack PDU by ID.
-	GetPERackPDUMetrics(context.Context, string) (*PDUMetrics, error)
+	// GetRackPDUPowerRating returns power ratings for a single Rack PDU by ID.
+	GetRackPDUPowerRating(context.Context, string) (*RackPDU, error)
+	// GetRackPDUEnergetics returns power and energy metrics for a single Rack PDU by ID.
+	GetRackPDUEnergetics(context.Context, string) (*PDUEnergetics, error)
+	// GetRackPDUOutletElectricals returns the power, voltage and current metrics for a single outlet Rack PDU by ID.
+	GetRackPDUOutletElectricals(context.Context, string, string) (*OutletEletricals, error)
+	// GetRackPDUMainCurrent returns the main current metrics for a single Rack PDU by ID.
+	GetRackPDUMainCurrent(context.Context, string) (*MainCurrent, error)
+	// GetRackPDUBranchCurrent returns the current metrics for a single branch Rack PDU by ID.
+	GetRackPDUBranchCurrent(context.Context, string, string) (*BranchCurrent, error)
 }
 
 type ClientImpl struct {
@@ -54,57 +60,21 @@ type ClientImpl struct {
 
 // PowerEquipment represents the PowerEquipment collection.
 type PowerEquipment struct {
-	ODataID   string `json:"@odata.id"`
-	ODataType string `json:"@odata.type"`
-	Name      string `json:"Name"`
-	RackPDUs  struct {
-		ODataID string `json:"@odata.id"`
-	} `json:"RackPDUs"`
+	Name string `json:"Name"`
 }
 
 // RackPDUsCollection represents the collection of RackPDUs.
 type RackPDUsCollection struct {
-	ODataID      string `json:"@odata.id"`
-	ODataType    string `json:"@odata.type"`
 	Name         string `json:"Name"`
-	Members      []Link `json:"Members"`
 	MembersCount int    `json:"Members@odata.count"`
-}
-
-// Link represents a Redfish link object.
-type Link struct {
-	ODataID string `json:"@odata.id"`
 }
 
 // RackPDU represents a single RackPDU device.
 type RackPDU struct {
-	ODataID         string `json:"@odata.id"`
-	ODataType       string `json:"@odata.type"`
-	ID              int    `json:"Id"`
-	Name            string `json:"Name"`
-	EquipmentType   string `json:"EquipmentType"`
-	FirmwareVersion string `json:"FirmwareVersion"`
-	Manufacturer    string `json:"Manufacturer"`
-	Model           string `json:"Model"`
-	PartNumber      string `json:"PartNumber"`
-	SerialNumber    string `json:"SerialNumber"`
-	Version         string `json:"Version"`
-	// PowerState      string `json:"PowerState"`
-	Status       Status `json:"Status"`
-	Metrics      Link   `json:"Metrics"`
-	Outlets      Link   `json:"Outlets"`
-	OutletGroups Link   `json:"OutletGroups"`
-	Mains        Link   `json:"Mains"`
-	Branches     Link   `json:"Branches"`
-	// PowerSupplies   Link   `json:"PowerSupplies"`
-	RatedPowerWatts int     `json:"RatedPowerWatts"`
-	UUID            string  `json:"UUID"`
+	ID              string  `json:"Id"`
+	Name            string  `json:"Name"`
+	Status          Status  `json:"Status"`
 	PowerCapacityVA float64 `json:"PowerCapacityVA"`
-	Location        struct {
-		Placement struct {
-			Row string `json:"Row"`
-		} `json:"Placement"`
-	} `json:"Location"`
 }
 
 // Status represents the status of a Redfish resource.
@@ -113,24 +83,60 @@ type Status struct {
 	Health string `json:"Health"`
 }
 
-// PDUMetrics represents the metrics for a PDU.
-type PDUMetrics struct {
-	ODataID            string        `json:"@odata.id"`
-	ODataType          string        `json:"@odata.type"`
-	ID                 string        `json:"Id"`
-	Name               string        `json:"Name"`
-	PowerWatts         SensorReading `json:"PowerWatts"`
-	EnergykWh          SensorReading `json:"EnergykWh"`
-	TemperatureCelsius SensorReading `json:"TemperatureCelsius"`
+// PDUEnergeticsMetrics represents the metrics for a PDU.
+type PDUEnergetics struct {
+	ID         string     `json:"Id"`
+	Name       string     `json:"Name"`
+	PowerWatts PowerWatts `json:"PowerWatts"`
+	EnergykWh  EnergykWh  `json:"EnergykWh"`
 }
 
-// SensorReading represents a sensor reading with value and metadata.
-type SensorReading struct {
-	DataSourceURI string  `json:"DataSourceUri"`
-	Reading       float64 `json:"Reading"`
-	ApparentVA    float64 `json:"ApparentVA"`
-	ReactiveVAR   float64 `json:"ReactiveVAR"`
-	PowerFactor   float64 `json:"PowerFactor"`
+// PowerWatts represents a power and apparent power merics.
+type PowerWatts struct {
+	Power         float64 `json:"Reading"`
+	ApparentPower float64 `json:"ApparentVA"`
+}
+
+// EnergykWh represents energy value.
+type EnergykWh struct {
+	EnergykWh float64 `json:"EnergykWh"` // we need this value in watts
+}
+
+// OutletElectricals represent outlet metrics.
+type OutletEletricals struct {
+	Status        Status     `json:"Status"`
+	OutletType    string     `json:"OutletType"`
+	RatedCurrent  float64    `json:"RatedCurrentAmps"`
+	Voltage       Voltage    `json:"Voltage"`
+	Current       Current    `json:"CurrentAmps"`
+	ApparentPower PowerWatts `json:"PowerWatts"`
+}
+
+// Voltage represents volatage.
+type Voltage struct {
+	Voltage float64 `json:"Reading"`
+}
+
+// Current represents current.
+type Current struct {
+	Current float64 `json:"Reading"`
+}
+
+// MainCurrent represents main current power metrics.
+type MainCurrent struct {
+	// 3 phases voltage
+	Line1ToLine2 PowerWatts `json:"Line1ToLine2"` //how many of these
+}
+
+// BranchCurrent represents branch current metrics.
+type BranchCurrent struct {
+	RatedCurrent float64     `json:"RatedCurrentAmps"`
+	Current      CurrentAmps `json:"CurrentAmps"`
+}
+
+// CurrentAmps represents current metric.
+type CurrentAmps struct {
+	Current float64 `json:"Reading"`
 }
 
 func NewClient(baseURL *url.URL, logger log.MinInterface, username, password string, timeout time.Duration) Client {
@@ -294,7 +300,7 @@ func (c *ClientImpl) GetRackPDUs(ctx context.Context) (*RackPDUsCollection, erro
 }
 
 // GetPDU retrieves details for a specific PDU.
-func (c *ClientImpl) GetPERackPDU(ctx context.Context, pduID string) (*RackPDU, error) {
+func (c *ClientImpl) GetRackPDUPowerRating(ctx context.Context, pduID string) (*RackPDU, error) {
 	var result RackPDU
 
 	endpoint := "/redfish/v1/PowerEquipment/RackPDUs/" + pduID
@@ -306,10 +312,43 @@ func (c *ClientImpl) GetPERackPDU(ctx context.Context, pduID string) (*RackPDU, 
 }
 
 // GetPDUMetrics retrieves metrics for a specific PDU.
-func (c *ClientImpl) GetPERackPDUMetrics(ctx context.Context, pduID string) (*PDUMetrics, error) {
-	var result PDUMetrics
+func (c *ClientImpl) GetRackPDUEnergetics(ctx context.Context, pduID string) (*PDUEnergetics, error) {
+	var result PDUEnergetics
 
 	endpoint := fmt.Sprintf("/redfish/v1/PowerEquipment/RackPDUs/%s/Metrics", pduID)
+	if err := c.get(ctx, endpoint, &result); err != nil {
+		return nil, err
+	}
+
+	return &result, nil
+}
+
+func (c *ClientImpl) GetRackPDUOutletElectricals(ctx context.Context, pduID, outlet string) (*OutletEletricals, error) {
+	var result OutletEletricals
+
+	endpoint := fmt.Sprintf("/redfish/v1/PowerEquipment/RackPDUs/%s/Outlets/%s", pduID, outlet)
+	if err := c.get(ctx, endpoint, &result); err != nil {
+		return nil, err
+	}
+
+	return &result, nil
+}
+
+func (c *ClientImpl) GetRackPDUMainCurrent(ctx context.Context, pduID string) (*MainCurrent, error) {
+	var result MainCurrent
+
+	endpoint := fmt.Sprintf("/redfish/v1/PowerEquipment/RackPDUs/%s/Mains/AC1", pduID)
+	if err := c.get(ctx, endpoint, &result); err != nil {
+		return nil, err
+	}
+
+	return &result, nil
+}
+
+func (c *ClientImpl) GetRackPDUBranchCurrent(ctx context.Context, pduID, branch string) (*BranchCurrent, error) {
+	var result BranchCurrent
+
+	endpoint := fmt.Sprintf("/redfish/v1/PowerEquipment/RackPDUs/%s/Branches/%s", pduID, branch)
 	if err := c.get(ctx, endpoint, &result); err != nil {
 		return nil, err
 	}
