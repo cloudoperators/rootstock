@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Greenhouse contributors
 // SPDX-License-Identifier: Apache-2.0
 
-package redfish
+package manager
 
 import (
 	"errors"
@@ -11,6 +11,8 @@ import (
 	"github.com/cloudoperators/rootstock/pkg/log"
 )
 
+// newTestManager creates a manager instance for testing purposes.
+// It accepts a list of IPs and registers each as a device with fixed credentials and intervals.
 func newTestManager(ips ...string) *manager {
 	configs := make([]DeviceConfig, len(ips))
 	for i, ip := range ips {
@@ -23,6 +25,7 @@ func newTestManager(ips ...string) *manager {
 		30*time.Second,
 		2,
 		5*time.Second,
+		nil,
 		log.Default(),
 	).(*manager)
 	if !ok {
@@ -32,6 +35,7 @@ func newTestManager(ips ...string) *manager {
 	return m
 }
 
+// TestNewManager verifies that NewManager correctly registers all provided IPs as devices.
 func TestNewManager(t *testing.T) {
 	m := newTestManager("10.0.0.1", "10.0.0.2")
 
@@ -55,7 +59,8 @@ func TestNewManager(t *testing.T) {
 	}
 }
 
-func TestGetScrapeJobReturnsDueDevice(t *testing.T) {
+// getScrapeJob should return a device that has never been scraped.
+func TestGetScrapeJob_Due(t *testing.T) {
 	m := newTestManager("10.0.0.1")
 
 	job := m.getScrapeJob()
@@ -64,16 +69,17 @@ func TestGetScrapeJobReturnsDueDevice(t *testing.T) {
 		t.Fatal("expected a job, got nil")
 	}
 
-	if job.deviceID != "10.0.0.1" {
-		t.Errorf("expected device 10.0.0.1, got %s", job.deviceID)
+	if job.DeviceID != "10.0.0.1" {
+		t.Errorf("expected device 10.0.0.1, got %s", job.DeviceID)
 	}
 
-	if !job.currentlyScraped {
+	if !m.devices["10.0.0.1"].currentlyScraped {
 		t.Error("expected currentlyScraped to be true after getScrapeJob")
 	}
 }
 
-func TestGetScrapeJobSkipsCurrentlyScraped(t *testing.T) {
+// getScrapeJob should skip a device that is currently being scraped.
+func TestGetScrapeJob_InProgress(t *testing.T) {
 	m := newTestManager("10.0.0.1")
 	m.devices["10.0.0.1"].currentlyScraped = true
 
@@ -84,7 +90,8 @@ func TestGetScrapeJobSkipsCurrentlyScraped(t *testing.T) {
 	}
 }
 
-func TestGetScrapeJobSkipsRecentlyScraped(t *testing.T) {
+// getScrapeJob should skip a device scraped within the interval window.
+func TestGetScrapeJob_Recent(t *testing.T) {
 	m := newTestManager("10.0.0.1")
 	m.devices["10.0.0.1"].lastScraped = time.Now().Add(-5 * time.Second)
 
@@ -95,14 +102,15 @@ func TestGetScrapeJobSkipsRecentlyScraped(t *testing.T) {
 	}
 }
 
-func TestScrapeResultSuccessClearsFailures(t *testing.T) {
+// reportScrapeResult should clear failures and mark device available on success.
+func TestReportScrapeResult_Success(t *testing.T) {
 	m := newTestManager("10.0.0.1")
 	m.devices["10.0.0.1"].consecutiveFailures = []ScrapeResult{
 		{Err: errors.New("timeout")},
 		{Err: errors.New("timeout")},
 	}
 
-	m.scrapeResult("10.0.0.1", time.Now(), ScrapeResult{Err: nil})
+	m.reportScrapeResult("10.0.0.1", time.Now(), ScrapeResult{Err: nil})
 
 	d := m.devices["10.0.0.1"]
 	if len(d.consecutiveFailures) != 0 {
@@ -114,11 +122,12 @@ func TestScrapeResultSuccessClearsFailures(t *testing.T) {
 	}
 }
 
-func TestScrapeResultAccumulatesFailures(t *testing.T) {
+// reportScrapeResult should append to consecutiveFailures on error.
+func TestReportScrapeResult_Failures(t *testing.T) {
 	m := newTestManager("10.0.0.1")
 
-	m.scrapeResult("10.0.0.1", time.Now(), ScrapeResult{Err: errors.New("connection refused")})
-	m.scrapeResult("10.0.0.1", time.Now(), ScrapeResult{Err: errors.New("timeout")})
+	m.reportScrapeResult("10.0.0.1", time.Now(), ScrapeResult{Err: errors.New("connection refused")})
+	m.reportScrapeResult("10.0.0.1", time.Now(), ScrapeResult{Err: errors.New("timeout")})
 
 	d := m.devices["10.0.0.1"]
 	if len(d.consecutiveFailures) != 2 {

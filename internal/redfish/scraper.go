@@ -3,16 +3,15 @@
 
 package redfish
 
-import "context"
+import (
+	"context"
 
-type Scraper struct {
-	manager *manager
-}
+	"github.com/cloudoperators/rootstock/internal/manager"
+)
 
-func newScraper(manager *manager) *Scraper {
-	return &Scraper{manager: manager}
-}
+type Scraper struct{}
 
-func (*Scraper) run(_ context.Context) {
-	// implement scraper logic
+func (*Scraper) Scrape(_ context.Context, _ manager.ScrapeJob) manager.ScrapeResult {
+	// implement redfish scraper logic
+	return manager.ScrapeResult{}
 }

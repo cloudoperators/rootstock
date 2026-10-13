@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Greenhouse contributors
 // SPDX-License-Identifier: Apache-2.0
 
-package redfish
+package manager
 
 import "time"
 
@@ -19,6 +19,13 @@ type ScrapeResult struct {
 // DeviceConfig is the input configuration for a single device from the static list.
 type DeviceConfig struct {
 	IP string
+}
+
+// ScrapeJob is returned by GetScrapeJob and contains only what a scraper needs to do its work.
+type ScrapeJob struct {
+	DeviceID string
+	IP       string
+	Auth     Auth
 }
 
 type device struct {
