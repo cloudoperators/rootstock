@@ -471,7 +471,7 @@ run_plugin_e2e() {
     #    registry, so a `kind load` into node containerd is not enough -- we push
     #    an OCI image and point the Plugin at REGISTRY_INCLUSTER/rootstock.
     if ! docker image inspect "$ROOTSTOCK_IMAGE" >/dev/null 2>&1; then
-        die "image ${ROOTSTOCK_IMAGE} not found locally; build it first (e.g. 'make build' / 'make kind-up')"
+        die "image ${ROOTSTOCK_IMAGE} not found locally; build it first (e.g. 'make docker-build' / 'make kind-up')"
     fi
     # Push using the HOST-visible registry address; the Plugin references the
     # in-cluster address (REGISTRY_INCLUSTER) that resolves to the same zot.
