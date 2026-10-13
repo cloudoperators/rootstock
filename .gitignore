@@ -8,3 +8,6 @@ bin/
 
 go-report.xml
 coverage.out
+
+# Local Greenhouse verifier workdir (hack/greenhouse/verify-plugindefinition.sh)
+.greenhouse-verify/

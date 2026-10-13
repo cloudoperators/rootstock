@@ -1,0 +1,52 @@
+# SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Greenhouse contributors
+# SPDX-License-Identifier: Apache-2.0
+
+# Greenhouse Plugin instance for testing rootstock on the apeirolab node
+# (192.168.0.98). This assumes:
+#   - Greenhouse operator + CRDs + Flux are installed on the cluster.
+#   - The rootstock image was imported into the node's containerd as
+#     docker.io/library/rootstock:<tag> (linux/arm64) via
+#     `ctr -n k8s.io images import`. The <tag> is the app version from
+#     VERSION.yaml (e.g. 0.1.0 at authoring time); set image.tag below to match.
+#     Because it is NOT in a registry, image.pullPolicy MUST be Never (or
+#     IfNotPresent) so the kubelet uses the local image instead of pulling.
+#   - The chart is reachable by Flux (see plugindefinition.yaml notes). On this
+#     single-node cluster with no registry, you must either publish the chart to
+#     an OCI registry Flux can reach, OR test via `helm install` (see README).
+#
+# The Redfish password is supplied via valueFrom.secret so Greenhouse projects
+# it into the pod as the mounted credentials file (never an env var).
+apiVersion: greenhouse.sap/v1alpha1
+kind: Plugin
+metadata:
+  name: rootstock
+  namespace: PLACEHOLDER_ORG_NAMESPACE   # your Greenhouse Organization namespace
+spec:
+  pluginDefinition: rootstock
+  # Name of the onboarded Cluster this Plugin deploys to. On a single self-hosted
+  # setup this is typically the local/admin cluster's onboarded name.
+  clusterName: PLACEHOLDER_CLUSTER_NAME
+  releaseNamespace: rootstock
+  disabled: false
+  optionValues:
+    - name: image.repository
+      value: docker.io/library/rootstock
+    - name: image.tag
+      # Container image tag (the app version from VERSION.yaml) -- NOT a Helm
+      # chart version. The verifier (verify-plugindefinition.sh --with-plugin)
+      # overrides this and image.repository at runtime from ROOTSTOCK_IMAGE
+      # (default rootstock:<VERSION.yaml .version>). For a manual apply, set it
+      # to match the image you built/imported.
+      value: "0.1.0"
+    # CRITICAL: the image only exists in the node's containerd, not a registry.
+    - name: image.pullPolicy
+      value: Never
+    - name: redfish.username
+      value: redfish
+    - name: redfish.password
+      valueFrom:
+        secret:
+          name: rootstock-redfish
+          key: redfish_password
+    - name: serviceMonitor.enabled
+      value: false
