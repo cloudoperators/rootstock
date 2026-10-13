@@ -41,27 +41,27 @@ type powerRating struct {
 	powerRating *prometheus.Desc
 }
 
-type outletElectricals struct {
-	name           *prometheus.Desc
-	state          *prometheus.Desc
-	odatautletType *prometheus.Desc
-	ratedCurrent   *prometheus.Desc
-	voltage        *prometheus.Desc
-	current        *prometheus.Desc
-	apparentPower  *prometheus.Desc
-}
+// type outletElectricals struct {
+// 	name           *prometheus.Desc
+// 	state          *prometheus.Desc
+// 	odatautletType *prometheus.Desc
+// 	ratedCurrent   *prometheus.Desc
+// 	voltage        *prometheus.Desc
+// 	current        *prometheus.Desc
+// 	apparentPower  *prometheus.Desc
+// }
 
-type mainCurrent struct {
-	name          *prometheus.Desc
-	voltage       *prometheus.Desc
-	power         *prometheus.Desc
-	apparentPower *prometheus.Desc
-}
+// type mainCurrent struct {
+// 	name          *prometheus.Desc
+// 	voltage       *prometheus.Desc
+// 	power         *prometheus.Desc
+// 	apparentPower *prometheus.Desc
+// }
 
-type branchCurrent struct {
-	ratedCurrent *prometheus.Desc
-	current      *prometheus.Desc
-}
+// type branchCurrent struct {
+// 	ratedCurrent *prometheus.Desc
+// 	current      *prometheus.Desc
+// }
 
 func NewCollector(redfishClient redfish.Client, pduID string) *Collector {
 	logger := log.Default()

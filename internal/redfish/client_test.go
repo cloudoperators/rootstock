@@ -20,21 +20,26 @@ import (
 // Helper function to create a test server with custom handlers
 func setupTestServer(t *testing.T, handlers map[string]http.HandlerFunc) *httptest.Server {
 	t.Helper()
+
 	mux := http.NewServeMux()
 	for path, handler := range handlers {
 		mux.HandleFunc(path, handler)
 	}
+
 	return httptest.NewServer(mux)
 }
 
 // Helper function to create a client for testing
 func newTestClient(t *testing.T, serverURL string) redfish.Client {
 	t.Helper()
+
 	base, err := url.Parse(serverURL)
 	if err != nil {
 		t.Fatalf("failed to parse server URL: %v", err)
 	}
+
 	logger := log.NewMockLogger()
+
 	return redfish.NewClient(base, logger, "testuser", "testpass", 5*time.Second)
 }
 
@@ -71,9 +76,11 @@ func TestLogin_Success(t *testing.T) {
 			if err := json.NewDecoder(r.Body).Decode(&loginReq); err != nil {
 				t.Errorf("failed to decode login request: %v", err)
 			}
+
 			if loginReq.Username != "testuser" {
 				t.Errorf("expected username 'testuser', got '%s'", loginReq.Username)
 			}
+
 			if loginReq.Password != "testpass" {
 				t.Errorf("expected password 'testpass', got '%s'", loginReq.Password)
 			}
@@ -106,6 +113,7 @@ func TestClose_Success(t *testing.T) {
 	server := setupTestServer(t, map[string]http.HandlerFunc{
 		"/redfish/v1/SessionService/Sessions": func(w http.ResponseWriter, r *http.Request) {
 			loginCalled = true
+
 			w.Header().Set("X-Auth-Token", "test-token-123")
 			w.Header().Set("Location", "/redfish/v1/SessionService/Sessions/1")
 			w.WriteHeader(http.StatusCreated)
@@ -114,7 +122,9 @@ func TestClose_Success(t *testing.T) {
 			if r.Method != http.MethodDelete {
 				t.Errorf("expected DELETE, got %s", r.Method)
 			}
+
 			closeCalled = true
+
 			w.WriteHeader(http.StatusOK)
 		},
 	})
@@ -136,6 +146,7 @@ func TestClose_Success(t *testing.T) {
 	if !loginCalled {
 		t.Error("login was not called")
 	}
+
 	if !closeCalled {
 		t.Error("close was not called")
 	}
@@ -262,12 +273,15 @@ func TestGetRackPDUPowerRating_Success(t *testing.T) {
 	if result.ID != "1" {
 		t.Errorf("expected ID '1', got '%s'", result.ID)
 	}
+
 	if result.Name != "PDU-01" {
 		t.Errorf("expected Name 'PDU-01', got '%s'", result.Name)
 	}
+
 	if result.PowerCapacityVA != 7200.0 {
 		t.Errorf("expected PowerCapacityVA 7200.0, got %f", result.PowerCapacityVA)
 	}
+
 	if result.Status.State != "Enabled" {
 		t.Errorf("expected Status.State 'Enabled', got '%s'", result.Status.State)
 	}
@@ -315,9 +329,11 @@ func TestGetRackPDUEnergetics_Success(t *testing.T) {
 	if result.PowerWatts.Power != 3500.5 {
 		t.Errorf("expected PowerWatts.Power 3500.5, got %f", result.PowerWatts.Power)
 	}
+
 	if result.PowerWatts.ApparentPower != 3600.0 {
 		t.Errorf("expected PowerWatts.ApparentPower 3600.0, got %f", result.PowerWatts.ApparentPower)
 	}
+
 	if result.EnergykWh.EnergykWh != 12345.67 {
 		t.Errorf("expected EnergykWh.EnergykWh 12345.67, got %f", result.EnergykWh.EnergykWh)
 	}
@@ -350,6 +366,7 @@ func TestGet_NotFound(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error for 404, got nil")
 	}
+
 	if !strings.Contains(err.Error(), "unexpected status code 404") {
 		t.Errorf("expected 404 error, got: %v", err)
 	}
@@ -372,8 +389,8 @@ func TestGetRackPDUOutletElectricals_Success(t *testing.T) {
 					"State":  "Enabled",
 					"Health": "OK",
 				},
-				"OutletType":        "NEMA_5_20R",
-				"RatedCurrentAmps":  16.0,
+				"OutletType":       "NEMA_5_20R",
+				"RatedCurrentAmps": 16.0,
 				"Voltage": map[string]float64{
 					"Reading": 120.5,
 				},
@@ -404,28 +421,36 @@ func TestGetRackPDUOutletElectricals_Success(t *testing.T) {
 	if result.Status.State != "Enabled" {
 		t.Errorf("expected Status.State 'Enabled', got '%s'", result.Status.State)
 	}
+
 	if result.Status.Health != "OK" {
 		t.Errorf("expected Status.Health 'OK', got '%s'", result.Status.Health)
 	}
+
 	if result.OutletType != "NEMA_5_20R" {
 		t.Errorf("expected OutletType 'NEMA_5_20R', got '%s'", result.OutletType)
 	}
+
 	if result.RatedCurrent != 16.0 {
 		t.Errorf("expected RatedCurrent 16.0, got %f", result.RatedCurrent)
 	}
+
 	if result.Voltage.Voltage != 120.5 {
 		t.Errorf("expected Voltage.Voltage 120.5, got %f", result.Voltage.Voltage)
 	}
+
 	if result.Current.Current != 8.2 {
 		t.Errorf("expected Current.Current 8.2, got %f", result.Current.Current)
 	}
+
 	if result.ApparentPower.Power != 988.1 {
 		t.Errorf("expected ApparentPower.Power 988.1, got %f", result.ApparentPower.Power)
 	}
+
 	if result.ApparentPower.ApparentPower != 1000.0 {
 		t.Errorf("expected ApparentPower.ApparentPower 1000.0, got %f", result.ApparentPower.ApparentPower)
 	}
 }
+
 // TestGetRackPDUMainCurrent_Success verifies successful main current retrieval
 func TestGetRackPDUMainCurrent_Success(t *testing.T) {
 	t.Parallel()
@@ -485,9 +510,11 @@ func TestGetRackPDUMainCurrent_Success(t *testing.T) {
 	if result.PolyPhaseVoltage.Line1ToLine2.Voltage != 208.5 {
 		t.Errorf("expected Line1ToLine2.Voltage 208.5, got %f", result.PolyPhaseVoltage.Line1ToLine2.Voltage)
 	}
+
 	if result.PolyPhaseVoltage.Line2ToLine3.Voltage != 207.8 {
 		t.Errorf("expected Line2ToLine3.Voltage 207.8, got %f", result.PolyPhaseVoltage.Line2ToLine3.Voltage)
 	}
+
 	if result.PolyPhaseVoltage.Line3ToLine1.Voltage != 208.2 {
 		t.Errorf("expected Line3ToLine1.Voltage 208.2, got %f", result.PolyPhaseVoltage.Line3ToLine1.Voltage)
 	}
@@ -496,25 +523,27 @@ func TestGetRackPDUMainCurrent_Success(t *testing.T) {
 	if result.PolyPhasePowerWatts.Line1ToLine2.Power != 1200.5 {
 		t.Errorf("expected Line1ToLine2.Power 1200.5, got %f", result.PolyPhasePowerWatts.Line1ToLine2.Power)
 	}
+
 	if result.PolyPhasePowerWatts.Line1ToLine2.ApparentPower != 1250.0 {
 		t.Errorf("expected Line1ToLine2.ApparentPower 1250.0, got %f", result.PolyPhasePowerWatts.Line1ToLine2.ApparentPower)
 	}
+
 	if result.PolyPhasePowerWatts.Line2ToLine3.Power != 1180.3 {
 		t.Errorf("expected Line2ToLine3.Power 1180.3, got %f", result.PolyPhasePowerWatts.Line2ToLine3.Power)
 	}
+
 	if result.PolyPhasePowerWatts.Line2ToLine3.ApparentPower != 1230.0 {
 		t.Errorf("expected Line2ToLine3.ApparentPower 1230.0, got %f", result.PolyPhasePowerWatts.Line2ToLine3.ApparentPower)
 	}
+
 	if result.PolyPhasePowerWatts.Line3ToLine1.Power != 1195.7 {
 		t.Errorf("expected Line3ToLine1.Power 1195.7, got %f", result.PolyPhasePowerWatts.Line3ToLine1.Power)
 	}
+
 	if result.PolyPhasePowerWatts.Line3ToLine1.ApparentPower != 1240.0 {
 		t.Errorf("expected Line3ToLine1.ApparentPower 1240.0, got %f", result.PolyPhasePowerWatts.Line3ToLine1.ApparentPower)
 	}
 }
-
-
-
 
 // TestGetRackPDUBranchCurrent_Success verifies successful branch current retrieval
 func TestGetRackPDUBranchCurrent_Success(t *testing.T) {
@@ -553,6 +582,7 @@ func TestGetRackPDUBranchCurrent_Success(t *testing.T) {
 	if result.RatedCurrent != 32.0 {
 		t.Errorf("expected RatedCurrent 32.0, got %f", result.RatedCurrent)
 	}
+
 	if result.Current.Current != 18.5 {
 		t.Errorf("expected Current.Current 18.5, got %f", result.Current.Current)
 	}
