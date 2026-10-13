@@ -66,7 +66,7 @@ REDFISH_PASSWORD ?= admin
         mockup-start mockup-stop \
         lint lint-go lint-md conventions scan \
         generate docker-build \
-        kind-up kind-load kind-mockup kind-secret kind-deploy kind-verify kind-down \
+        kind-up kind-load kind-mockup kind-namespace kind-secret kind-deploy kind-verify kind-down \
         kind-cluster \
         helm-lint helm-template \
         get-version \
@@ -187,29 +187,30 @@ helm-template: ## Render the Helm chart to stdout
 	@echo "$(green) helm template$(reset)"
 	helm template $(CHART_RELEASE) $(CHART_DIR) -f $(CHART_DIR)/ci/test-values.yaml
 
-kind-load: docker-build ## Load the built image into the kind cluster
+kind-load: docker-build kind-cluster ## Load the built image into the kind cluster
 	@echo "$(green) loading $(IMAGE) into kind cluster $(KIND_CLUSTER)$(reset)"
 	kind load docker-image $(IMAGE) --name $(KIND_CLUSTER)
 
-kind-mockup: ## Build+load and deploy the DMTF Redfish mockup (PDU dataset) into kind
+kind-namespace: kind-cluster ## Ensure the target namespace exists (idempotent)
+	@echo "$(green) ensuring namespace $(CHART_NAMESPACE)$(reset)"
+	kubectl --context kind-$(KIND_CLUSTER) create namespace $(CHART_NAMESPACE) \
+		--dry-run=client -o yaml | kubectl --context kind-$(KIND_CLUSTER) apply -f -
+
+kind-mockup: kind-namespace ## Build+load and deploy the DMTF Redfish mockup (PDU dataset) into kind
 	@echo "$(green) building and loading redfish mockup image$(reset)"
 	docker build -t rootstock-mockup:latest -f hack/kind/Dockerfile.mockup .
 	kind load docker-image rootstock-mockup:latest --name $(KIND_CLUSTER)
 	@echo "$(green) deploying redfish mockup into kind$(reset)"
-	kubectl --context kind-$(KIND_CLUSTER) create namespace $(CHART_NAMESPACE) \
-		--dry-run=client -o yaml | kubectl --context kind-$(KIND_CLUSTER) apply -f -
 	kubectl --context kind-$(KIND_CLUSTER) -n $(CHART_NAMESPACE) apply -f hack/kind/redfish-mockup.yaml
 	kubectl --context kind-$(KIND_CLUSTER) -n $(CHART_NAMESPACE) rollout status deploy/redfish-mockup --timeout=120s
 
-kind-secret: kind-cluster ## Create the redfish credentials secret in the kind cluster
+kind-secret: kind-namespace ## Create the redfish credentials secret in the kind cluster
 	@echo "$(green) creating redfish credentials secret $(REDFISH_SECRET)$(reset)"
-	kubectl --context kind-$(KIND_CLUSTER) create namespace $(CHART_NAMESPACE) \
-		--dry-run=client -o yaml | kubectl --context kind-$(KIND_CLUSTER) apply -f -
 	kubectl --context kind-$(KIND_CLUSTER) -n $(CHART_NAMESPACE) create secret generic $(REDFISH_SECRET) \
 		--from-literal=redfish_password="$(REDFISH_PASSWORD)" \
 		--dry-run=client -o yaml | kubectl --context kind-$(KIND_CLUSTER) apply -f -
 
-kind-deploy: kind-secret ## Install/upgrade the rootstock Helm chart in the kind cluster
+kind-deploy: kind-secret kind-load ## Install/upgrade the rootstock Helm chart in the kind cluster
 	@echo "$(green) deploying rootstock chart into kind$(reset)"
 	helm --kube-context kind-$(KIND_CLUSTER) upgrade --install $(CHART_RELEASE) $(CHART_DIR) \
 		--namespace $(CHART_NAMESPACE) --create-namespace \
@@ -219,7 +220,7 @@ kind-deploy: kind-secret ## Install/upgrade the rootstock Helm chart in the kind
 		--set redfish.existingSecret=$(REDFISH_SECRET) \
 		--wait --timeout 120s
 
-kind-up: kind-cluster kind-load kind-mockup kind-deploy ## Create kind cluster and deploy everything
+kind-up: kind-mockup kind-deploy ## Create kind cluster and deploy everything
 	@echo "$(green) rootstock is deployed. Run 'make kind-verify' to probe it.$(reset)"
 
 kind-cluster: ## Create the kind cluster if it does not exist
