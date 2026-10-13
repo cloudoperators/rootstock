@@ -48,8 +48,12 @@ endif
 # Container image / local Kubernetes (kind) settings
 IMAGE          ?= ghcr.io/cloudoperators/rootstock:dev-$(USER)
 # Split IMAGE into repository and tag for the Helm --set flags below.
-IMAGE_REPO     := $(shell image='$(IMAGE)'; printf '%s' "$${image%:*}")
-IMAGE_TAG      := $(shell image='$(IMAGE)'; printf '%s' "$${image##*:}")
+# Done in pure make (no $(shell ...)) so the Makefile parses on the GNU Make
+# 3.81 that ships with macOS. A colon only denotes a tag when it appears in the
+# last path segment, otherwise it is a registry port (e.g. localhost:5000/...).
+IMAGE_LAST     := $(lastword $(subst /, ,$(IMAGE)))
+IMAGE_TAG      := $(if $(findstring :,$(IMAGE_LAST)),$(lastword $(subst :, ,$(IMAGE))),latest)
+IMAGE_REPO     := $(if $(findstring :,$(IMAGE_LAST)),$(patsubst %:$(IMAGE_TAG),%,$(IMAGE)),$(IMAGE))
 KIND_CLUSTER   ?= rootstock-local
 CHART_DIR      := k8s_configuration/chart
 CHART_RELEASE  ?= rootstock
@@ -197,8 +201,10 @@ kind-mockup: ## Build+load and deploy the DMTF Redfish mockup (PDU dataset) into
 	kubectl --context kind-$(KIND_CLUSTER) -n $(CHART_NAMESPACE) apply -f hack/kind/redfish-mockup.yaml
 	kubectl --context kind-$(KIND_CLUSTER) -n $(CHART_NAMESPACE) rollout status deploy/redfish-mockup --timeout=120s
 
-kind-secret: ## Create the redfish credentials secret in the kind cluster
+kind-secret: kind-cluster ## Create the redfish credentials secret in the kind cluster
 	@echo "$(green) creating redfish credentials secret $(REDFISH_SECRET)$(reset)"
+	kubectl --context kind-$(KIND_CLUSTER) create namespace $(CHART_NAMESPACE) \
+		--dry-run=client -o yaml | kubectl --context kind-$(KIND_CLUSTER) apply -f -
 	kubectl --context kind-$(KIND_CLUSTER) -n $(CHART_NAMESPACE) create secret generic $(REDFISH_SECRET) \
 		--from-literal=redfish_password="$(REDFISH_PASSWORD)" \
 		--dry-run=client -o yaml | kubectl --context kind-$(KIND_CLUSTER) apply -f -
