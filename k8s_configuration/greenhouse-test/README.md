@@ -51,8 +51,10 @@ Then set in k8s_configuration/plugindefinition.yaml:
 
 ```bash
 export KUBECONFIG=<admin kubeconfig>   # on the node: /etc/kubernetes/admin.conf
-kubectl apply -f k8s_configuration/plugindefinition.yaml
-kubectl get plugindefinition rootstock
+# PluginDefinition is namespaced: it MUST live in the Organization namespace
+# (the org whose name == the namespace), or it never reconciles.
+kubectl -n <org-namespace> apply -f k8s_configuration/plugindefinition.yaml
+kubectl -n <org-namespace> get plugindefinition rootstock
 ```
 
 ## Step 3 — Create the Redfish Secret (Organization namespace)
