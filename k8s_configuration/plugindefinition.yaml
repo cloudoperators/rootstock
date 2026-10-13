@@ -34,6 +34,11 @@ spec:
       description: Container image tag. Defaults to the chart appVersion when empty.
       type: string
       required: false
+    - name: image.pullPolicy
+      description: Kubernetes image pull policy for rootstock.
+      type: string
+      required: false
+      default: IfNotPresent
     - name: redfish.username
       displayName: Redfish username
       description: Username used for Redfish session authentication.
