@@ -48,8 +48,8 @@ endif
 # Container image / local Kubernetes (kind) settings
 IMAGE          ?= ghcr.io/cloudoperators/rootstock:dev-$(USER)
 # Split IMAGE into repository and tag for the Helm --set flags below.
-IMAGE_REPO     := $(firstword $(subst :, ,$(IMAGE)))
-IMAGE_TAG      := $(lastword $(subst :, ,$(IMAGE)))
+IMAGE_REPO     := $(shell image='$(IMAGE)'; printf '%s' "$${image%:*}")
+IMAGE_TAG      := $(shell image='$(IMAGE)'; printf '%s' "$${image##*:}")
 KIND_CLUSTER   ?= rootstock-local
 CHART_DIR      := k8s_configuration/chart
 CHART_RELEASE  ?= rootstock
