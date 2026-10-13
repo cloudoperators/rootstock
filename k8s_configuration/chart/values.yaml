@@ -47,17 +47,18 @@ redfish:
   # The password is ALWAYS consumed from a mounted file, never an environment
   # variable. There are two mutually exclusive ways to supply it:
   #
-  # 1. existingSecret: reference a pre-created Kubernetes Secret (recommended;
-  #    this is also the path a Greenhouse Plugin's valueFrom.secret feeds into).
-  # 2. password: provide the value inline and let the chart render a Secret for
-  #    self-contained / local (kind) deployments.
+  # 1. existingSecret: reference a pre-created, externally-managed Kubernetes
+  #    Secret (recommended when the Secret is managed outside the chart).
+  # 2. password: provide the value inline and let the chart render a Secret.
+  #    Used for self-contained / local (kind) deployments AND by Greenhouse:
+  #    a Plugin's redfish.password (valueFrom.secret) feeds this value.
   #
   # In both cases the Secret is projected into the pod as a read-only file.
   existingSecret: ""
   # Key within the Secret that holds the password.
   secretKey: redfish_password
-  # Inline password. Only used when existingSecret is empty. Leave empty in
-  # production and supply existingSecret instead.
+  # Inline password. Only used when existingSecret is empty. For an
+  # externally-managed Secret, leave this empty and set existingSecret instead.
   password: ""
 
   # Directory the credentials file is mounted into. Maps to --config-folder.
