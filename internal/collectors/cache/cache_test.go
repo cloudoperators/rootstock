@@ -76,20 +76,20 @@ func TestCacheConcurrency(t *testing.T) {
 	wg.Add(goroutines * 2)
 
 	// Writers
-	for i := 0; i < goroutines; i++ {
+	for i := range goroutines {
 		go func(id int) {
 			defer wg.Done()
-			for j := 0; j < iterations; j++ {
+			for j := range iterations {
 				cache.Set("key", id*iterations+j)
 			}
 		}(i)
 	}
 
 	// Readers
-	for i := 0; i < goroutines; i++ {
+	for range goroutines {
 		go func() {
 			defer wg.Done()
-			for j := 0; j < iterations; j++ {
+			for range iterations {
 				_, _ = cache.Get("key")
 			}
 		}()
