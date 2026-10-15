@@ -9,21 +9,6 @@ import (
 	"testing"
 )
 
-func TestNewCache(t *testing.T) {
-	cache := NewCache[string]()
-	if cache == nil {
-		t.Fatal("NewCache returned nil")
-	}
-
-	if cache.data == nil {
-		t.Fatal("cache.data should be initialized")
-	}
-
-	if cache.logger == nil {
-		t.Fatal("cache.logger should be initialized")
-	}
-}
-
 func TestCacheSetAndGet(t *testing.T) {
 	cache := NewCache[string]()
 

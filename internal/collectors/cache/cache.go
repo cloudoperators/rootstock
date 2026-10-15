@@ -15,18 +15,28 @@ var (
 	ErrCacheExpired  = errors.New("cache entry expired")
 )
 
+// Cacher defines the interface for cache operations.
+type Cache[T any] interface {
+	// Get retrieves a value from the cache.
+	// Returns ErrCacheNotFound if the key doesn't exist.
+	Get(key string) (any, error)
+
+	// Set stores a value in the cache.
+	Set(key string, data T)
+}
+
 // Cache is a generic thread-safe in-memory cache.
-type Cache[T any] struct {
+type cache[T any] struct {
 	mu     sync.RWMutex
 	logger log.MinInterface
 	data   map[string]any
 }
 
 // NewCache creates a new cache.
-func NewCache[T any]() *Cache[T] {
+func NewCache[T any]() Cache[T] {
 	logger := log.Default()
 
-	return &Cache[T]{
+	return &cache[T]{
 		logger: logger,
 		data:   make(map[string]any),
 	}
@@ -34,7 +44,7 @@ func NewCache[T any]() *Cache[T] {
 
 // Get retrieves a value from the cache.
 // Returns ErrCacheNotFound if the key doesn't exist.
-func (c *Cache[T]) Get(key string) (any, error) {
+func (c *cache[T]) Get(key string) (any, error) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
@@ -49,7 +59,7 @@ func (c *Cache[T]) Get(key string) (any, error) {
 }
 
 // Set stores a value in the cache.
-func (c *Cache[T]) Set(key string, data T) {
+func (c *cache[T]) Set(key string, data T) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
