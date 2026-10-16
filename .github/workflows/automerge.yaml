@@ -23,6 +23,7 @@ on:
 
 env:
   TARGET_BRANCH: main
+  BLOCKED_LABELS: "invalid,WIP,wip,do-not-merge,DO-NOT-MERGE"
   DEBUG: false
 
 permissions:
@@ -75,19 +76,23 @@ jobs:
           fi
 
           PR=$(gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" \
-            --json number,title,body,headRefName,baseRefName,baseRefOid,mergeStateStatus,reviewDecision,url,isDraft
+            --json number,title,body,headRefName,baseRefName,baseRefOid,mergeStateStatus,reviewDecision,url,isDraft,labels
           )
 
           BASE=$(echo "$PR" | jq -r .baseRefName)
           STATE=$(echo "$PR" | jq -r .mergeStateStatus)
           REVIEW=$(echo "$PR" | jq -r '.reviewDecision // empty')
           DRAFT=$(echo "$PR" | jq -r .isDraft)
+          BLOCKED_LABEL=$(echo "$PR" | jq -r --arg bl "$BLOCKED_LABELS" '
+            ($bl | split(",")) as $list | .labels[].name | select(IN($list[]))
+          ' | head -1)
 
           if [ "$BASE" != "$TARGET_BRANCH" ] \
             || [ "$STATE" != "CLEAN" ] \
             || [ "$REVIEW" = "CHANGES_REQUESTED" ] \
             || [ "$REVIEW" = "REVIEW_REQUIRED" ] \
-            || [ "$DRAFT" = "true" ]; then
+            || [ "$DRAFT" = "true" ] \
+            || [ -n "$BLOCKED_LABEL" ]; then
             echo "eligible=false" >> "$GITHUB_OUTPUT"
 
             if [ "$DEBUG" = "true" ]; then
@@ -96,6 +101,7 @@ jobs:
               echo "DEBUG: merge_state_status=$STATE ?= NOT CLEAN"
               echo "DEBUG: review_decision=$REVIEW ?= CHANGES_REQUESTED OR REVIEW_REQUIRED"
               echo "DEBUG: is_draft=$DRAFT ?= true"
+              echo "DEBUG: blocked_label=${BLOCKED_LABEL:-<none>}"
               echo "DEBUG: pr_json=$(echo "$PR" | jq -c .)"
             fi
 
@@ -109,6 +115,7 @@ jobs:
             echo "DEBUG: pr_url=$(echo "$PR" | jq -r .url)"
             echo "DEBUG: head_ref=$(echo "$PR" | jq -r .headRefName)"
             echo "DEBUG: base_sha=$(echo "$PR" | jq -r .baseRefOid)"
+            echo "DEBUG: blocked_label=<none>"
             echo "DEBUG: pr_body=$(echo "$PR" | jq -r '.body // ""')"
           fi
 
