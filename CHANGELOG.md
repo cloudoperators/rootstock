@@ -14,6 +14,22 @@ and this project adheres to
   [#78](https://github.com/cloudoperators/rootstock/pull/78)
   ([diff](https://github.com/cloudoperators/rootstock/compare/v0.0.2...v0.1.0))
   by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.1.0 - 🚀) tooling: Add shell and markdown linters
+  [#89](https://github.com/cloudoperators/rootstock/pull/89)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.0.2...v0.1.0))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.1.0 - ⚙️) tooling: Add automerge workflow and pr title linter
+  [#88](https://github.com/cloudoperators/rootstock/pull/88)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.0.2...v0.1.0))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.1.0 - 🐛) tooling: Main docker build
+  [#91](https://github.com/cloudoperators/rootstock/pull/91)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.0.2...v0.1.0))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.1.0 - 🐛) tooling: Main docker build
+  [#93](https://github.com/cloudoperators/rootstock/pull/93)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.0.2...v0.1.0))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
 
 ## 2026-10-05
 
