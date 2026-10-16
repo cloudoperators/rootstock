@@ -67,7 +67,7 @@ jobs:
             exit 0
           fi
 
-          PR=$(gh pr view "$PR_NUMBER" \
+          PR=$(gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" \
             --json number,title,body,headRefName,baseRefName,baseRefOid,mergeStateStatus,reviewDecision,url
           )
 
