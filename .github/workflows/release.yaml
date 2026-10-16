@@ -40,3 +40,4 @@ jobs:
       - variables
     with:
       version: ${{ needs.variables.outputs.version }}
+      release: true

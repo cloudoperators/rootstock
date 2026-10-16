@@ -1,0 +1,148 @@
+# SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Greenhouse contributors
+# SPDX-License-Identifier: Apache-2.0
+
+name: Automerge
+
+on:
+  workflow_run:
+    workflows: ["CI", "REUSE Compliance Check", "CodeQL"]
+    types: [completed]
+  pull_request_review:
+    types: [submitted]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: PR number to merge
+        required: true
+        type: string
+
+env:
+  TARGET_BRANCH: main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  check-eligibility:
+    runs-on: ubuntu-latest
+    outputs:
+      eligible: ${{ steps.check.outputs.eligible }}
+      pr_number: ${{ steps.check.outputs.pr_number }}
+      pr_title: ${{ steps.check.outputs.pr_title }}
+      pr_body: ${{ steps.check.outputs.pr_body }}
+      pr_url: ${{ steps.check.outputs.pr_url }}
+      head_ref: ${{ steps.check.outputs.head_ref }}
+      base_sha: ${{ steps.check.outputs.base_sha }}
+    steps:
+      - name: Check PR eligibility
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EVENT_NAME: ${{ github.event_name }}
+          DISPATCH_PR: ${{ inputs.pr_number }}
+          REVIEW_PR: ${{ github.event.pull_request.number }}
+          WORKFLOW_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          WORKFLOW_PRS: ${{ toJson(github.event.workflow_run.pull_requests) }}
+        run: |
+          case "$EVENT_NAME" in
+            workflow_dispatch)
+              PR_NUMBER="$DISPATCH_PR"
+              ;;
+            pull_request_review)
+              PR_NUMBER="$REVIEW_PR"
+              ;;
+            workflow_run)
+              if [ "$WORKFLOW_CONCLUSION" != "success" ]; then
+                echo "eligible=false" >> "$GITHUB_OUTPUT"
+                exit 0
+              fi
+              PR_NUMBER=$(echo "$WORKFLOW_PRS" \
+                | jq -r 'if length > 0 then .[0].number else empty end')
+              ;;
+          esac
+
+          if [ -z "$PR_NUMBER" ]; then
+            echo "eligible=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          PR=$(gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" \
+            --json number,title,body,headRefName,baseRefName,baseRefOid,mergeStateStatus,reviewDecision,url,isDraft
+          )
+
+          BASE=$(echo "$PR" | jq -r .baseRefName)
+          STATE=$(echo "$PR" | jq -r .mergeStateStatus)
+          REVIEW=$(echo "$PR" | jq -r '.reviewDecision // empty')
+          DRAFT=$(echo "$PR" | jq -r .isDraft)
+
+          if [ "$BASE" != "$TARGET_BRANCH" ] \
+            || [ "$STATE" != "CLEAN" ] \
+            || [ "$REVIEW" = "CHANGES_REQUESTED" ] \
+            || [ "$REVIEW" = "REVIEW_REQUIRED" ] \
+            || [ "$DRAFT" = "true" ]; then
+            echo "eligible=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          {
+            echo "eligible=true"
+            echo "pr_number=$(echo "$PR" | jq -r .number)"
+            echo "pr_title=$(echo "$PR" | jq -r .title)"
+            echo "pr_url=$(echo "$PR" | jq -r .url)"
+            echo "head_ref=$(echo "$PR" | jq -r .headRefName)"
+            echo "base_sha=$(echo "$PR" | jq -r .baseRefOid)"
+            printf 'pr_body<<__BODY__\n'
+            echo "$PR" | jq -r '.body // ""'
+            printf '__BODY__\n'
+          } >> "$GITHUB_OUTPUT"
+
+          echo $GITHUB_OUTPUT
+
+  debug:
+    runs-on: ubuntu-latest
+    needs: check-eligibility
+    steps:
+      - name: print output
+        env:
+          ELIGIBLE: ${{ needs.check-eligibility.outputs.eligible }}
+          HEAD_REF: ${{ needs.check-eligibility.outputs.head_ref }}
+          PR_NUMBER: ${{ needs.check-eligibility.outputs.pr_number }}
+          PR_TITLE: ${{ needs.check-eligibility.outputs.pr_title }}
+          PR_BODY: ${{ needs.check-eligibility.outputs.pr_body }}
+          PR_URL: ${{ needs.check-eligibility.outputs.pr_url }}
+          BASE_SHA: ${{ needs.check-eligibility.outputs.base_sha }}
+        run: |
+          echo "eligible=$ELIGIBLE"
+          echo "head_ref=$HEAD_REF"
+          echo "pr_number=$PR_NUMBER"
+          echo "pr_title=$PR_TITLE"
+          echo "pr_body=$PR_BODY"
+          echo "pr_url=$PR_URL"
+          echo "base_sha=$BASE_SHA"
+
+  # update-changelog-and-version:
+  #   needs: check-eligibility
+  #   if: needs.check-eligibility.outputs.eligible == 'true'
+  #   uses: ./.github/workflows/changelog_version.yaml
+  #   with:
+  #     head_ref: ${{ needs.check-eligibility.outputs.head_ref }}
+  #     pr_number: ${{ needs.check-eligibility.outputs.pr_number }}
+  #     pr_title: ${{ needs.check-eligibility.outputs.pr_title }}
+  #     pr_body: ${{ needs.check-eligibility.outputs.pr_body }}
+  #     pr_url: ${{ needs.check-eligibility.outputs.pr_url }}
+  #     base_sha: ${{ needs.check-eligibility.outputs.base_sha }}
+  #   secrets: inherit
+
+  # merge:
+  #   needs: [check-eligibility, update-changelog-and-version]
+  #   if: needs.check-eligibility.outputs.eligible == 'true'
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Merge PR
+  #       env:
+  #         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #       run: |
+  #         gh pr merge "${{ needs.check-eligibility.outputs.pr_number }}" \
+  #           --squash \
+  #           --delete-branch

@@ -64,7 +64,7 @@ REDFISH_PASSWORD ?= admin
 
 .PHONY: build test test-unit test-integration test-contract test-performance \
         mockup-start mockup-stop \
-        lint lint-go lint-md conventions scan \
+        lint lint-go lint-md lint-shell conventions scan \
         generate docker-build \
         kind-up kind-load kind-mockup kind-namespace kind-secret kind-deploy kind-verify kind-down \
         kind-cluster \
@@ -135,9 +135,12 @@ lint-go: ## Run golangci-lint on Go code
 	golangci-lint run ./... --fix
 
 lint-md: ## Run prettier for markdown files
-	prettier --prose-wrap always --write "**/*.md"
+	npx --yes prettier --prose-wrap always --write "**/*.md"
 
-lint: lint-go lint-md ## Run all linters (alias)
+lint-shell: ## Run shellcheck on shell scripts
+	find . -name '*.sh' -not -path './.git/*' -print0 | xargs -r -0 shellcheck
+
+lint: lint-go lint-md lint-shell ## Run all linters (alias)
 	go mod tidy
 
 
