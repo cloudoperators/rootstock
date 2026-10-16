@@ -42,11 +42,10 @@ MOCKUP_CONTAINER := redfish-mockup
 
 
 .PHONY: build test test-unit test-integration test-contract test-performance \
-        mockup-start mockup-stop \
-
-        lint lint-go lint-md lint-shell \
+				mockup-start mockup-stop \
+				lint lint-go lint-md lint-shell \
 				scan \
-        docker-build \
+				docker-build \
 				generate generate-changelog generate-version \
 				get-version test-changelog \
 				help
@@ -130,6 +129,7 @@ generate-version: ## Bump version in VERSION.yaml
 
 generate-changelog: ## Update the local CHANGELOG.md file
 	@hack/update_changelog.sh
+	$(MAKE) lint-md
 
 get-version: ## Prints out the current version as presented in the VERSION.yaml file
 	@echo $(VERSION)
