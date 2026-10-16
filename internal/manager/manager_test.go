@@ -25,6 +25,7 @@ func newTestManager(ips ...string) *manager {
 		30*time.Second,
 		2,
 		5*time.Second,
+		1*time.Second,
 		nil,
 		log.Default(),
 	).(*manager)
@@ -102,15 +103,15 @@ func TestGetScrapeJob_Recent(t *testing.T) {
 	}
 }
 
-// reportScrapeResult should clear failures and mark device available on success.
-func TestReportScrapeResult_Success(t *testing.T) {
+// updateDevice should clear failures and mark device available on success.
+func TestUpdateDevice_Success(t *testing.T) {
 	m := newTestManager("10.0.0.1")
 	m.devices["10.0.0.1"].consecutiveFailures = []ScrapeResult{
 		{Err: errors.New("timeout")},
 		{Err: errors.New("timeout")},
 	}
 
-	m.reportScrapeResult("10.0.0.1", time.Now(), ScrapeResult{Err: nil})
+	m.updateDevice("10.0.0.1", time.Now(), ScrapeResult{Err: nil})
 
 	d := m.devices["10.0.0.1"]
 	if len(d.consecutiveFailures) != 0 {
@@ -122,12 +123,12 @@ func TestReportScrapeResult_Success(t *testing.T) {
 	}
 }
 
-// reportScrapeResult should append to consecutiveFailures on error.
-func TestReportScrapeResult_Failures(t *testing.T) {
+// updateDevice should append to consecutiveFailures on error.
+func TestUpdateDevice_Failures(t *testing.T) {
 	m := newTestManager("10.0.0.1")
 
-	m.reportScrapeResult("10.0.0.1", time.Now(), ScrapeResult{Err: errors.New("connection refused")})
-	m.reportScrapeResult("10.0.0.1", time.Now(), ScrapeResult{Err: errors.New("timeout")})
+	m.updateDevice("10.0.0.1", time.Now(), ScrapeResult{Err: errors.New("connection refused")})
+	m.updateDevice("10.0.0.1", time.Now(), ScrapeResult{Err: errors.New("timeout")})
 
 	d := m.devices["10.0.0.1"]
 	if len(d.consecutiveFailures) != 2 {

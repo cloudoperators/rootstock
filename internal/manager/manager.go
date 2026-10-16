@@ -22,13 +22,14 @@ type Manager interface {
 }
 
 type manager struct {
-	devices     map[string]*device
-	mu          sync.RWMutex
-	interval    time.Duration // how often each device should be scraped
-	workerCount int
-	timeout     time.Duration
-	scraper     Scraper
-	logger      log.MinInterface
+	devices      map[string]*device
+	mu           sync.RWMutex
+	interval     time.Duration // how often each device should be scraped
+	workerCount  int
+	timeout      time.Duration // max time a single scrape attempt may take
+	pollInterval time.Duration // how long a worker sleeps when no device is ready to scrape
+	scraper      Scraper
+	logger       log.MinInterface
 }
 
 // takes the list of IPs, creates a device for each one and puts then in the map
@@ -38,6 +39,7 @@ func NewManager(
 	interval time.Duration,
 	workerCount int,
 	timeout time.Duration,
+	pollInterval time.Duration,
 	scraper Scraper,
 	logger log.MinInterface,
 ) Manager {
@@ -52,12 +54,13 @@ func NewManager(
 	}
 
 	return &manager{
-		devices:     devices,
-		interval:    interval,
-		workerCount: workerCount,
-		timeout:     timeout,
-		scraper:     scraper,
-		logger:      logger,
+		devices:      devices,
+		interval:     interval,
+		workerCount:  workerCount,
+		timeout:      timeout,
+		pollInterval: pollInterval,
+		scraper:      scraper,
+		logger:       logger,
 	}
 }
 
@@ -67,15 +70,17 @@ func (m *manager) getScrapeJob() *ScrapeJob {
 	defer m.mu.Unlock()
 
 	for _, d := range m.devices {
-		nbfailures := len(d.consecutiveFailures)
+		// failureCount drives the backoff: each consecutive failure adds one
+		// extra interval before the device is retried.
+		failureCount := len(d.consecutiveFailures)
 
-		if nbfailures >= 10 {
+		if failureCount >= 10 {
 			m.logger.Error("device repeatedly failing, resetting", "device", d.deviceID)
 			d.consecutiveFailures = nil
-			nbfailures = 0
+			failureCount = 0
 		}
 
-		waitTime := max(time.Duration(nbfailures)*m.interval, m.interval)
+		waitTime := max(time.Duration(failureCount)*m.interval, m.interval)
 
 		if !d.currentlyScraped && time.Since(d.lastScraped) >= waitTime {
 			d.currentlyScraped = true
@@ -92,7 +97,7 @@ func (m *manager) getScrapeJob() *ScrapeJob {
 }
 
 // worker calls this after finising. Updates the device.
-func (m *manager) reportScrapeResult(deviceID string, timestamp time.Time, result ScrapeResult) {
+func (m *manager) updateDevice(deviceID string, timestamp time.Time, result ScrapeResult) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -104,10 +109,10 @@ func (m *manager) reportScrapeResult(deviceID string, timestamp time.Time, resul
 	d.currentlyScraped = false
 	d.lastScraped = timestamp
 
-	if result.Err == nil {
-		d.consecutiveFailures = nil
-	} else {
+	if result.Err != nil {
 		d.consecutiveFailures = append(d.consecutiveFailures, result)
+	} else {
+		d.consecutiveFailures = nil
 	}
 }
 
@@ -115,18 +120,12 @@ func (m *manager) reportScrapeResult(deviceID string, timestamp time.Time, resul
 // for the next device to scrape, calls the scraper, and reports the result back.
 func (m *manager) runWorker(ctx context.Context) {
 	for {
-		select {
-		case <-ctx.Done():
-			return
-		default:
-		}
-
 		job := m.getScrapeJob()
 		if job == nil {
 			select {
 			case <-ctx.Done():
 				return
-			case <-time.After(5 * time.Second):
+			case <-time.After(m.pollInterval):
 			}
 
 			continue
@@ -136,9 +135,9 @@ func (m *manager) runWorker(ctx context.Context) {
 		timestamp := time.Now()
 		result := m.scraper.Scrape(scrapeCtx, *job)
 
-		cancel()
+		defer cancel()
 
-		m.reportScrapeResult(job.DeviceID, timestamp, result)
+		m.updateDevice(job.DeviceID, timestamp, result)
 	}
 }
 
