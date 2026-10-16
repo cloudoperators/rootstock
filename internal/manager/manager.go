@@ -135,7 +135,7 @@ func (m *manager) runWorker(ctx context.Context) {
 		timestamp := time.Now()
 		result := m.scraper.Scrape(scrapeCtx, *job)
 
-		defer cancel()
+		cancel()
 
 		m.updateDevice(job.DeviceID, timestamp, result)
 	}
