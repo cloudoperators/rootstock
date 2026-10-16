@@ -32,21 +32,34 @@ jobs:
   conventions:
     name: Conventions
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          ref: ${{ github.head_ref }}
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
-      - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v9
-        with:
-          version: v2.14.0
-      - name: TODO - Markdown linting
-        run: echo "TODO - run prettier on markdown files"
-      - name: TODO - Shell linting
-        run: echo "TODO - run shellcheck on shell scripts"
+          cache: true
+      - name: Install golangci-lint
+        run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@v2.14.0
+      - name: Run lint-go
+        run: make lint-go
+      - name: Lint Markdown
+        run: make lint-md
+      - name: Lint Shell
+        run: make lint-shell
+      - name: Commit auto-fixes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if ! git diff --quiet; then
+            git commit -am "chore: apply linter auto-fixes"
+            git push
+          fi
 
   code-scans:
     name: Code Scans
