@@ -105,6 +105,7 @@ jobs:
     steps:
       - name: print output
         run: |
+          echo "eligible=${{  needs.check-eligibility.outputs.eligible }}"
           echo "head_ref=${{ needs.check-eligibility.outputs.head_ref }}"
           echo "pr_number=${{ needs.check-eligibility.outputs.pr_number }}"
           echo "pr_title=${{ needs.check-eligibility.outputs.pr_title }}"
