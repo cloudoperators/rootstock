@@ -97,30 +97,28 @@ jobs:
             printf '__BODY__\n'
           } >> "$GITHUB_OUTPUT"
 
-          echo $GITHUB_OUTPUT
+  update-changelog-and-version:
+    needs: check-eligibility
+    if: needs.check-eligibility.outputs.eligible == 'true'
+    uses: ./.github/workflows/changelog_version.yaml
+    with:
+      head_ref: ${{ needs.check-eligibility.outputs.head_ref }}
+      pr_number: ${{ needs.check-eligibility.outputs.pr_number }}
+      pr_title: ${{ needs.check-eligibility.outputs.pr_title }}
+      pr_body: ${{ needs.check-eligibility.outputs.pr_body }}
+      pr_url: ${{ needs.check-eligibility.outputs.pr_url }}
+      base_sha: ${{ needs.check-eligibility.outputs.base_sha }}
+    secrets: inherit
 
-  # update-changelog-and-version:
-  #   needs: check-eligibility
-  #   if: needs.check-eligibility.outputs.eligible == 'true'
-  #   uses: ./.github/workflows/changelog_version.yaml
-  #   with:
-  #     head_ref: ${{ needs.check-eligibility.outputs.head_ref }}
-  #     pr_number: ${{ needs.check-eligibility.outputs.pr_number }}
-  #     pr_title: ${{ needs.check-eligibility.outputs.pr_title }}
-  #     pr_body: ${{ needs.check-eligibility.outputs.pr_body }}
-  #     pr_url: ${{ needs.check-eligibility.outputs.pr_url }}
-  #     base_sha: ${{ needs.check-eligibility.outputs.base_sha }}
-  #   secrets: inherit
-
-  # merge:
-  #   needs: [check-eligibility, update-changelog-and-version]
-  #   if: needs.check-eligibility.outputs.eligible == 'true'
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Merge PR
-  #       env:
-  #         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #       run: |
-  #         gh pr merge "${{ needs.check-eligibility.outputs.pr_number }}" \
-  #           --squash \
-  #           --delete-branch
+  merge:
+    needs: [check-eligibility, update-changelog-and-version]
+    if: needs.check-eligibility.outputs.eligible == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Merge PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr merge "${{ needs.check-eligibility.outputs.pr_number }}" \
+            --squash \
+            --delete-branch
