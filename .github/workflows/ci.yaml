@@ -45,7 +45,11 @@ jobs:
           go-version-file: go.mod
           cache: true
       - name: Install golangci-lint
-        run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@v2.14.0
+        uses: golangci/golangci-lint-action@v9
+        with:
+          install-only: true
+          version: v2.14
+
       - name: Run lint-go
         run: make lint-go
       - name: Lint Markdown
