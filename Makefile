@@ -117,8 +117,7 @@ generate-version: ## Bump version in VERSION.yaml
 	@hack/update_version.sh
 
 generate-changelog: ## Update the local CHANGELOG.md file
-	@hack/update_changelog.sh
-	$(MAKE) lint-md
+	@hack/update_changelog.sh && $(MAKE) lint-md
 
 get-version: ## Prints out the current version as presented in the VERSION.yaml file
 	@echo $(VERSION)
