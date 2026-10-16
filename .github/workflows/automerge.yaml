@@ -150,10 +150,16 @@ jobs:
     if: needs.check-eligibility.outputs.eligible == 'true'
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/create-github-app-token@v2
+        id: app-token
+        with:
+          app-id: ${{ secrets.CLOUDOPERATOR_APP_ID }}
+          private-key: ${{ secrets.CLOUDOPERATOR_APP_PRIVATE_KEY }}
       - name: Merge PR
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           gh pr merge "${{ needs.check-eligibility.outputs.pr_number }}" \
+            --repo "$GITHUB_REPOSITORY" \
             --squash \
             --delete-branch
