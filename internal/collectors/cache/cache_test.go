@@ -16,154 +16,109 @@ func TestCache(t *testing.T) {
 		Metric float64
 	}
 
+	type setEntry struct {
+		key   string
+		value any
+	}
+
 	tests := []struct {
-		name      string
-		setup     func(t *testing.T)
-		wantError error
+		name       string
+		newCache   func(*testing.T) anyCacher
+		setEntries []setEntry
+		getKey     string
+		wantValue  any
+		wantError  error
 	}{
 		{
-			name: "string cache - set and get",
-			setup: func(t *testing.T) {
-				cache := New[string]()
-				cache.Set("key1", "value1")
-
-				value, err := cache.Get("key1")
-				if err != nil {
-					t.Fatalf("unexpected error: %v", err)
-				}
-				if value != "value1" {
-					t.Errorf("expected value1, got %s", value)
-				}
-			},
+			name:       "string cache - set and get",
+			newCache:   wrapCache[string],
+			setEntries: []setEntry{{"key1", "value1"}},
+			getKey:     "key1",
+			wantValue:  "value1",
 		},
 		{
-			name: "string cache - overwrite value",
-			setup: func(t *testing.T) {
-				cache := New[string]()
-				cache.Set("key1", "value1")
-				cache.Set("key1", "value2")
-
-				value, err := cache.Get("key1")
-				if err != nil {
-					t.Fatalf("unexpected error: %v", err)
-				}
-				if value != "value2" {
-					t.Errorf("expected value2, got %s", value)
-				}
-			},
+			name:       "string cache - overwrite value",
+			newCache:   wrapCache[string],
+			setEntries: []setEntry{{"key1", "value1"}, {"key1", "value2"}},
+			getKey:     "key1",
+			wantValue:  "value2",
 		},
 		{
-			name: "cache miss - nonexistent key",
-			setup: func(t *testing.T) {
-				cache := New[string]()
-
-				_, err := cache.Get("nonexistent")
-				if !errors.Is(err, ErrCacheNotFound) {
-					t.Errorf("expected ErrCacheNotFound, got %v", err)
-				}
-			},
+			name:      "cache miss - nonexistent key",
+			newCache:  wrapCache[string],
+			getKey:    "nonexistent",
+			wantError: ErrCacheNotFound,
 		},
 		{
-			name: "int cache - set and get",
-			setup: func(t *testing.T) {
-				cache := New[int]()
-				cache.Set("answer", 42)
-
-				value, err := cache.Get("answer")
-				if err != nil {
-					t.Fatalf("unexpected error: %v", err)
-				}
-				if value != 42 {
-					t.Errorf("expected 42, got %d", value)
-				}
-			},
+			name:       "int cache - set and get",
+			newCache:   wrapCache[int],
+			setEntries: []setEntry{{"answer", 42}},
+			getKey:     "answer",
+			wantValue:  42,
 		},
 		{
-			name: "struct cache - set and get",
-			setup: func(t *testing.T) {
-				cache := New[RackPDU]()
-
-				device := RackPDU{
-					ID:     "device1",
-					Name:   "Test Device",
-					Metric: 67.89,
-				}
-
-				cache.Set("device1", device)
-
-				retrieved, err := cache.Get("device1")
-				if err != nil {
-					t.Fatalf("unexpected error: %v", err)
-				}
-
-				if retrieved.ID != device.ID || retrieved.Name != device.Name || retrieved.Metric != device.Metric {
-					t.Errorf("retrieved device doesn't match: got %+v, want %+v", retrieved, device)
-				}
+			name:     "struct cache - set and get",
+			newCache: wrapCache[RackPDU],
+			setEntries: []setEntry{
+				{"device1", RackPDU{ID: "device1", Name: "Test Device", Metric: 67.89}},
 			},
+			getKey:    "device1",
+			wantValue: RackPDU{ID: "device1", Name: "Test Device", Metric: 67.89},
 		},
 		{
-			name: "struct cache - multiple devices",
-			setup: func(t *testing.T) {
-				cache := New[RackPDU]()
-
-				device1 := RackPDU{ID: "dev1", Name: "Device 1", Metric: 10.5}
-				device2 := RackPDU{ID: "dev2", Name: "Device 2", Metric: 20.5}
-
-				cache.Set("dev1", device1)
-				cache.Set("dev2", device2)
-
-				// Get first device
-				val1, err := cache.Get("dev1")
-				if err != nil {
-					t.Fatalf("unexpected error for dev1: %v", err)
-				}
-				if val1.ID != "dev1" {
-					t.Errorf("expected dev1, got %s", val1.ID)
-				}
-
-				// Get second device
-				val2, err := cache.Get("dev2")
-				if err != nil {
-					t.Fatalf("unexpected error for dev2: %v", err)
-				}
-				if val2.ID != "dev2" {
-					t.Errorf("expected dev2, got %s", val2.ID)
-				}
+			name:     "struct cache - multiple devices, get first",
+			newCache: wrapCache[RackPDU],
+			setEntries: []setEntry{
+				{"dev1", RackPDU{ID: "dev1", Name: "Device 1", Metric: 10.5}},
+				{"dev2", RackPDU{ID: "dev2", Name: "Device 2", Metric: 20.5}},
 			},
+			getKey:    "dev1",
+			wantValue: RackPDU{ID: "dev1", Name: "Device 1", Metric: 10.5},
 		},
 		{
-			name: "any cache - store different types",
-			setup: func(t *testing.T) {
-				cache := New[any]()
-
-				cache.Set("string", "hello")
-				cache.Set("int", 123)
-				cache.Set("struct", RackPDU{ID: "test"})
-
-				// Get string
-				val1, err := cache.Get("string")
-				if err != nil {
-					t.Fatalf("unexpected error: %v", err)
-				}
-				if str, ok := val1.(string); !ok || str != "hello" {
-					t.Errorf("expected 'hello', got %v", val1)
-				}
-
-				// Get int
-				val2, err := cache.Get("int")
-				if err != nil {
-					t.Fatalf("unexpected error: %v", err)
-				}
-				if num, ok := val2.(int); !ok || num != 123 {
-					t.Errorf("expected 123, got %v", val2)
-				}
+			name:     "struct cache - multiple devices, get second",
+			newCache: wrapCache[RackPDU],
+			setEntries: []setEntry{
+				{"dev1", RackPDU{ID: "dev1", Name: "Device 1", Metric: 10.5}},
+				{"dev2", RackPDU{ID: "dev2", Name: "Device 2", Metric: 20.5}},
 			},
+			getKey:    "dev2",
+			wantValue: RackPDU{ID: "dev2", Name: "Device 2", Metric: 20.5},
+		},
+		{
+			name:     "any cache - get string value",
+			newCache: wrapCache[any],
+			setEntries: []setEntry{
+				{"string", "hello"},
+				{"int", 123},
+				{"struct", RackPDU{ID: "test"}},
+			},
+			getKey:    "string",
+			wantValue: "hello",
+		},
+		{
+			name:       "any cache - get int value",
+			newCache:   wrapCache[any],
+			setEntries: []setEntry{{"string", "hello"}, {"int", 123}},
+			getKey:     "int",
+			wantValue:  123,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.setup(t)
+			c := tt.newCache(t)
+			for _, e := range tt.setEntries {
+				c.Set(e.key, e.value)
+			}
+
+			value, err := c.Get(tt.getKey)
+			if !errors.Is(err, tt.wantError) {
+				t.Fatalf("unexpected error: got %v, want %v", err, tt.wantError)
+			}
+			if tt.wantError == nil && value != tt.wantValue {
+				t.Errorf("unexpected value: got %v, want %v", value, tt.wantValue)
+			}
 		})
 	}
 }
@@ -202,4 +157,30 @@ func TestCacheConcurrency(t *testing.T) {
 	if err != nil {
 		t.Errorf("expected key to exist after concurrent operations, got error: %v", err)
 	}
+}
+
+type anyCacher interface {
+	Set(key string, val any)
+	Get(key string) (any, error)
+}
+
+type cacheAdapter[T any] struct {
+	t *testing.T
+	c Cache[T]
+}
+
+func (a *cacheAdapter[T]) Set(key string, val any) {
+	v, ok := val.(T)
+	if !ok {
+		var t T
+		a.t.Errorf("illegal type passed to caches Set method: expecting %T but got %T", t, val)
+		a.t.Fail()
+	}
+	a.c.Set(key, v)
+}
+func (a *cacheAdapter[T]) Get(key string) (any, error) { return a.c.Get(key) }
+
+func wrapCache[T any](t *testing.T) anyCacher {
+	t.Helper()
+	return &cacheAdapter[T]{t: t, c: New[T]()}
 }

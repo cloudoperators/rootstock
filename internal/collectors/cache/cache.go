@@ -8,9 +8,7 @@ import (
 	"sync"
 )
 
-var (
-	ErrCacheNotFound = errors.New("cache entry not found")
-)
+var ErrCacheNotFound = errors.New("cache entry not found")
 
 // Cacher defines the interface for cache operations.
 type Cache[T any] interface {
