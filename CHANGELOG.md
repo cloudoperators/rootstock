@@ -8,14 +8,10 @@ and this project adheres to
 
 <!-- git-cliff: end of header -->
 
-## 2026-10-13
+## 2026-10-16
 
 - (0.1.0 - 🚀) tooling: Add a docker build
   [#78](https://github.com/cloudoperators/rootstock/pull/78)
-  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.0.2...v0.1.0))
-  by [@blackhat-jan](https://github.com/blackhat-jan)
-- (0.1.0 - 🚀) tooling: Add changelog and version generation in
-  [#86](https://github.com/cloudoperators/rootstock/pull/86)
   ([diff](https://github.com/cloudoperators/rootstock/compare/v0.0.2...v0.1.0))
   by [@blackhat-jan](https://github.com/blackhat-jan)
 
