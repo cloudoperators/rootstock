@@ -20,7 +20,6 @@ linters:
     - noinlineerr
     - testpackage
     - wsl
-    - wsl_v5
     - nlreturn
     - err113
     - exhaustruct
@@ -42,7 +41,6 @@ linters:
     - godot
     - tagalign
     - mnd
-    - intrange
   settings:
     cyclop:
       # Relaxed to accommodate the metric-emitting Collect loop.

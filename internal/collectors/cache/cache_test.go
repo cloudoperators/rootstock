@@ -116,6 +116,7 @@ func TestCache(t *testing.T) {
 			if !errors.Is(err, tt.wantError) {
 				t.Fatalf("unexpected error: got %v, want %v", err, tt.wantError)
 			}
+
 			if tt.wantError == nil && value != tt.wantValue {
 				t.Errorf("unexpected value: got %v, want %v", value, tt.wantValue)
 			}
@@ -125,8 +126,11 @@ func TestCache(t *testing.T) {
 
 func TestCacheConcurrency(t *testing.T) {
 	cache := New[int]()
-	const goroutines = 100
-	const iterations = 100
+
+	const (
+		goroutines = 100
+		iterations = 100
+	)
 
 	var wg sync.WaitGroup
 	wg.Add(2 * goroutines) // 200 wait groups for both read and write
@@ -135,6 +139,7 @@ func TestCacheConcurrency(t *testing.T) {
 	for i := range goroutines {
 		go func(id int) {
 			defer wg.Done()
+
 			for j := range iterations {
 				cache.Set("key", id*iterations+j)
 			}
@@ -145,6 +150,7 @@ func TestCacheConcurrency(t *testing.T) {
 	for range goroutines {
 		go func() {
 			defer wg.Done()
+
 			for range iterations {
 				_, _ = cache.Get("key")
 			}
@@ -176,6 +182,7 @@ func (a *cacheAdapter[T]) Set(key string, val any) {
 		a.t.Errorf("illegal type passed to caches Set method: expecting %T but got %T", t, val)
 		a.t.Fail()
 	}
+
 	a.c.Set(key, v)
 }
 func (a *cacheAdapter[T]) Get(key string) (any, error) { return a.c.Get(key) }
