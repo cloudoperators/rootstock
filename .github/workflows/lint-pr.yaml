@@ -22,8 +22,13 @@ jobs:
           # Configure which types are allowed (newline-delimited).
           # These are regex patterns auto-wrapped in `^ $`.
           # Default: https://github.com/commitizen/conventional-commit-types
+          ##
+          # fix   : all changes that address a failure of the current code base must be prefixed with this
+          # feat  : all changes that add business functionality (features) to the current code base must be prefixed with this
+          # docs  : all changes to the documentation (internal and external) must be prefixed with this
+          # chore : all other changes (e.g. to scripts, internal tooling) must be prefixed with this
           types: |
-            fix
+            fix 
             feat
             docs
             chore

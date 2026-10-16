@@ -68,17 +68,19 @@ jobs:
           fi
 
           PR=$(gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" \
-            --json number,title,body,headRefName,baseRefName,baseRefOid,mergeStateStatus,reviewDecision,url
+            --json number,title,body,headRefName,baseRefName,baseRefOid,mergeStateStatus,reviewDecision,url,isDraft
           )
 
           BASE=$(echo "$PR" | jq -r .baseRefName)
           STATE=$(echo "$PR" | jq -r .mergeStateStatus)
           REVIEW=$(echo "$PR" | jq -r '.reviewDecision // empty')
+          DRAFT=$(echo "$PR" | jq -r .isDraft)
 
           if [ "$BASE" != "$TARGET_BRANCH" ] \
             || [ "$STATE" != "CLEAN" ] \
             || [ "$REVIEW" = "CHANGES_REQUESTED" ] \
-            || [ "$REVIEW" = "REVIEW_REQUIRED" ]; then
+            || [ "$REVIEW" = "REVIEW_REQUIRED" ] \
+            || [ "$DRAFT" = "true" ]; then
             echo "eligible=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
