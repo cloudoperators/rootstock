@@ -19,7 +19,7 @@ var (
 type Cache[T any] interface {
 	// Get retrieves a value from the cache.
 	// Returns ErrCacheNotFound if the key doesn't exist.
-	Get(key string) (any, error)
+	Get(key string) (T, error)
 
 	// Set stores a value in the cache.
 	Set(key string, data T)
