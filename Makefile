@@ -3,6 +3,31 @@
 
 green := \033[1;32m[+]
 reset := \033[0m
+BINARY         := rootstock
+OS             := $(shell go env GOOS)
+ARCH           := $(shell go env GOARCH)
+
+## Auto Detect Platform
+ifeq ($(PLATFORM),)
+	ifneq ($(filter arm%,$(ARCH)),)
+		PLATFORM = linux/arm64
+	else
+		PLATFORM = linux/amd64
+	endif
+endif
+
+## Version setting
+VERSION ?= $(shell sed -n 's/^version:[[:space:]]*//p' VERSION.yaml)
+GIT_COMMIT     := $(shell git rev-parse HEAD)
+GIT_TREE_STATE := $(shell if [ -z "`git status --porcelain`" ]; then echo "clean"; else echo "dirty"; fi)
+BUILD_DATE     := $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
+
+override LDFLAGS += \
+	-X main.version=$(VERSION) \
+	-X main.buildDate=$(BUILD_DATE) \
+	-X main.gitCommit=$(GIT_COMMIT) \
+	-X main.gitTreeState=$(GIT_TREE_STATE)
+
 
 IMAGE ?= ghcr.io/cloudoperators/rootstock:dev-$(USER)
 
@@ -15,26 +40,16 @@ MOCKUP_PORT      ?= 8000
 MOCKUP_CONTAINER := redfish-mockup
 
 
-## Auto Detect Platform
-UNAME_P   := $(shell uname -p)
-ifeq ($(PLATFORM),)
-ifeq ($(UNAME_P),x86_64)
-	PLATFORM = linux/amd64
-endif
-ifneq ($(filter arm%,$(UNAME_P)),)
-	PLATFORM = linux/arm64
-endif
-endif
-
-## Version setting
-VERSION ?= $(shell sed -n 's/^version:[[:space:]]*//p' VERSION.yaml)
 
 .PHONY: build test test-unit test-integration test-contract test-performance \
         mockup-start mockup-stop \
-        lint lint-go lint-md lint-shell conventions scan \
-        generate docker-build \
-				get-version \
-        help
+
+        lint lint-go lint-md lint-shell \
+				scan \
+        docker-build \
+				generate generate-changelog generate-version \
+				get-version test-changelog \
+				help
 
 # Build
 
@@ -102,22 +117,26 @@ lint-shell: ## Run shellcheck on shell scripts
 lint: lint-go lint-md lint-shell ## Run all linters (alias)
 	go mod tidy
 
-
-conventions: ## Check formatting conventions - markdown, shell, go (TODO: prettier + shellcheck)
-	@echo "TODO: run prettier on markdown files"
-	@echo "TODO: run shellcheck on shell scripts"
-	$(MAKE) lint-go
-
 scan: ## Run security vulnerability scan
 	@echo "TODO: CodeQL scanning runs in CI via GitHub Actions shared-codeql workflow"
 	@echo "TODO: add local scanning tool here?"
 
 # Release
-generate: ## Run code generation (TODO: not yet needed)
-	@echo "TODO: add code generation steps e.g. go generate ./..."
+generate: ## run general all file generation
+	@echo "TODO: add proper generation here"
+
+generate-version: ## Bump version in VERSION.yaml
+	@hack/update_version.sh
+
+generate-changelog: ## Update the local CHANGELOG.md file
+	@hack/update_changelog.sh
 
 get-version: ## Prints out the current version as presented in the VERSION.yaml file
 	@echo $(VERSION)
+
+test-changelog: ## Run the local changelog generation test suite
+	@echo "$(green) testing changelog generation$(reset)"
+	@hack/update_changelog_test.sh
 
 docker-build: ## Build the container image for rootstock
 	@echo "$(green) building docker image$(reset)"
