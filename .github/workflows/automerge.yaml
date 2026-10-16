@@ -99,6 +99,28 @@ jobs:
 
           echo $GITHUB_OUTPUT
 
+  debug:
+    runs-on: ubuntu-latest
+    needs: check-eligibility
+    steps:
+      - name: print output
+        env:
+          ELIGIBLE: ${{ needs.check-eligibility.outputs.eligible }}
+          HEAD_REF: ${{ needs.check-eligibility.outputs.head_ref }}
+          PR_NUMBER: ${{ needs.check-eligibility.outputs.pr_number }}
+          PR_TITLE: ${{ needs.check-eligibility.outputs.pr_title }}
+          PR_BODY: ${{ needs.check-eligibility.outputs.pr_body }}
+          PR_URL: ${{ needs.check-eligibility.outputs.pr_url }}
+          BASE_SHA: ${{ needs.check-eligibility.outputs.base_sha }}
+        run: |
+          echo "eligible=$ELIGIBLE"
+          echo "head_ref=$HEAD_REF"
+          echo "pr_number=$PR_NUMBER"
+          echo "pr_title=$PR_TITLE"
+          echo "pr_body=$PR_BODY"
+          echo "pr_url=$PR_URL"
+          echo "base_sha=$BASE_SHA"
+
   # update-changelog-and-version:
   #   needs: check-eligibility
   #   if: needs.check-eligibility.outputs.eligible == 'true'
