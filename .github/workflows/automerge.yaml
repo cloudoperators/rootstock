@@ -15,9 +15,15 @@ on:
         description: PR number to merge
         required: true
         type: string
+      debug:
+        description: enable for debug output
+        required: false
+        default: false
+        type: boolean
 
 env:
   TARGET_BRANCH: main
+  DEBUG: false
 
 permissions:
   contents: write
@@ -44,6 +50,7 @@ jobs:
           REVIEW_PR: ${{ github.event.pull_request.number }}
           WORKFLOW_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
           WORKFLOW_PRS: ${{ toJson(github.event.workflow_run.pull_requests) }}
+          DEBUG: ${{ inputs.debug }}
         run: |
           case "$EVENT_NAME" in
             workflow_dispatch)
@@ -82,7 +89,27 @@ jobs:
             || [ "$REVIEW" = "REVIEW_REQUIRED" ] \
             || [ "$DRAFT" = "true" ]; then
             echo "eligible=false" >> "$GITHUB_OUTPUT"
+
+            if [ "$DEBUG" = "true" ]; then
+              echo "DEBUG: pr_number=$(echo "$PR" | jq -r .number)"
+              echo "DEBUG: base=$BASE ?= $TARGET_BRANCH"
+              echo "DEBUG: merge_state_status=$STATE ?= NOT CLEAN"
+              echo "DEBUG: review_decision=$REVIEW ?= CHANGES_REQUESTED OR REVIEW_REQUIRED"
+              echo "DEBUG: is_draft=$DRAFT ?= true"
+              echo "DEBUG: pr_json=$(echo "$PR" | jq -c .)"
+            fi
+
             exit 0
+          fi
+
+          if [ "$DEBUG" = "true" ]; then
+            echo "DEBUG: eligible=true"
+            echo "DEBUG: pr_number=$(echo "$PR" | jq -r .number)"
+            echo "DEBUG: pr_title=$(echo "$PR" | jq -r .title)"
+            echo "DEBUG: pr_url=$(echo "$PR" | jq -r .url)"
+            echo "DEBUG: head_ref=$(echo "$PR" | jq -r .headRefName)"
+            echo "DEBUG: base_sha=$(echo "$PR" | jq -r .baseRefOid)"
+            echo "DEBUG: pr_body=$(echo "$PR" | jq -r '.body // ""')"
           fi
 
           {
@@ -97,52 +124,29 @@ jobs:
             printf '__BODY__\n'
           } >> "$GITHUB_OUTPUT"
 
-          echo $GITHUB_OUTPUT
-
-  debug:
-    runs-on: ubuntu-latest
+  update-changelog-and-version:
     needs: check-eligibility
+    if: needs.check-eligibility.outputs.eligible == 'true'
+    uses: ./.github/workflows/changelog_version.yaml
+    with:
+      head_ref: ${{ needs.check-eligibility.outputs.head_ref }}
+      pr_number: ${{ needs.check-eligibility.outputs.pr_number }}
+      pr_title: ${{ needs.check-eligibility.outputs.pr_title }}
+      pr_body: ${{ needs.check-eligibility.outputs.pr_body }}
+      pr_url: ${{ needs.check-eligibility.outputs.pr_url }}
+      base_sha: ${{ needs.check-eligibility.outputs.base_sha }}
+    secrets: inherit
+
+
+  merge:
+    needs: [check-eligibility, update-changelog-and-version]
+    if: needs.check-eligibility.outputs.eligible == 'true'
+    runs-on: ubuntu-latest
     steps:
-      - name: print output
+      - name: Merge PR
         env:
-          ELIGIBLE: ${{ needs.check-eligibility.outputs.eligible }}
-          HEAD_REF: ${{ needs.check-eligibility.outputs.head_ref }}
-          PR_NUMBER: ${{ needs.check-eligibility.outputs.pr_number }}
-          PR_TITLE: ${{ needs.check-eligibility.outputs.pr_title }}
-          PR_BODY: ${{ needs.check-eligibility.outputs.pr_body }}
-          PR_URL: ${{ needs.check-eligibility.outputs.pr_url }}
-          BASE_SHA: ${{ needs.check-eligibility.outputs.base_sha }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "eligible=$ELIGIBLE"
-          echo "head_ref=$HEAD_REF"
-          echo "pr_number=$PR_NUMBER"
-          echo "pr_title=$PR_TITLE"
-          echo "pr_body=$PR_BODY"
-          echo "pr_url=$PR_URL"
-          echo "base_sha=$BASE_SHA"
-
-  # update-changelog-and-version:
-  #   needs: check-eligibility
-  #   if: needs.check-eligibility.outputs.eligible == 'true'
-  #   uses: ./.github/workflows/changelog_version.yaml
-  #   with:
-  #     head_ref: ${{ needs.check-eligibility.outputs.head_ref }}
-  #     pr_number: ${{ needs.check-eligibility.outputs.pr_number }}
-  #     pr_title: ${{ needs.check-eligibility.outputs.pr_title }}
-  #     pr_body: ${{ needs.check-eligibility.outputs.pr_body }}
-  #     pr_url: ${{ needs.check-eligibility.outputs.pr_url }}
-  #     base_sha: ${{ needs.check-eligibility.outputs.base_sha }}
-  #   secrets: inherit
-
-  # merge:
-  #   needs: [check-eligibility, update-changelog-and-version]
-  #   if: needs.check-eligibility.outputs.eligible == 'true'
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Merge PR
-  #       env:
-  #         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #       run: |
-  #         gh pr merge "${{ needs.check-eligibility.outputs.pr_number }}" \
-  #           --squash \
-  #           --delete-branch
+          gh pr merge "${{ needs.check-eligibility.outputs.pr_number }}" \
+            --squash \
+            --delete-branch
