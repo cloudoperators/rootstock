@@ -44,7 +44,7 @@ func NewCache[T any]() Cache[T] {
 
 // Get retrieves a value from the cache.
 // Returns ErrCacheNotFound if the key doesn't exist.
-func (c *cache[T]) Get(key string) (any, error) {
+func (c *cache[T]) Get(key string) (T, error) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
