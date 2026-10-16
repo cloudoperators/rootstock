@@ -58,6 +58,8 @@ jobs:
 
       - name: Run lint-go
         run: make lint-go
+      - name: Install prettier
+        run: npm install -g prettier
       - name: Lint Markdown
         run: make lint-md
       - name: Lint Shell
