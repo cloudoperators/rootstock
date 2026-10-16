@@ -45,14 +45,14 @@ done
 # * On main (release flow) HEAD already is the tip of main.
 # * On a PR branch (automerge flow) the tip of main is passed explicitly via
 #   BASE_COMMIT (the PR base sha); the new commit is supplied via COMMIT_MSG.
-#   As a fallback we resolve the merge-base with origin/main so the range never
-#   accidentally includes commits that are not (yet) on main.
+#   As a fallback we resolve origin/main directly so newer main commits are
+#   included without including commits unique to the PR branch.
 if [[ "$base_commit" == "" ]]; then
   if [ "$(git rev-parse --abbrev-ref HEAD)" = "main" ]; then
     base_commit=$(git rev-parse HEAD)
   else
-    base_commit=$(git merge-base HEAD origin/main 2>/dev/null) || {
-      echo "error: no common ancestor with origin/main found; ensure the branch is based on main" >&2
+    base_commit=$(git rev-parse --verify 'origin/main^{commit}' 2>/dev/null) || {
+      echo "error: origin/main not found; fetch main or pass --base-commit" >&2
       exit 1
     }
   fi
