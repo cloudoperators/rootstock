@@ -16,7 +16,7 @@ docker run -d --rm \
     dmtf/redfish-mockup-server:latest -D pdu-mockup
 
 echo "Waiting for mockup server to be ready..."
-for i in $(seq 1 30); do
+for _ in $(seq 1 30); do
     curl -sf "http://localhost:${MOCKUP_PORT}/redfish/v1/PowerEquipment" > /dev/null 2>&1 \
         && echo "Mockup server ready." && exit 0
     sleep 1
