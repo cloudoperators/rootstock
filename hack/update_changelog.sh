@@ -55,6 +55,7 @@ if [[ "$base_commit" == "" ]]; then
       echo "error: origin/main not found; fetch main or pass --base-commit" >&2
       exit 1
     }
+    echo "warning: using origin/main as range endpoint; run 'git fetch' if it may be stale" >&2
   fi
 fi
 
@@ -72,5 +73,5 @@ if [[ "$commit_msg" != "" ]]; then
 fi
 cliff_args+=("${changelog_start_commit}^..${base_commit}")
 
-$debug && echo "git cliff ${cliff_args[*]}"
+[[ "$debug" == true ]] && echo "git cliff ${cliff_args[*]}"
 git cliff "${cliff_args[@]}"

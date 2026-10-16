@@ -165,9 +165,8 @@ gen_changelog() {
   (
     cd "${FIXTURE_DIR}" || exit 1
     if ! CHANGELOG_START_COMMIT="${START_COMMIT}" DEBUG="${DEBUG}" \
-         bash "${UPDATE_SCRIPT}" >/dev/null 2>&1; then
-      echo "__CHANGELOG_GEN_FAILED__"
-      exit 0
+         bash "${UPDATE_SCRIPT}" >/dev/null; then
+      exit 1
     fi
     cat CHANGELOG.md
   )

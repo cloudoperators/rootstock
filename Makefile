@@ -3,7 +3,6 @@
 
 green := \033[1;32m[+]
 reset := \033[0m
-BINARY         := rootstock
 OS             := $(shell go env GOOS)
 ARCH           := $(shell go env GOARCH)
 
@@ -18,16 +17,6 @@ endif
 
 ## Version setting
 VERSION ?= $(shell sed -n 's/^version:[[:space:]]*//p' VERSION.yaml)
-GIT_COMMIT     := $(shell git rev-parse HEAD)
-GIT_TREE_STATE := $(shell if [ -z "`git status --porcelain`" ]; then echo "clean"; else echo "dirty"; fi)
-BUILD_DATE     := $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
-
-override LDFLAGS += \
-	-X main.version=$(VERSION) \
-	-X main.buildDate=$(BUILD_DATE) \
-	-X main.gitCommit=$(GIT_COMMIT) \
-	-X main.gitTreeState=$(GIT_TREE_STATE)
-
 
 IMAGE ?= ghcr.io/cloudoperators/rootstock:dev-$(USER)
 
