@@ -38,7 +38,7 @@ func NewCache[T any]() Cache[T] {
 
 	return &cache[T]{
 		logger: logger,
-		data:   make(map[string]any),
+		data:   make(map[string]T),
 	}
 }
 
