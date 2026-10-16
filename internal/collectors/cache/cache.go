@@ -6,13 +6,10 @@ package cache
 import (
 	"errors"
 	"sync"
-
-	"github.com/cloudoperators/rootstock/pkg/log"
 )
 
 var (
 	ErrCacheNotFound = errors.New("cache entry not found")
-	ErrCacheExpired  = errors.New("cache entry expired")
 )
 
 // Cacher defines the interface for cache operations.
@@ -27,18 +24,14 @@ type Cache[T any] interface {
 
 // Cache is a generic thread-safe in-memory cache.
 type cache[T any] struct {
-	mu     sync.RWMutex
-	logger log.MinInterface
-	data   map[string]any
+	mu   sync.RWMutex
+	data map[string]T
 }
 
-// NewCache creates a new cache.
-func NewCache[T any]() Cache[T] {
-	logger := log.Default()
-
+// New creates a new cache.
+func New[T any]() Cache[T] {
 	return &cache[T]{
-		logger: logger,
-		data:   make(map[string]T),
+		data: make(map[string]T),
 	}
 }
 
