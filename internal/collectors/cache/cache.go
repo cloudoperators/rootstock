@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	ErrCacheNotFound = errors.New("cache not found")
+	ErrCacheNotFound = errors.New("cache entry not found")
 	ErrCacheExpired  = errors.New("cache entry expired")
 )
 
