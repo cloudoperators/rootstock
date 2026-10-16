@@ -13,6 +13,7 @@ possible: it scrapes telemetry from data center hardware and delivers it
 upstream to Greenhouse, ready for dashboards and carbon accounting tools.
 
 ## To-Do
+
 In case you are the maintainer of a new SAP open source project, these are the
 steps to do with the template files:
 
