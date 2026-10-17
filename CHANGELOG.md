@@ -8,7 +8,7 @@ and this project adheres to
 
 <!-- git-cliff: end of header -->
 
-## 2026-10-16
+## 2026-10-17
 
 - (0.1.0 - 🚀) tooling: Add a docker build
   [#78](https://github.com/cloudoperators/rootstock/pull/78)
@@ -28,6 +28,17 @@ and this project adheres to
   by [@blackhat-jan](https://github.com/blackhat-jan)
 - (0.1.0 - 🐛) tooling: Main docker build
   [#93](https://github.com/cloudoperators/rootstock/pull/93)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.0.2...v0.1.0))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.1.0 - 🚀) tooling: Automate changelog and version updates in pipeline
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.0.2...v0.1.0))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.1.0 - 🚀) tooling: Local changelog generation
+  [#92](https://github.com/cloudoperators/rootstock/pull/92)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.0.2...v0.1.0))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.1.0 - ⚙️) testing: Automerge in
+  [#95](https://github.com/cloudoperators/rootstock/pull/95)
   ([diff](https://github.com/cloudoperators/rootstock/compare/v0.0.2...v0.1.0))
   by [@blackhat-jan](https://github.com/blackhat-jan)
 
