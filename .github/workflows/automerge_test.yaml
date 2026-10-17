@@ -55,6 +55,10 @@ jobs:
               PR_NUMBER=$(echo "$WORKFLOW_PRS" \
                 | jq -r 'if length > 0 then .[0].number else empty end')
               ;;
+            pull_request)
+              PR_NUMBER=$(echo "$WORKFLOW_PRS" \
+                | jq -r 'if length > 0 then .[0].number else empty end')
+              ;;
           esac
 
           if [ -z "$PR_NUMBER" ]; then
