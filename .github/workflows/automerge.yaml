@@ -22,9 +22,9 @@ on:
         type: boolean
 
 env:
-  TARGET_BRANCH: main
+  TARGET_BRANCH: automate-changelog-generation
   BLOCKED_LABELS: "invalid,WIP,wip,do-not-merge,DO-NOT-MERGE"
-  DEBUG: false
+  DEBUG: true
 
 permissions:
   contents: write
