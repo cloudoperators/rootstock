@@ -60,6 +60,7 @@ jobs:
               ;;
           esac
 
+          echo "${PR_NUMBER}"
           if [ -z "$PR_NUMBER" ]; then
             echo "eligible=false" >> "$GITHUB_OUTPUT"
             exit 0
@@ -68,6 +69,8 @@ jobs:
           PR=$(gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" \
             --json number,title,body,headRefName,baseRefName,baseRefOid,mergeStateStatus,reviewDecision,url,isDraft,labels
           )
+
+          echo "${PR}"
 
           BASE=$(echo "$PR" | jq -r .baseRefName)
           STATE=$(echo "$PR" | jq -r .mergeStateStatus)
