@@ -80,10 +80,10 @@ jobs:
             ($bl | split(",")) as $list | .labels[].name | select(IN($list[]))
           ' | head -1)
 
+          # || [ "$REVIEW" = "REVIEW_REQUIRED" ] \
+          # || [ "$STATE" != "CLEAN" ] \
           if [ "$BASE" != "$TARGET_BRANCH" ] \
-            || [ "$STATE" != "CLEAN" ] \
             || [ "$REVIEW" = "CHANGES_REQUESTED" ] \
-            || [ "$REVIEW" = "REVIEW_REQUIRED" ] \
             || [ "$DRAFT" = "true" ] \
             || [ -n "$BLOCKED_LABEL" ]; then
             echo "eligible=false" >> "$GITHUB_OUTPUT"
