@@ -15,8 +15,8 @@ The chart is a standard `application` chart and is compatible with
 
 ## Local testing on kind
 
-From the repository root, the Makefile wires up a full local environment
-(builds the image, deploys an in-cluster DMTF Redfish mockup pre-loaded with
+From the repository root, the Makefile wires up a full local environment (builds
+the image, deploys an in-cluster DMTF Redfish mockup pre-loaded with
 `testdata/pdu-mockup`, creates the credentials Secret, and installs the chart):
 
 ```bash
@@ -46,21 +46,21 @@ helm install rootstock k8s_configuration/chart \
 
 rootstock reads the Redfish password **only** from a mounted file
 (`--config-folder <dir>` + `--redfish-credentials-file <name>`, i.e.
-`<configFolder>/<credentialsFileName>`, default `/config/redfish_password`).
-The file is watched (fsnotify) and hot-reloaded on change. The chart therefore
+`<configFolder>/<credentialsFileName>`, default `/config/redfish_password`). The
+file is watched (fsnotify) and hot-reloaded on change. The chart therefore
 always projects the password as a **read-only mounted file** and never sets it
 as an environment variable.
 
 There are two mutually exclusive ways to provide the password:
 
-| Mode | Values | Use case |
-| --- | --- | --- |
-| **Existing Secret** | `redfish.existingSecret: <name>` | Production, CI with a pre-created Secret. Recommended when the Secret is managed outside the chart. |
-| **Inline** | `redfish.password: <value>` | Self-contained / local (kind) runs **and Greenhouse** (`valueFrom.secret` feeds the `redfish.password` value). The chart renders a Secret for you. |
+| Mode                | Values                           | Use case                                                                                                                                           |
+| ------------------- | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Existing Secret** | `redfish.existingSecret: <name>` | Production, CI with a pre-created Secret. Recommended when the Secret is managed outside the chart.                                                |
+| **Inline**          | `redfish.password: <value>`      | Self-contained / local (kind) runs **and Greenhouse** (`valueFrom.secret` feeds the `redfish.password` value). The chart renders a Secret for you. |
 
 In both modes the Secret is mounted at `redfish.configFolder` and the key
-`redfish.secretKey` is projected to the file `redfish.credentialsFileName`
-with mode `0400`.
+`redfish.secretKey` is projected to the file `redfish.credentialsFileName` with
+mode `0400`.
 
 ### Greenhouse
 
@@ -88,20 +88,20 @@ renders the Secret from that value. Leave `redfish.existingSecret` unset.
 See [`values.yaml`](./values.yaml) for the full list and inline documentation.
 Key options:
 
-| Key | Default | Description |
-| --- | --- | --- |
-| `image.repository` | `ghcr.io/cloudoperators/rootstock` | Image repository. |
-| `image.tag` | `""` (chart appVersion) | Image tag. |
-| `redfish.username` | `redfish` | Redfish auth username. |
-| `redfish.existingSecret` | `""` | Pre-created Secret holding the password. |
-| `redfish.password` | `""` | Inline password (renders a Secret). |
-| `redfish.secretKey` | `redfish_password` | Key within the Secret. |
-| `redfish.configFolder` | `/config` | Mount dir (`--config-folder`). |
-| `redfish.credentialsFileName` | `redfish_password` | File name (`--redfish-credentials-file`). |
-| `server.port` | `9220` | REST server port. |
-| `server.scrapeTimeout` | `30s` | Upstream scrape timeout. |
-| `service.type` / `service.port` | `ClusterIP` / `9220` | Service exposure. |
-| `serviceMonitor.enabled` | `false` | Create a Prometheus Operator ServiceMonitor. |
+| Key                             | Default                            | Description                                  |
+| ------------------------------- | ---------------------------------- | -------------------------------------------- |
+| `image.repository`              | `ghcr.io/cloudoperators/rootstock` | Image repository.                            |
+| `image.tag`                     | `""` (chart appVersion)            | Image tag.                                   |
+| `redfish.username`              | `redfish`                          | Redfish auth username.                       |
+| `redfish.existingSecret`        | `""`                               | Pre-created Secret holding the password.     |
+| `redfish.password`              | `""`                               | Inline password (renders a Secret).          |
+| `redfish.secretKey`             | `redfish_password`                 | Key within the Secret.                       |
+| `redfish.configFolder`          | `/config`                          | Mount dir (`--config-folder`).               |
+| `redfish.credentialsFileName`   | `redfish_password`                 | File name (`--redfish-credentials-file`).    |
+| `server.port`                   | `9220`                             | REST server port.                            |
+| `server.scrapeTimeout`          | `30s`                              | Upstream scrape timeout.                     |
+| `service.type` / `service.port` | `ClusterIP` / `9220`               | Service exposure.                            |
+| `serviceMonitor.enabled`        | `false`                            | Create a Prometheus Operator ServiceMonitor. |
 
 ## Endpoints
 

@@ -3,6 +3,20 @@
 
 green := \033[1;32m[+]
 reset := \033[0m
+OS             := $(shell go env GOOS)
+ARCH           := $(shell go env GOARCH)
+
+## Auto Detect Platform
+ifeq ($(PLATFORM),)
+	ifneq ($(filter arm%,$(ARCH)),)
+		PLATFORM = linux/arm64
+	else
+		PLATFORM = linux/amd64
+	endif
+endif
+
+## Version setting
+VERSION ?= $(shell sed -n 's/^version:[[:space:]]*//p' VERSION.yaml)
 
 BINARY         := rootstock
 OS             := $(shell go env GOOS)
@@ -34,16 +48,7 @@ MOCKUP_PORT      ?= 8000
 MOCKUP_CONTAINER := redfish-mockup
 
 
-## Auto Detect Platform
-UNAME_P   := $(shell uname -p)
-ifeq ($(PLATFORM),)
-ifeq ($(UNAME_P),x86_64)
-	PLATFORM = linux/amd64
-endif
-ifneq ($(filter arm%,$(UNAME_P)),)
-	PLATFORM = linux/arm64
-endif
-endif
+
 
 # Container image / local Kubernetes (kind) settings
 IMAGE          ?= ghcr.io/cloudoperators/rootstock:dev-$(USER)
@@ -51,26 +56,27 @@ IMAGE          ?= ghcr.io/cloudoperators/rootstock:dev-$(USER)
 # Done in pure make (no $(shell ...)) so the Makefile parses on the GNU Make
 # 3.81 that ships with macOS. A colon only denotes a tag when it appears in the
 # last path segment, otherwise it is a registry port (e.g. localhost:5000/...).
-IMAGE_LAST     := $(lastword $(subst /, ,$(IMAGE)))
-IMAGE_TAG      := $(if $(findstring :,$(IMAGE_LAST)),$(lastword $(subst :, ,$(IMAGE))),latest)
-IMAGE_REPO     := $(if $(findstring :,$(IMAGE_LAST)),$(patsubst %:$(IMAGE_TAG),%,$(IMAGE)),$(IMAGE))
-KIND_CLUSTER   ?= rootstock-local
-CHART_DIR      := k8s_configuration/chart
-CHART_RELEASE  ?= rootstock
-CHART_NAMESPACE ?= rootstock
-REDFISH_SECRET ?= rootstock-redfish
-REDFISH_PASSWORD ?= admin
+IMAGE_LAST     		:= $(lastword $(subst /, ,$(IMAGE)))
+IMAGE_TAG      		:= $(if $(findstring :,$(IMAGE_LAST)),$(lastword $(subst :, ,$(IMAGE))),latest)
+IMAGE_REPO     		:= $(if $(findstring :,$(IMAGE_LAST)),$(patsubst %:$(IMAGE_TAG),%,$(IMAGE)),$(IMAGE))
+KIND_CLUSTER   		?= rootstock-local
+CHART_DIR      		:= k8s_configuration/chart
+CHART_RELEASE  		?= rootstock
+CHART_NAMESPACE 	?= rootstock
+REDFISH_SECRET 		?= rootstock-redfish
+REDFISH_PASSWORD 	?= admin
 
 
 .PHONY: build test test-unit test-integration test-contract test-performance \
-        mockup-start mockup-stop \
-        lint lint-go lint-md lint-shell conventions scan \
-        generate docker-build \
-        kind-up kind-load kind-mockup kind-namespace kind-secret kind-deploy kind-verify kind-down \
-        kind-cluster \
+				mockup-start mockup-stop \
+				lint lint-go lint-md lint-shell \
+				scan \
+				docker-build \
+        kind-up kind-load kind-mockup kind-namespace kind-secret kind-deploy kind-verify kind-down kind-cluster \
         helm-lint helm-template \
-        get-version \
-        help
+				generate generate-changelog generate-version \
+				get-version test-changelog \
+				help
 
 # Build
 
@@ -143,22 +149,26 @@ lint-shell: ## Run shellcheck on shell scripts
 lint: lint-go lint-md lint-shell ## Run all linters (alias)
 	go mod tidy
 
-
-conventions: ## Check formatting conventions - markdown, shell, go (TODO: prettier + shellcheck)
-	@echo "TODO: run prettier on markdown files"
-	@echo "TODO: run shellcheck on shell scripts"
-	$(MAKE) lint-go
-
 scan: ## Run security vulnerability scan
 	@echo "TODO: CodeQL scanning runs in CI via GitHub Actions shared-codeql workflow"
 	@echo "TODO: add local scanning tool here?"
 
 # Release
-generate: ## Run code generation (TODO: not yet needed)
-	@echo "TODO: add code generation steps e.g. go generate ./..."
+generate: ## run general all file generation
+	@echo "TODO: add proper generation here"
+
+generate-version: ## Bump version in VERSION.yaml
+	@hack/update_version.sh
+
+generate-changelog: ## Update the local CHANGELOG.md file
+	@hack/update_changelog.sh && $(MAKE) lint-md
 
 get-version: ## Prints out the current version as presented in the VERSION.yaml file
 	@echo $(VERSION)
+
+test-changelog: ## Run the local changelog generation test suite
+	@echo "$(green) testing changelog generation$(reset)"
+	@hack/update_changelog_test.sh
 
 docker-build: ## Build the container image for rootstock
 	@echo "$(green) building docker image$(reset)"

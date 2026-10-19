@@ -7,7 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 
 `verify-plugindefinition.sh` proves that the rootstock
 [`PluginDefinition`](../../k8s_configuration/plugindefinition.yaml) is valid
-against a *real* Greenhouse control plane — without assuming any pre-existing
+against a _real_ Greenhouse control plane — without assuming any pre-existing
 Greenhouse checkout.
 
 It bootstraps Greenhouse-in-kind from scratch, publishes the rootstock Helm
@@ -84,12 +84,12 @@ The script runs these phases in order:
 4. **Apply the PluginDefinition** — repoints a temp copy at the in-cluster
    registry and version, applies it to the demo org, and waits for it to
    reconcile. This readiness check is the primary pass/fail signal.
-5. **Full E2E** *(only with `--with-plugin`)* — pushes the rootstock and
+5. **Full E2E** _(only with `--with-plugin`)_ — pushes the rootstock and
    test-connection images to the registry as OCI artifacts, deploys the Redfish
    mockup (unless a target is supplied), and applies a normalized Plugin. It
    then asserts the Plugin is Ready and verifies the health and probe endpoints
    emit real metrics.
-6. **Teardown** *(skipped with `--keep`)* — deletes both kind clusters, the
+6. **Teardown** _(skipped with `--keep`)_ — deletes both kind clusters, the
    registry container, and the work directory.
 
 The committed `plugindefinition.yaml` and `plugin.yaml` are **never mutated** —
@@ -128,7 +128,8 @@ The chart version is read **dynamically** so the verifier always tests whatever
 the repository currently declares — nothing is hardcoded:
 
 - **Chart version** (packaged, pushed, and requested by the `PluginDefinition`)
-  comes from [`k8s_configuration/chart/Chart.yaml`](../../k8s_configuration/chart/Chart.yaml)
+  comes from
+  [`k8s_configuration/chart/Chart.yaml`](../../k8s_configuration/chart/Chart.yaml)
   `.version`. This is the central authority for what gets tested.
 - **App/image version** (the `--with-plugin` image tag) comes from
   [`VERSION.yaml`](../../VERSION.yaml) `.version`, matching the Makefile's
@@ -151,27 +152,27 @@ so the chart that is pushed and the version Greenhouse pulls always agree.
 
 ## Environment overrides
 
-| Variable | Default | Purpose |
-|----------|---------|---------|
-| `GREENHOUSE_REF` | `v0.17.2` | Greenhouse git tag/commit to clone. |
-| `GREENHOUSE_REPO` | `https://github.com/cloudoperators/greenhouse` | Source repo. |
-| `WORKDIR` | `<repo>/.greenhouse-verify` | Where the clone + kubeconfigs live. |
-| `ADMIN_CLUSTER` / `REMOTE_CLUSTER` | `greenhouse-admin` / `greenhouse-remote` | kind cluster names (match the pinned Makefile). |
-| `DEMO_ORG` | `demo` | Greenhouse Organization namespace. |
-| `REGISTRY_HOST` | `localhost:5000` | Registry address reachable from the host (`helm push`). |
-| `REGISTRY_INCLUSTER` | `registry:5000` | Registry address reachable from kind nodes / Flux. |
-| `REGISTRY_CHART_REPO` | `charts` | OCI path the chart is pushed under. |
-| `CHART_VERSION` | `Chart.yaml .version` | Chart version to package/push/test (override to test another version). |
-| `APP_VERSION` | `VERSION.yaml .version` | App/image tag version. |
-| `ROOTSTOCK_IMAGE` | `rootstock:<APP_VERSION>` | Local build tag (source image) pushed to the registry for `--with-plugin`. |
-| `ROOTSTOCK_REGISTRY_IMAGE` | `registry:5000/rootstock:<APP_VERSION>` | In-cluster ref the Plugin/HelmRelease pulls from. |
-| `TESTCONN_SOURCE_IMAGE` | `curlimages/curl:8.11.1` | Upstream curl image pulled once and re-published for the chart's Helm test hook. |
-| `TESTCONN_REGISTRY_IMAGE` | `registry:5000/curl:<tag>` | In-cluster ref the test-connection pod pulls from. |
-| `REMOTE_ONBOARDED_NAME` | `kind-<REMOTE_CLUSTER>` | Name the remote cluster is onboarded as; a Plugin's `spec.clusterName`. |
-| `TARGET` | bundled DMTF mockup svc | Redfish endpoint probed under `--with-plugin`; when set, the mockup is NOT deployed. |
-| `READY_TIMEOUT` | `300` | Seconds to wait for `READY=True`. |
-| `POLL_INTERVAL` | `5` | Seconds between readiness polls. |
-| `REDFISH_PASSWORD` | `redfish-test-password` | Password put in the Redfish `Secret` (`--with-plugin`). |
+| Variable                           | Default                                        | Purpose                                                                              |
+| ---------------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `GREENHOUSE_REF`                   | `v0.17.2`                                      | Greenhouse git tag/commit to clone.                                                  |
+| `GREENHOUSE_REPO`                  | `https://github.com/cloudoperators/greenhouse` | Source repo.                                                                         |
+| `WORKDIR`                          | `<repo>/.greenhouse-verify`                    | Where the clone + kubeconfigs live.                                                  |
+| `ADMIN_CLUSTER` / `REMOTE_CLUSTER` | `greenhouse-admin` / `greenhouse-remote`       | kind cluster names (match the pinned Makefile).                                      |
+| `DEMO_ORG`                         | `demo`                                         | Greenhouse Organization namespace.                                                   |
+| `REGISTRY_HOST`                    | `localhost:5000`                               | Registry address reachable from the host (`helm push`).                              |
+| `REGISTRY_INCLUSTER`               | `registry:5000`                                | Registry address reachable from kind nodes / Flux.                                   |
+| `REGISTRY_CHART_REPO`              | `charts`                                       | OCI path the chart is pushed under.                                                  |
+| `CHART_VERSION`                    | `Chart.yaml .version`                          | Chart version to package/push/test (override to test another version).               |
+| `APP_VERSION`                      | `VERSION.yaml .version`                        | App/image tag version.                                                               |
+| `ROOTSTOCK_IMAGE`                  | `rootstock:<APP_VERSION>`                      | Local build tag (source image) pushed to the registry for `--with-plugin`.           |
+| `ROOTSTOCK_REGISTRY_IMAGE`         | `registry:5000/rootstock:<APP_VERSION>`        | In-cluster ref the Plugin/HelmRelease pulls from.                                    |
+| `TESTCONN_SOURCE_IMAGE`            | `curlimages/curl:8.11.1`                       | Upstream curl image pulled once and re-published for the chart's Helm test hook.     |
+| `TESTCONN_REGISTRY_IMAGE`          | `registry:5000/curl:<tag>`                     | In-cluster ref the test-connection pod pulls from.                                   |
+| `REMOTE_ONBOARDED_NAME`            | `kind-<REMOTE_CLUSTER>`                        | Name the remote cluster is onboarded as; a Plugin's `spec.clusterName`.              |
+| `TARGET`                           | bundled DMTF mockup svc                        | Redfish endpoint probed under `--with-plugin`; when set, the mockup is NOT deployed. |
+| `READY_TIMEOUT`                    | `300`                                          | Seconds to wait for `READY=True`.                                                    |
+| `POLL_INTERVAL`                    | `5`                                            | Seconds between readiness polls.                                                     |
+| `REDFISH_PASSWORD`                 | `redfish-test-password`                        | Password put in the Redfish `Secret` (`--with-plugin`).                              |
 
 ## Caveats
 
@@ -186,7 +187,8 @@ so the chart that is pushed and the version Greenhouse pulls always agree.
   automatically.
 - `--with-plugin` requires the `rootstock` image to exist locally
   (`docker image inspect rootstock:<APP_VERSION>`, where `APP_VERSION` is read
-  from `VERSION.yaml`). Build it first with `make docker-build` / `make kind-up`.
+  from `VERSION.yaml`). Build it first with `make docker-build` /
+  `make kind-up`.
 - Cluster/org names and the registry addresses are the pinned-ref defaults; if
   you point at a different `GREENHOUSE_REF` whose Makefile differs, override the
   matching variables above.

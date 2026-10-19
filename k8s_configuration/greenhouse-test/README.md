@@ -19,14 +19,16 @@ Because the image is NOT in a registry, every path below uses
 
 - Single-node kubeadm cluster, containerd runtime (no Docker), flannel CNI.
 - No OCI registry on the node (only kube-apiserver :6443).
-- Node architecture is **arm64** — the image is arm64-only; pods must schedule here.
+- Node architecture is **arm64** — the image is arm64-only; pods must schedule
+  here.
 - The node is **ephemeral**: a reprovision wipes containerd, so the image import
   (and anything else) must be repeated after a wipe. Never restart the node.
 
 ## Greenhouse requirements (must exist before the Plugin test)
 
 1. Greenhouse operator + CRDs (`greenhouse.sap/*`, PluginDefinition, Plugin).
-2. Flux (source-controller + helm-controller) — Greenhouse deploys Plugin charts via Flux.
+2. Flux (source-controller + helm-controller) — Greenhouse deploys Plugin charts
+   via Flux.
 3. The chart must be reachable by Flux. On this registry-less cluster that means
    either publishing the chart to an in-cluster-reachable OCI registry, or using
    the local-chart hostPath mechanism from Greenhouse's local-dev docs.
@@ -92,11 +94,13 @@ curl -s "http://localhost:9220/probe?target=<REDFISH_URL>&labels=1" | head
 
 A reachable Redfish target is required for /probe. If none exists on this
 cluster, deploy the mockup (hack/kind/redfish-mockup.yaml + its image, imported
-the same way as the rootstock image) or point at a real PDU the pod can route to.
+the same way as the rootstock image) or point at a real PDU the pod can route
+to.
 
 ## Fallback: prove the image without Greenhouse (plain helm)
 
-This validates the exact image + chart on this node without needing Flux/registry:
+This validates the exact image + chart on this node without needing
+Flux/registry:
 
 ```bash
 export KUBECONFIG=<admin kubeconfig>
