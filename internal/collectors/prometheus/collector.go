@@ -47,6 +47,7 @@ func NewCollector(redfishClient redfish.Client, pduID string) *Collector {
 		redfishClient: redfishClient,
 		pduID:         pduID,
 		logger:        logger,
+		mu:            sync.Mutex{},
 		peRackPDUMetrics: &PERackPDUMetrics{
 			Reading: prometheus.NewDesc(
 				"pdu_power_watts",
