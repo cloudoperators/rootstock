@@ -61,11 +61,12 @@ spec:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
             - name: dynamic-config
-              mountPath: {{ .Values.rootstock.config.folder }}
+              mountPath: {{ .Values.rootstock.config.folder }}/.rootstock.yaml
               subPath: .rootstock.yaml
               readOnly: true
             - name: redfish-pdu-access
-              mountPath: {{ .Values.rootstock.config.folder }}
+              mountPath: {{ .Values.rootstock.config.folder }}/redfish_pdus.yaml
+              subPath: redfish_pdus.yaml
               readOnly: true
       volumes:
         - name: dynamic-config

@@ -15,7 +15,11 @@ Resolve the release name: use .Values.releaseName when set, otherwise fall back
 to the Helm release name (.Release.Name).
 */}}
 {{- define "rootstock.releaseName" -}}
+{{- if eq .Release.Name "release-name" }}
+{{- default "rootstock" .Values.releaseName }}
+{{- else }}
 {{- default .Release.Name .Values.releaseName }}
+{{- end }}
 {{- end }}
 
 {{/*
@@ -91,7 +95,11 @@ Resolve the namespace: use .Values.namespace when set, otherwise fall back to
 the Helm release namespace (.Release.Namespace).
 */}}
 {{- define "rootstock.namespace" -}}
+{{- if eq .Release.Namespace "default" }}
+{{- default "rootstock" .Values.namespace }}
+{{- else }}
 {{- default .Release.Namespace .Values.namespace }}
+{{- end }}
 {{- end }}
 
 {{/*

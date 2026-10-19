@@ -214,7 +214,7 @@ kind-cluster: ## Create the kind cluster if it does not exist
 kind-prepare: kind-cluster ## Build/load the mockup image, create namespace and credentials secret
 	@$(KIND_CONTROL) prepare
 
-kind-deploy: kind-cluster ## Build/load the rootstock image and install/upgrade the Helm chart
+kind-deploy: docker-build kind-cluster ## Build/load the rootstock image and install/upgrade the Helm chart
 	@$(KIND_CONTROL) deploy
 
 kind-up: kind-prepare kind-deploy ## Create kind cluster and deploy everything
