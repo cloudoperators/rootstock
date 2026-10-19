@@ -11,6 +11,14 @@ Expand the name of the chart.
 {{- end }}
 
 {{/*
+Resolve the release name: use .Values.releaseName when set, otherwise fall back
+to the Helm release name (.Release.Name).
+*/}}
+{{- define "rootstock.releaseName" -}}
+{{- default .Release.Name .Values.releaseName }}
+{{- end }}
+
+{{/*
 Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 */}}
@@ -19,10 +27,10 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
 {{- $name := default .Chart.Name .Values.nameOverride }}
-{{- if contains $name .Release.Name }}
-{{- .Release.Name | trunc 63 | trimSuffix "-" }}
+{{- if contains $name (include "rootstock.releaseName" .) }}
+{{- include "rootstock.releaseName" . | trunc 63 | trimSuffix "-" }}
 {{- else }}
-{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" }}
+{{- printf "%s-%s" (include "rootstock.releaseName" .) $name | trunc 63 | trimSuffix "-" }}
 {{- end }}
 {{- end }}
 {{- end }}
@@ -64,7 +72,7 @@ Selector labels
 */}}
 {{- define "rootstock.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "rootstock.name" . }}
-app.kubernetes.io/instance: {{ .Release.Name }}
+app.kubernetes.io/instance: {{ include "rootstock.releaseName" . }}
 {{- end }}
 
 {{/*
@@ -79,13 +87,21 @@ Create the name of the service account to use.
 {{- end }}
 
 {{/*
+Resolve the namespace: use .Values.namespace when set, otherwise fall back to
+the Helm release namespace (.Release.Namespace).
+*/}}
+{{- define "rootstock.namespace" -}}
+{{- default .Release.Namespace .Values.namespace }}
+{{- end }}
+
+{{/*
 Name of the Secret that holds the Redfish password.
 When redfish.existingSecret is set, use it; otherwise use the chart-rendered Secret.
 */}}
 {{- define "rootstock.redfishSecretName" -}}
-{{- if .Values.redfish.existingSecret }}
-{{- .Values.redfish.existingSecret }}
+{{- if .Values.rootstock.redfish.existingSecret }}
+{{- .Values.rootstock.redfish.existingSecret }}
 {{- else }}
-{{- printf "%s-redfish" (include "rootstock.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- "redfish-pdu-access" }}
 {{- end }}
 {{- end }}

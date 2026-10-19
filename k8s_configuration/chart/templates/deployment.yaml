@@ -7,6 +7,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "rootstock.fullname" . }}
+  namespace: {{ include "rootstock.namespace" . }}
   labels:
     {{- include "rootstock.labels" . | nindent 4 }}
 spec:
@@ -46,16 +47,11 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args:
             - run
-            - --port={{ .Values.server.port }}
-            - --scrape-timeout={{ .Values.server.scrapeTimeout }}
-            - --redfish-username={{ .Values.redfish.username }}
-            - --config-folder={{ .Values.redfish.configFolder }}
-            - --redfish-credentials-file={{ .Values.redfish.credentialsFileName }}
           # NOTE: the Redfish password is NEVER passed as an environment
           # variable. It is read exclusively from the mounted file below.
           ports:
             - name: http
-              containerPort: {{ .Values.server.port }}
+              containerPort: {{ default 9220 .Values.rootstock.port }}
               protocol: TCP
           livenessProbe:
             {{- toYaml .Values.livenessProbe | nindent 12 }}
@@ -64,17 +60,28 @@ spec:
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
-            - name: redfish-credentials
-              mountPath: {{ .Values.redfish.configFolder }}
+            - name: dynamic-config
+              mountPath: {{ .Values.rootstock.config.folder }}
+              subPath: .rootstock.yaml
+              readOnly: true
+            - name: redfish-pdu-access
+              mountPath: {{ .Values.rootstock.config.folder }}
               readOnly: true
       volumes:
-        - name: redfish-credentials
+        - name: dynamic-config
+          configMap:
+            name: dynamic-config
+            defaultMode: 0400
+            items:
+              - key: .rootstock.yaml
+                path: .rootstock.yaml
+        - name: redfish-pdu-access
           secret:
             secretName: {{ include "rootstock.redfishSecretName" . }}
             defaultMode: 0400
             items:
-              - key: {{ .Values.redfish.secretKey }}
-                path: {{ .Values.redfish.credentialsFileName }}
+              - key: redfish_pdus.yaml
+                path: redfish_pdus.yaml
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

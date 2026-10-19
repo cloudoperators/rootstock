@@ -32,6 +32,12 @@ const (
 	serverTimeout = 5 * time.Second
 )
 
+// PDUCredentials holds the username and password for a single PDU.
+type PDUCredentials struct {
+	Username string `yaml:"username"`
+	Password string `yaml:"password"`
+}
+
 type Server interface {
 	// ListenAndServe starts the rest server
 	ListenAndServe()
@@ -40,7 +46,7 @@ type Server interface {
 }
 
 func New(
-	port int, logger log.MinInterface, redfishUsername, redfishPassword string, scrapeTimeout time.Duration,
+	port int, logger log.MinInterface, credentials map[string]PDUCredentials, scrapeTimeout time.Duration,
 ) Server {
 	s := &server{
 		server: &http.Server{
@@ -49,10 +55,9 @@ func New(
 			WriteTimeout:      serverTimeout,
 			IdleTimeout:       serverTimeout,
 		},
-		log:             logger,
-		redfishUsername: redfishUsername,
-		redfishPassword: redfishPassword,
-		scrapeTimeout:   scrapeTimeout,
+		log:           logger,
+		credentials:   credentials,
+		scrapeTimeout: scrapeTimeout,
 	}
 
 	r := chi.NewRouter()
@@ -72,12 +77,11 @@ func New(
 }
 
 type server struct {
-	server          *http.Server
-	log             log.MinInterface
-	wg              sync.WaitGroup
-	redfishUsername string
-	redfishPassword string
-	scrapeTimeout   time.Duration
+	server        *http.Server
+	log           log.MinInterface
+	wg            sync.WaitGroup
+	credentials   map[string]PDUCredentials
+	scrapeTimeout time.Duration
 }
 
 func (s *server) ListenAndServe() {
@@ -137,6 +141,14 @@ func (s *server) probeHandler() http.HandlerFunc {
 
 		s.log.Info("probing target", "target", target, "pduID", pduID)
 
+		creds, ok := s.credentials[pduID]
+		if !ok {
+			http.Error(w, fmt.Sprintf("no credentials configured for PDU %q", pduID), http.StatusBadRequest)
+			s.log.Warn("no credentials configured for PDU", "pduID", pduID)
+
+			return
+		}
+
 		// Parse target URL
 		targetURL, err := url.Parse(target)
 		if err != nil {
@@ -146,12 +158,12 @@ func (s *server) probeHandler() http.HandlerFunc {
 			return
 		}
 
-		// Create redfish client with configured credentials
+		// Create redfish client with the PDU-specific credentials
 		redfishClient := redfish.NewClient(
 			targetURL,
 			s.log,
-			s.redfishUsername,
-			s.redfishPassword,
+			creds.Username,
+			creds.Password,
 			s.scrapeTimeout,
 		)
 

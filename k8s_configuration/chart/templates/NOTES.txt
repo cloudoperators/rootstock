@@ -4,28 +4,26 @@ SPDX-License-Identifier: Apache-2.0
 */}}
 rootstock has been deployed.
 
-Release:   {{ .Release.Name }}
-Namespace: {{ .Release.Namespace }}
+Release:   {{ include "rootstock.releaseName" . }}
+Namespace: {{ include "rootstock.namespace" . }}
 Image:     {{ include "rootstock.image" . }}
 
-The Redfish password is mounted (never set as an env var) from the Secret
-{{ include "rootstock.redfishSecretName" . }} into the file:
-  {{ .Values.redfish.configFolder }}/{{ .Values.redfish.credentialsFileName }}
-{{ if .Values.redfish.existingSecret }}
-Using the pre-existing Secret: {{ .Values.redfish.existingSecret }}
+The Redfish credentials are mounted (never set as an env var) from the Secret
+{{ include "rootstock.redfishSecretName" . }} into:
+  {{ .Values.rootstock.config.folder }}/redfish_pdus.yaml
+{{ if .Values.rootstock.redfish.existingSecret }}
+Using the pre-existing Secret: {{ .Values.rootstock.redfish.existingSecret }}
 {{- else }}
-Using a chart-managed Secret rendered from redfish.password.
-This is also the Greenhouse mode: a Plugin's redfish.password (optionValues
-valueFrom.secret) feeds this value and the chart renders the Secret.
-For an externally-managed Secret, set redfish.existingSecret instead.
+Using a chart-managed Secret rendered from rootstock.redfish.access.
+For an externally-managed Secret, set rootstock.redfish.existingSecret instead.
 {{- end }}
 
 To reach the exporter locally:
-  kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "rootstock.fullname" . }} {{ .Values.service.port }}:{{ .Values.service.port }}
+  kubectl -n {{ include "rootstock.namespace" . }} port-forward svc/{{ include "rootstock.fullname" . }} {{ .Values.service.port }}:{{ .Values.service.port }}
 
 Then query:
   curl http://localhost:{{ .Values.service.port }}/healthz
-  curl "http://localhost:{{ .Values.service.port }}/probe?target=<REDFISH_URL>&labels=1"
+  curl "http://localhost:{{ .Values.service.port }}/probe?target=<REDFISH_URL>&labels=<PDU_ID>"
 
 Run the chart's smoke test with:
   helm test {{ .Release.Name }} -n {{ .Release.Namespace }}

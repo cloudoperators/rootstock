@@ -3,10 +3,17 @@
 
 # Default values for the rootstock chart.
 
+# Override the namespace this chart deploys into. When empty the Helm release
+# namespace is used (the default --namespace / -n flag passed to helm install).
+namespace: ""
+
+# Override the release name used to derive resource names and labels. When empty
+# the Helm release name (.Release.Name) is used.
+releaseName: ""
+
 # Number of rootstock replicas. rootstock is a stateless multi-target probe
 # exporter, so it can be scaled horizontally if needed.
 replicaCount: 1
-
 image:
   # Container image repository for rootstock.
   repository: ghcr.io/cloudoperators/rootstock
@@ -15,6 +22,44 @@ image:
   # Image digest. Takes precedence over tag when set (e.g. sha256:...).
   digest: ""
   pullPolicy: IfNotPresent
+
+rootstock:
+  log:
+    level: debug
+    format: text
+    # trace: true
+  redfish:
+    username: redfish
+    # The password is ALWAYS consumed from a mounted file, never an environment
+    # variable. There are two mutually exclusive ways to supply it:
+    #
+    # 1. existingSecret: reference a pre-created, externally-managed Kubernetes
+    #    Secret (recommended when the Secret is managed outside the chart). The
+    #    secret content must have the format
+    # 
+    #     redfish_pdus.yaml: |
+    #       pdu1:
+    #         password: password_value
+    #         username: user_value
+    # 
+    # 2. password: provide the value inline and let the chart render a Secret.
+    #    Used for self-contained / local (kind) deployments AND by Greenhouse:
+    #    a Plugin's redfish.password (valueFrom.secret) feeds this value.
+    #
+    # In both cases the Secret is projected into the pod as a read-only file.
+    existingSecret: ""
+    access:
+      pdu1: {username: redfish, password: changeThis}
+
+    # Inline password. Only used when existingSecret is empty. For an
+    # externally-managed Secret, leave this empty and set existingSecret instead.
+    password:
+  config:
+    folder: /config
+  port: 9220
+  # Timeout for scraping upstream Redfish APIs. Maps to --scrape-timeout.
+  scrape:
+    timeout: 30s
 
 # Image used by the Helm test hook (templates/tests/test-connection.yaml) that
 # curls the /healthz and /ready endpoints. Parameterized so environments that
@@ -66,13 +111,6 @@ redfish:
   # File name holding the password. Maps to --redfish-credentials-file.
   # The container reads <configFolder>/<credentialsFileName>.
   credentialsFileName: redfish_password
-
-# HTTP server configuration.
-server:
-  # Port the rootstock REST server listens on. Maps to --port.
-  port: 9220
-  # Timeout for scraping upstream Redfish APIs. Maps to --scrape-timeout.
-  scrapeTimeout: 30s
 
 service:
   type: ClusterIP

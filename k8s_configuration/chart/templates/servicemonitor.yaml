@@ -11,6 +11,7 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: {{ include "rootstock.fullname" . }}
+  namespace: {{ include "rootstock.namespace" . }}
   labels:
     {{- include "rootstock.labels" . | nindent 4 }}
     {{- with .Values.serviceMonitor.labels }}
@@ -25,7 +26,7 @@ spec:
       path: {{ .Values.serviceMonitor.path }}
   namespaceSelector:
     matchNames:
-      - {{ .Release.Namespace }}
+      - {{ include "rootstock.namespace" . }}
   selector:
     matchLabels:
       {{- include "rootstock.selectorLabels" . | nindent 6 }}
