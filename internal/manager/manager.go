@@ -125,6 +125,10 @@ func (m *manager) updateDevice(deviceID string, timestamp time.Time, result Scra
 // for the next device to scrape, calls the scraper, and reports the result back.
 func (m *manager) runWorker(ctx context.Context) {
 	for {
+		if ctx.Err() != nil {
+			return
+		}
+
 		job := m.getScrapeJob()
 		if job == nil {
 			select {
