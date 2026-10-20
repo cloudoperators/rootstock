@@ -21,6 +21,7 @@ import (
 )
 
 const (
+	//nolint:gosec // this is a credential file name, no sensitive information
 	redfishCredFile = "redfish_pdus.yaml"
 )
 
@@ -107,10 +108,12 @@ func registerCredentialsWatchAndRunServer() {
 			}
 
 			pduCredentials = newCreds
+
 			keys := make([]string, 0, len(pduCredentials))
 			for k := range pduCredentials {
 				keys = append(keys, k)
 			}
+
 			logger.Debug("pdu credentials registered", "pdus", keys)
 
 			dynamicRunServer(logger)
