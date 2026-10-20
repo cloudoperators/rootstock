@@ -580,7 +580,10 @@ probe_check() {
         || die "rootstock deployment never became ready on ${REMOTE_CONTEXT}"
 
     local pf_pid=""
-    cleanup_pf() { [[ -n "${pf_pid:-}" ]] && kill "$pf_pid" 2>/dev/null || true; }
+    cleanup_pf() { 
+      # shellcheck disable=SC2015  
+      [[ -n "${pf_pid:-}" ]] && kill "$pf_pid" 2>/dev/null || true
+    }
     trap cleanup_pf RETURN
 
     kubectl --context "$REMOTE_CONTEXT" -n "$ns" port-forward "svc/${release}" "${local_port}:9220" \

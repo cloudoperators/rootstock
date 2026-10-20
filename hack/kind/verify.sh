@@ -19,6 +19,7 @@ kubectl --context "${CONTEXT}" -n "${NAMESPACE}" rollout status \
 SVC="${RELEASE}"
 PF_PID=""
 cleanup() {
+    # shellcheck disable=SC2015
     [[ -n "${PF_PID}" ]] && kill "${PF_PID}" 2>/dev/null || true
 }
 trap cleanup EXIT
