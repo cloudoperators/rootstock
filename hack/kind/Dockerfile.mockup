@@ -1,0 +1,15 @@
+# SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Greenhouse contributors
+# SPDX-License-Identifier: Apache-2.0
+
+# A DMTF Redfish mockup server pre-loaded with rootstock's PDU test dataset.
+# Used only for local kind-based testing, never in production.
+#
+# The base image entrypoint is:
+#   ["python", "/usr/src/app/redfishMockupServer.py", "-H", "0.0.0.0"]
+# with workdir /usr/src/app. We bake in the PDU dataset and append the flags
+# that select it (-p 8000 -D pdu-mockup) via CMD so they are passed to the
+# existing entrypoint.
+FROM dmtf/redfish-mockup-server:latest
+COPY testdata/pdu-mockup /usr/src/app/pdu-mockup
+CMD ["-p", "8000", "-D", "pdu-mockup"]
+

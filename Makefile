@@ -17,8 +17,7 @@ endif
 
 ## Version setting
 VERSION ?= $(shell sed -n 's/^version:[[:space:]]*//p' VERSION.yaml)
-
-IMAGE ?= ghcr.io/cloudoperators/rootstock:dev-$(USER)
+IMAGE   ?= ghcr.io/cloudoperators/rootstock:dev-$(USER)
 
 # Integration test mockup server
 # Requires pdu-mockup data at testdata/pdu-mockup (already added to the repo).
@@ -29,26 +28,27 @@ MOCKUP_PORT      ?= 8000
 MOCKUP_CONTAINER := redfish-mockup
 
 
-
 .PHONY: build test test-unit test-integration test-contract test-performance \
 				mockup-start mockup-stop \
 				lint lint-go lint-md lint-shell \
 				scan \
 				docker-build \
+        kind-up kind-deploy kind-% \
+        helm-lint helm-template \
 				generate generate-changelog generate-version \
 				get-version test-changelog \
 				help
 
 # Build
 
-build: GIT_COMMIT  = $(shell git rev-parse HEAD)
-build: GIT_STATE   = $(shell if [ -z "$$(git status --porcelain)" ]; then echo clean; else echo dirty; fi)
-build: BUILD_DATE  = $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
-build: LDFLAGS     = "-s -w \
-											-X main.version=$(VERSION) \
-											-X main.gitCommit=$(GIT_COMMIT) \
-											-X main.gitTreeState=$(GIT_STATE) \
-											-X main.buildDate=$(BUILD_DATE)"
+build: GIT_COMMIT = $(shell git rev-parse HEAD 2>/dev/null)
+build: GIT_STATE  = $(shell if [ -z "$$(git status --porcelain 2>/dev/null)" ]; then echo clean; else echo dirty; fi)
+build: BUILD_DATE = $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
+build: LDFLAGS    = "-s -w \
+							-X main.version=$(VERSION) \
+							-X main.gitCommit=$(GIT_COMMIT) \
+							-X main.gitTreeState=$(GIT_STATE) \
+							-X main.buildDate=$(BUILD_DATE)"
 build: ## Compile a static server binary to bin/
 	@echo "$(green) building binary$(reset)"
 	CGO_ENABLED=0 go build \
@@ -56,6 +56,17 @@ build: ## Compile a static server binary to bin/
 			-ldflags $(LDFLAGS) \
 			-o bin/rootstock \
 			.
+
+docker-build: ## Build the container image for rootstock
+	@echo "$(green) building docker image$(reset)"
+	docker build \
+		--build-arg GOCACHE=$(shell go env GOCACHE) \
+		--build-arg GOMODCACHE=$(shell go env GOMODCACHE) \
+		--build-arg VERSION=$(VERSION) \
+		--platform $(PLATFORM) \
+		-t ${IMAGE} \
+		-f Dockerfile \
+		.
 
 # Tests
 
@@ -80,6 +91,10 @@ test-contract: ## Run contract tests (TODO: not yet implemented)
 test-performance: ## Run performance tests (TODO: not yet implemented)
 	@echo "TODO: performance tests not yet implemented"
 	@echo "TODO: will cover queue length and concurrent API request limits"
+
+test-changelog: ## Run the local changelog generation test suite
+	@echo "$(green) testing changelog generation$(reset)"
+	@hack/update_changelog_test.sh
 
 # ---------------------------------------------------------------------------
 # Mockup server lifecycle (used by test-integration)
@@ -122,20 +137,38 @@ generate-changelog: ## Update the local CHANGELOG.md file
 get-version: ## Prints out the current version as presented in the VERSION.yaml file
 	@echo $(VERSION)
 
-test-changelog: ## Run the local changelog generation test suite
-	@echo "$(green) testing changelog generation$(reset)"
-	@hack/update_changelog_test.sh
+# ---------------------------------------------------------------------------
+# Local Kubernetes deployment via kind + Helm
+# Requires: docker, kind, kubectl, helm
+#
+# All kind lifecycle logic lives in hack/kind/control.sh; the targets below are
+# thin wrappers that pass the Makefile variables to it as environment overrides.
+# One-shot: make kind-up (create cluster, load image, deploy mockup + chart)
+#           make kind-validate (port-forward and probe the running pod)
+#           make kind-delete (delete the cluster)
+# ---------------------------------------------------------------------------
 
-docker-build: ## Build the container image for rootstock
-	@echo "$(green) building docker image$(reset)"
-	docker build \
-		--build-arg GOCACHE=$(shell go env GOCACHE) \
-		--build-arg GOMODCACHE=$(shell go env GOMODCACHE) \
-		--build-arg VERSION=$(VERSION) \
-		--platform $(PLATFORM) \
-		-t ${IMAGE} \
-		-f Dockerfile \
-		.
+# Invocation shared by every kind-* target: export the Makefile variables as the
+# environment overrides that control.sh reads (RELEASE_NAME/RELEASE_NAMESPACE
+# mirror CHART_RELEASE/CHART_NAMESPACE).
+KIND_CONTROL := IMAGE=$(IMAGE) hack/kind/control.sh
+
+helm-lint: ## Lint the Helm chart
+	@echo "$(green) helm lint$(reset)"
+	helm lint k8s_configuration/chart
+
+helm-template: ## Render the Helm chart to stdout
+	@helm template k8s_configuration/chart
+
+kind-deploy: docker-build ## Build/load the rootstock image and install/upgrade the Helm chart
+	@$(KIND_CONTROL) deploy
+
+kind-up: kind-create kind-prepare kind-deploy ## Create kind cluster and deploy everything
+	@echo "$(green) rootstock is deployed. Run 'make kind-validate' to probe it.$(reset)"
+
+kind-%: ## Execute command $* for the kind cluster - commands: [create, delete, prepare, deploy, validate, cleanup]
+	@echo "$(green) executing command: $(KIND_CONTROL) $*$(reset)"
+	@$(KIND_CONTROL) $*
 
 # Build everything that is necessary for testing prometheus locally
 prometheus-local-setup: build mockup-start prometheus-collector-start
@@ -163,7 +196,6 @@ run-redfish: build ## Build and run the rootstock binary with redfish credential
 prometheus-local-run: prometheus-local-setup run-redfish
 
 # Help
-
 help: ## Show available targets
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
-		awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-22s\033[0m %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z_%-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
+		awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-22s\033[0m\t\t%s\n", $$1, $$2}'

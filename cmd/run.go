@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v3"
 
 	"github.com/cloudoperators/rootstock/internal/communication/rest"
 	"github.com/cloudoperators/rootstock/internal/shutdown"
@@ -19,30 +20,22 @@ import (
 	v "github.com/cloudoperators/rootstock/pkg/version"
 )
 
-var (
-	scrapeTimeoutDefault = 30 * time.Second
-	redfishPassword      *string
+const (
+	//nolint:gosec // this is a credential file name, no sensitive information
+	redfishCredFile = "redfish_pdus.yaml"
+)
 
+var (
 	port = NewParameter(
 		"port", "PORT", "port",
 		"port of the rest server",
 		9220,
 	)
-	scrapeTimeout = NewParameter(
+	scrapeTimeoutValue = 30 * time.Second
+	scrapeTimeout      = NewParameter(
 		"scrape.timeout", "SCRAPE_TIMEOUT", "scrape-timeout",
 		"timeout for scraping upstream APIs (e.g. 15s, 1m)",
-		scrapeTimeoutDefault.String(),
-	)
-
-	redfishUsername = NewParameter(
-		"redfish.username", "REDFISH_USERNAME", "redfish-username",
-		"username for the redfish authorization",
-		"redfish",
-	)
-	redfishCredFile = NewParameter(
-		"redfish.credentialsFile", "REDFISH_CREDENTIALS_FILE", "redfish-credentials-file",
-		"file that holds the password for the redfish authorization",
-		"redfish_password",
+		scrapeTimeoutValue.String(),
 	)
 )
 
@@ -61,6 +54,8 @@ func run() *cobra.Command {
 
 				return
 			}
+
+			scrapeTimeoutValue = sTimeout
 
 			logger.Info(
 				"rootstock configurations",
@@ -90,8 +85,6 @@ func run() *cobra.Command {
 
 	port.Register(c.Flags())
 	scrapeTimeout.Register(c.Flags())
-	redfishUsername.Register(c.Flags())
-	redfishCredFile.Register(c.Flags())
 
 	return c
 }
@@ -102,18 +95,27 @@ var (
 )
 
 func registerCredentialsWatchAndRunServer() {
-	file := filepath.Join(configFolder.Value(), redfishCredFile.Value())
+	file := filepath.Join(configFolder.Value(), redfishCredFile)
 	err := InitFileConfig(
 		file,
 		func(content []byte) error {
-			newPassword := string(content)
-			if redfishPassword != nil && *redfishPassword == newPassword {
-				return nil
+			var newCreds map[string]rest.PDUCredentials
+			if err := yaml.Unmarshal(content, &newCreds); err != nil {
+				return fmt.Errorf("failed to parse credentials file: %w", err)
 			}
 
-			redfishPassword = &newPassword
+			keys := make([]string, 0, len(newCreds))
+			for k := range newCreds {
+				keys = append(keys, k)
+			}
 
-			dynamicRunServer(logger)
+			logger.Debug("pdu credentials registered", "pdus", keys)
+
+			if len(newCreds) == 0 {
+				logger.Warn("credentials file parsed but contains no PDUs — all probe requests will be rejected")
+			}
+
+			dynamicRunServer(logger, newCreds)
 
 			return nil
 		},
@@ -121,7 +123,7 @@ func registerCredentialsWatchAndRunServer() {
 	fatalOnError(err, fmt.Sprintf("failed to register file watch on %q", file))
 }
 
-func dynamicRunServer(l log.FullInterface) {
+func dynamicRunServer(l log.FullInterface, creds map[string]rest.PDUCredentials) {
 	serverLock.Lock()
 	defer serverLock.Unlock()
 
@@ -129,18 +131,12 @@ func dynamicRunServer(l log.FullInterface) {
 		server.Stop(shutdown.GetContext())
 	}
 
-	password := ""
-	if redfishPassword != nil {
-		password = *redfishPassword
-	}
-
 	server = rest.New(
 		port.Value(),
 		l,
-		redfishUsername.Value(),
-		password,
-		scrapeTimeoutDefault,
+		creds,
+		scrapeTimeoutValue,
 	)
-	l.Info("starting HTTP server", "port", port.Value(), "username", redfishUsername.Value())
+	l.Info("starting HTTP server", "port", port.Value())
 	server.ListenAndServe()
 }

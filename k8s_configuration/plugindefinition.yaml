@@ -1,0 +1,60 @@
+# SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Greenhouse contributors
+# SPDX-License-Identifier: Apache-2.0
+
+# Greenhouse PluginDefinition for rootstock.
+#
+# This wraps the Helm chart in k8s_configuration/chart. The helmChart reference
+# below points at a published chart; update repository/version to match your
+# release (e.g. an OCI registry such as oci://ghcr.io/cloudoperators/charts).
+#
+# The Redfish password is modelled as a `secret`-type option. In a Plugin CR it
+# is supplied via optionValues[].valueFrom.secret{name,key}, which Greenhouse
+# projects into the pod as the mounted credentials file the chart expects.
+apiVersion: greenhouse.sap/v1alpha1
+kind: PluginDefinition
+metadata:
+  name: rootstock
+spec:
+  version: 0.1.0
+  displayName: rootstock
+  description: >-
+    Data-center energy/carbon telemetry collector. Scrapes Redfish targets and
+    exposes Prometheus metrics using a multi-target probe pattern.
+  helmChart:
+    name: rootstock
+    repository: oci://ghcr.io/cloudoperators/charts
+    version: 0.1.0
+  options:
+    - name: image.repository
+      description: Container image repository for rootstock.
+      type: string
+      required: false
+      default: "ghcr.io/cloudoperators/rootstock"
+    - name: image.tag
+      description: Container image tag. Defaults to the chart appVersion when empty.
+      type: string
+      required: false
+    - name: image.pullPolicy
+      description: Kubernetes image pull policy for rootstock.
+      type: string
+      required: false
+      default: IfNotPresent
+    - name: redfish.username
+      displayName: Redfish username
+      description: Username used for Redfish session authentication.
+      type: string
+      required: true
+      default: "redfish"
+    - name: redfish.password
+      displayName: Redfish password
+      description: >-
+        Password for Redfish authentication. Supply via valueFrom.secret so it
+        is mounted into the pod as a file (never set as an environment variable).
+      type: secret
+      required: true
+    - name: serviceMonitor.enabled
+      displayName: Enable ServiceMonitor
+      description: Create a Prometheus Operator ServiceMonitor for /metrics.
+      type: bool
+      required: false
+      default: false

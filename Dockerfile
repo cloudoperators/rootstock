@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Greenhouse contributors
+# SPDX-License-Identifier: Apache-2.0
+
 ##########################################################################################
 # Builder image
 ##########################################################################################
@@ -27,11 +30,10 @@ RUN --mount=type=cache,target=${GOMODCACHE} \
         GOARCH=${TARGETARCH} \
         VERSION=${VERSION}
 
-
 ##########################################################################################
-# Final image 
+# Final image
 ##########################################################################################
- FROM gcr.io/distroless/static:nonroot
+FROM gcr.io/distroless/static:nonroot
 
 LABEL source_repository="https://github.com/cloudoperators/rootstock"
 WORKDIR /
