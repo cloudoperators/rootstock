@@ -116,7 +116,7 @@ jobs:
             echo "DEBUG: head_ref=$(echo "$PR" | jq -r .headRefName)"
             echo "DEBUG: base_sha=$(echo "$PR" | jq -r .baseRefOid)"
             echo "DEBUG: blocked_label=<none>"
-            eecho "DEBUG: pr_body=$PR_BODY"
+            echo "DEBUG: pr_body=$PR_BODY"
           fi
 
           {
