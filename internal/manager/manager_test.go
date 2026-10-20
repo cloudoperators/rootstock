@@ -47,7 +47,24 @@ func TestNewManager(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := newTestManager(tt.ips...)
+			configs := make([]DeviceConfig, len(tt.ips))
+			for i, ip := range tt.ips {
+				configs[i] = DeviceConfig{IP: ip}
+			}
+
+			m, ok := NewManager(
+				configs,
+				Auth{Username: "admin", Password: "pass"},
+				30*time.Second,
+				2,
+				5*time.Second,
+				1*time.Second,
+				nil,
+				log.Default(),
+			).(*manager)
+			if !ok {
+				t.Fatal("unexpected manager type")
+			}
 
 			if len(m.devices) != tt.wantCount {
 				t.Errorf("expected %d devices, got %d", tt.wantCount, len(m.devices))
