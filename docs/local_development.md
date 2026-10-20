@@ -11,6 +11,7 @@ This document describes how to get the local rootstock setup to work.
   - [Configuration inputs](#configuration-inputs)
   - [1-time config preparation](#1-time-config-preparation)
   - [run rootstock locally](#run-rootstock-locally)
+  - [Changelog update](#changelog-update)
   - [Docker images](#docker-images)
     - [Local builds](#local-builds)
     - [PR builds](#pr-builds)
@@ -150,6 +151,46 @@ go run main.go run \
   --redfish-credentials-file tmp/redfish_password \
   --config-folder . \
   --log-format text
+```
+
+## Changelog update
+
+The changelog is generated from git history using
+[git-cliff](https://git-cliff.org/). CI runs the update automatically on every
+merge to `main`; to preview or update it locally, install `git-cliff` first:
+
+```shell
+brew install git-cliff
+```
+
+Then regenerate the changelog:
+
+```shell
+make generate-changelog
+```
+
+This rewrites `CHANGELOG.md` in full from a fixed start commit up to the current
+tip of `main`. All commits that are not yet behind a release tag are grouped
+under the computed next version (using `--bump`), so the file always reflects
+what the next release will look like.
+
+An additional "commit" can be added to the changelog, by setting the environment
+variable `export COMMIT_MSG="..."`.
+
+To also bump `VERSION.yaml` to match:
+
+```shell
+make generate-version
+```
+
+Both targets are run together by the automerge pipeline, but running them
+locally is useful for reviewing the changelog before opening a PR or after
+rebasing onto `main`.
+
+To run the changelog generation test suite:
+
+```shell
+make test-changelog
 ```
 
 ## Docker images
