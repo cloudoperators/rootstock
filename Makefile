@@ -41,9 +41,9 @@ MOCKUP_CONTAINER := redfish-mockup
 
 # Build
 
-build: GIT_COMMIT     ?= $(shell git rev-parse HEAD 2>/dev/null)
-build: GIT_STATE ?= $(shell if [ -z "$$(git status --porcelain 2>/dev/null)" ]; then echo clean; else echo dirty; fi)
-build: BUILD_DATE     ?= $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
+build: GIT_COMMIT = $(shell git rev-parse HEAD 2>/dev/null)
+build: GIT_STATE  = $(shell if [ -z "$$(git status --porcelain 2>/dev/null)" ]; then echo clean; else echo dirty; fi)
+build: BUILD_DATE = $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 build: LDFLAGS    = "-s -w \
 							-X main.version=$(VERSION) \
 							-X main.gitCommit=$(GIT_COMMIT) \
