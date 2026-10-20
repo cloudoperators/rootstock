@@ -21,7 +21,7 @@ type DeviceConfig struct {
 	IP string
 }
 
-// ScrapeJob is returned by GetScrapeJob and contains only what a scraper needs to do its work.
+// ScrapeJob is returned by getScrapeJob and contains only what a scraper needs to do its work.
 type ScrapeJob struct {
 	DeviceID string
 	IP       string

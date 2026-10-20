@@ -14,92 +14,168 @@ import (
 // newTestManager creates a manager instance for testing purposes.
 // It accepts a list of IPs and registers each as a device with fixed credentials and intervals.
 func newTestManager(ips ...string) *manager {
-	configs := make([]DeviceConfig, len(ips))
-	for i, ip := range ips {
-		configs[i] = DeviceConfig{IP: ip}
+	devices := make(map[string]*device)
+	for _, ip := range ips {
+		devices[ip] = &device{
+			deviceID: ip,
+			ip:       ip,
+			auth:     Auth{Username: "admin", Password: "pass"},
+		}
 	}
 
-	m, ok := NewManager(
-		configs,
-		Auth{Username: "admin", Password: "pass"},
-		30*time.Second,
-		2,
-		5*time.Second,
-		1*time.Second,
-		nil,
-		log.Default(),
-	).(*manager)
-	if !ok {
-		panic("unexpected manager type")
+	return &manager{
+		devices:      devices,
+		interval:     30 * time.Second,
+		workerCount:  2,
+		timeout:      5 * time.Second,
+		pollInterval: 1 * time.Second,
+		logger:       log.Default(),
 	}
-
-	return m
 }
 
 // TestNewManager verifies that NewManager correctly registers all provided IPs as devices.
 func TestNewManager(t *testing.T) {
-	m := newTestManager("10.0.0.1", "10.0.0.2")
-
-	if len(m.devices) != 2 {
-		t.Errorf("expected 2 devices, got %d", len(m.devices))
+	tests := []struct {
+		name      string
+		ips       []string
+		wantCount int
+	}{
+		{name: "no devices", ips: []string{}, wantCount: 0},
+		{name: "single device", ips: []string{"10.0.0.1"}, wantCount: 1},
+		{name: "multiple devices", ips: []string{"10.0.0.1", "10.0.0.2"}, wantCount: 2},
 	}
 
-	for _, ip := range []string{"10.0.0.1", "10.0.0.2"} {
-		d, exists := m.devices[ip]
-		if !exists {
-			t.Fatalf("expected device for IP %s, not found", ip)
-		}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := newTestManager(tt.ips...)
 
-		if d.ip != ip {
-			t.Errorf("expected ip %s, got %s", ip, d.ip)
-		}
+			if len(m.devices) != tt.wantCount {
+				t.Errorf("expected %d devices, got %d", tt.wantCount, len(m.devices))
+			}
 
-		if d.currentlyScraped {
-			t.Errorf("new device should NOT be currently scraped")
-		}
-	}
-}
+			for _, ip := range tt.ips {
+				d, exists := m.devices[ip]
+				if !exists {
+					t.Fatalf("expected device for IP %s, not found", ip)
+				}
 
-// getScrapeJob should return a device that has never been scraped.
-func TestGetScrapeJob_Due(t *testing.T) {
-	m := newTestManager("10.0.0.1")
+				if d.ip != ip {
+					t.Errorf("expected ip %s, got %s", ip, d.ip)
+				}
 
-	job := m.getScrapeJob()
-
-	if job == nil {
-		t.Fatal("expected a job, got nil")
-	}
-
-	if job.DeviceID != "10.0.0.1" {
-		t.Errorf("expected device 10.0.0.1, got %s", job.DeviceID)
-	}
-
-	if !m.devices["10.0.0.1"].currentlyScraped {
-		t.Error("expected currentlyScraped to be true after getScrapeJob")
+				if d.currentlyScraped {
+					t.Errorf("new device should NOT be currently scraped")
+				}
+			}
+		})
 	}
 }
 
-// getScrapeJob should skip a device that is currently being scraped.
-func TestGetScrapeJob_InProgress(t *testing.T) {
-	m := newTestManager("10.0.0.1")
-	m.devices["10.0.0.1"].currentlyScraped = true
+// TestGetScrapeJob verifies that getScrapeJob returns a job only when a device is due for scraping.
+func TestGetScrapeJob(t *testing.T) {
+	tests := []struct {
+		name                string
+		ips                 []string
+		currentlyScraped    bool
+		lastScraped         time.Time
+		consecutiveFailures []ScrapeResult
+		wantJob             bool
+		wantDeviceID        string
+		wantFailureCount    int
+	}{
+		{
+			name:         "device never scraped returns job",
+			ips:          []string{"10.0.0.1"},
+			wantJob:      true,
+			wantDeviceID: "10.0.0.1",
+		},
+		{
+			name:             "device currently being scraped returns nil",
+			ips:              []string{"10.0.0.1"},
+			currentlyScraped: true,
+			wantJob:          false,
+		},
+		{
+			name:        "device scraped recently returns nil",
+			ips:         []string{"10.0.0.1"},
+			lastScraped: time.Now().Add(-5 * time.Second),
+			wantJob:     false,
+		},
+		{
+			name:         "device scraped past interval returns job",
+			ips:          []string{"10.0.0.1"},
+			lastScraped:  time.Now().Add(-31 * time.Second),
+			wantJob:      true,
+			wantDeviceID: "10.0.0.1",
+		},
+		{
+			name:        "device with failures applies backoff and returns nil",
+			ips:         []string{"10.0.0.1"},
+			lastScraped: time.Now().Add(-31 * time.Second),
+			consecutiveFailures: []ScrapeResult{
+				{Err: errors.New("timeout")},
+				{Err: errors.New("timeout")},
+			},
+			wantJob: false,
+		},
+		{
+			name:        "device with 10 failures resets and returns job",
+			ips:         []string{"10.0.0.1"},
+			lastScraped: time.Now().Add(-31 * time.Second),
+			consecutiveFailures: func() []ScrapeResult {
+				failures := make([]ScrapeResult, 10)
+				for i := range failures {
+					failures[i] = ScrapeResult{Err: errors.New("timeout")}
+				}
 
-	job := m.getScrapeJob()
-
-	if job != nil {
-		t.Error("expected nil, device is already being scraped")
+				return failures
+			}(),
+			wantJob:          true,
+			wantDeviceID:     "10.0.0.1",
+			wantFailureCount: 0,
+		},
+		{
+			name:    "no devices returns nil",
+			ips:     []string{},
+			wantJob: false,
+		},
 	}
-}
 
-// getScrapeJob should skip a device scraped within the interval window.
-func TestGetScrapeJob_Recent(t *testing.T) {
-	m := newTestManager("10.0.0.1")
-	m.devices["10.0.0.1"].lastScraped = time.Now().Add(-5 * time.Second)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := newTestManager(tt.ips...)
+			if len(tt.ips) > 0 {
+				m.devices["10.0.0.1"].currentlyScraped = tt.currentlyScraped
+				m.devices["10.0.0.1"].lastScraped = tt.lastScraped
+				m.devices["10.0.0.1"].consecutiveFailures = tt.consecutiveFailures
+			}
 
-	job := m.getScrapeJob()
+			job := m.getScrapeJob()
 
-	if job != nil {
-		t.Error("expected nil, device was scraped recently")
+			if !tt.wantJob {
+				if job != nil {
+					t.Errorf("expected nil, got job for device %s", job.DeviceID)
+				}
+
+				return
+			}
+
+			if job == nil {
+				t.Fatal("expected a job, got nil")
+			}
+
+			if job.DeviceID != tt.wantDeviceID {
+				t.Errorf("expected device %s, got %s", tt.wantDeviceID, job.DeviceID)
+			}
+
+			if !m.devices["10.0.0.1"].currentlyScraped {
+				t.Error("expected currentlyScraped to be true after getScrapeJob")
+			}
+
+			if len(m.devices["10.0.0.1"].consecutiveFailures) != tt.wantFailureCount {
+				t.Errorf("expected %d failures, got %d", tt.wantFailureCount, len(m.devices["10.0.0.1"].consecutiveFailures))
+			}
+		})
 	}
 }
 

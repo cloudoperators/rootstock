@@ -32,7 +32,7 @@ type manager struct {
 	logger       log.MinInterface
 }
 
-// takes the list of IPs, creates a device for each one and puts then in the map
+// NewManager creates a manager from the given device configs and starts managing scrapes.
 func NewManager(
 	configs []DeviceConfig,
 	credentials Auth,
@@ -64,7 +64,7 @@ func NewManager(
 	}
 }
 
-// worker calls this to get its next job
+// getScrapeJob returns the next device that is due for scraping, or nil if none are ready.
 func (m *manager) getScrapeJob() *ScrapeJob {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -96,7 +96,7 @@ func (m *manager) getScrapeJob() *ScrapeJob {
 	return nil
 }
 
-// worker calls this after finising. Updates the device.
+// updateDevice updates the device state after a scrape attempt.
 func (m *manager) updateDevice(deviceID string, timestamp time.Time, result ScrapeResult) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -111,6 +111,11 @@ func (m *manager) updateDevice(deviceID string, timestamp time.Time, result Scra
 
 	if result.Err != nil {
 		d.consecutiveFailures = append(d.consecutiveFailures, result)
+		m.logger.Error("scrape failed",
+			"device", deviceID,
+			"consecutiveFailures", len(d.consecutiveFailures),
+			"error", result.Err,
+		)
 	} else {
 		d.consecutiveFailures = nil
 	}
