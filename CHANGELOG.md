@@ -8,7 +8,7 @@ and this project adheres to
 
 <!-- git-cliff: end of header -->
 
-## 2026-10-16
+## 2026-10-20
 
 - (0.1.0 - 🚀) tooling: Add a docker build
   [#78](https://github.com/cloudoperators/rootstock/pull/78)
@@ -30,6 +30,18 @@ and this project adheres to
   [#93](https://github.com/cloudoperators/rootstock/pull/93)
   ([diff](https://github.com/cloudoperators/rootstock/compare/v0.0.2...v0.1.0))
   by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.1.0 - 🚀) tooling: Local changelog generation
+  [#92](https://github.com/cloudoperators/rootstock/pull/92)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.0.2...v0.1.0))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.1.0 - 🚀) tooling: Automate changelog and version updates in pipeline
+  [#94](https://github.com/cloudoperators/rootstock/pull/94)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.0.2...v0.1.0))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.1.0 - 🚀) results: Add generic cache in
+  [#87](https://github.com/cloudoperators/rootstock/pull/87)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.0.2...v0.1.0))
+  by [@idafurjes](https://github.com/idafurjes)
 
 ## 2026-10-05
 
