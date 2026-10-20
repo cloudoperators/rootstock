@@ -17,27 +17,9 @@ endif
 
 ## Version setting
 VERSION ?= $(shell sed -n 's/^version:[[:space:]]*//p' VERSION.yaml)
-
 BINARY         := rootstock
-OS             := $(shell go env GOOS)
-ARCH           := $(shell go env GOARCH)
-
-## Version setting
-# Single source of truth: VERSION.yaml via yq, with a git-based fallback for
-# environments without yq. The version package accepts a leading
-# <major>.<minor>.<patch> followed by an arbitrary suffix, so the "0.0.0-<sha>"
-# fallback and CI's "<version>-pr-<n>" are both valid.
-VERSION ?= $(shell \
-		command -v yq > /dev/null 2>&1 && yq -r '.version' VERSION.yaml \
-		|| echo "0.0.0-$$(git rev-parse --short HEAD)" \
-)
-
-# Build toolchain knobs. Overridable so the Dockerfile can cross-compile and
-# enforce FIPS, e.g. make build GOOS=linux GOARCH=arm64 GOFIPS140=certified.
-GOOS       ?= $(OS)
-GOARCH     ?= $(ARCH)
-CGO_ENABLED ?= 0
-GOFIPS140  ?=
+# Container image / local Kubernetes (kind) settings
+IMAGE          ?= ghcr.io/cloudoperators/rootstock:dev-$(USER)
 
 # Integration test mockup server
 # Requires pdu-mockup data at testdata/pdu-mockup (already added to the repo).
@@ -48,26 +30,12 @@ MOCKUP_PORT      ?= 8000
 MOCKUP_CONTAINER := redfish-mockup
 
 
-
-
-# Container image / local Kubernetes (kind) settings
-IMAGE          ?= ghcr.io/cloudoperators/rootstock:dev-$(USER)
-# The IMAGE repository/tag split and all other kind lifecycle logic live in
-# hack/kind/control.sh, which the kind-* targets delegate to.
-KIND_CLUSTER   		?= rootstock-local
-CHART_DIR      		:= k8s_configuration/chart
-CHART_RELEASE  		?= rootstock
-CHART_NAMESPACE 	?= rootstock
-REDFISH_SECRET 		?= rootstock-redfish
-REDFISH_PASSWORD 	?= admin
-
-
 .PHONY: build test test-unit test-integration test-contract test-performance \
 				mockup-start mockup-stop \
 				lint lint-go lint-md lint-shell \
 				scan \
 				docker-build \
-        kind-up kind-cluster kind-prepare kind-deploy kind-verify kind-cleanup kind-down \
+        kind-up kind-deploy kind-% \
         helm-lint helm-template \
 				generate generate-changelog generate-version \
 				get-version test-changelog \
@@ -89,12 +57,26 @@ build: LDFLAGS    = "-s -w \
 							-X main.buildDate=$(BUILD_DATE)"
 build: ## Compile a static server binary to bin/
 	@echo "$(green) building binary$(reset)"
-	CGO_ENABLED=$(CGO_ENABLED) GOOS=$(GOOS) GOARCH=$(GOARCH) GOFIPS140=$(GOFIPS140) \
+	CGO_ENABLED=$(CGO_ENABLED) GOOS=$(OS) GOARCH=$(ARCH) GOFIPS140=certified \
 		go build \
 			-installsuffix 'static' \
 			-ldflags $(LDFLAGS) \
 			-o bin/$(BINARY) \
 			.
+
+docker-build: ## Build the container image for rootstock
+	@echo "$(green) building docker image$(reset)"
+	docker build \
+		--build-arg GOCACHE=$(shell go env GOCACHE) \
+		--build-arg GOMODCACHE=$(shell go env GOMODCACHE) \
+		--build-arg VERSION=$(VERSION) \
+		--build-arg GIT_COMMIT=$(GIT_COMMIT) \
+		--build-arg GIT_TREE_STATE=$(GIT_TREE_STATE) \
+		--build-arg BUILD_DATE=$(BUILD_DATE) \
+		--platform $(PLATFORM) \
+		-t ${IMAGE} \
+		-f Dockerfile \
+		.
 
 # Tests
 
@@ -119,6 +101,10 @@ test-contract: ## Run contract tests (TODO: not yet implemented)
 test-performance: ## Run performance tests (TODO: not yet implemented)
 	@echo "TODO: performance tests not yet implemented"
 	@echo "TODO: will cover queue length and concurrent API request limits"
+
+test-changelog: ## Run the local changelog generation test suite
+	@echo "$(green) testing changelog generation$(reset)"
+	@hack/update_changelog_test.sh
 
 # ---------------------------------------------------------------------------
 # Mockup server lifecycle (used by test-integration)
@@ -161,24 +147,6 @@ generate-changelog: ## Update the local CHANGELOG.md file
 get-version: ## Prints out the current version as presented in the VERSION.yaml file
 	@echo $(VERSION)
 
-test-changelog: ## Run the local changelog generation test suite
-	@echo "$(green) testing changelog generation$(reset)"
-	@hack/update_changelog_test.sh
-
-docker-build: ## Build the container image for rootstock
-	@echo "$(green) building docker image$(reset)"
-	docker build \
-		--build-arg GOCACHE=$(shell go env GOCACHE) \
-		--build-arg GOMODCACHE=$(shell go env GOMODCACHE) \
-		--build-arg VERSION=$(VERSION) \
-		--build-arg GIT_COMMIT=$(GIT_COMMIT) \
-		--build-arg GIT_TREE_STATE=$(GIT_TREE_STATE) \
-		--build-arg BUILD_DATE=$(BUILD_DATE) \
-		--platform $(PLATFORM) \
-		-t ${IMAGE} \
-		-f Dockerfile \
-		.
-
 # ---------------------------------------------------------------------------
 # Local Kubernetes deployment via kind + Helm
 # Requires: docker, kind, kubectl, helm
@@ -186,48 +154,31 @@ docker-build: ## Build the container image for rootstock
 # All kind lifecycle logic lives in hack/kind/control.sh; the targets below are
 # thin wrappers that pass the Makefile variables to it as environment overrides.
 # One-shot: make kind-up (create cluster, load image, deploy mockup + chart)
-#           make kind-verify (port-forward and probe the running pod)
-#           make kind-down (delete the cluster)
+#           make kind-validate (port-forward and probe the running pod)
+#           make kind-delete (delete the cluster)
 # ---------------------------------------------------------------------------
 
 # Invocation shared by every kind-* target: export the Makefile variables as the
 # environment overrides that control.sh reads (RELEASE_NAME/RELEASE_NAMESPACE
 # mirror CHART_RELEASE/CHART_NAMESPACE).
-KIND_CONTROL := KIND_CLUSTER=$(KIND_CLUSTER) \
-	RELEASE_NAME=$(CHART_RELEASE) \
-	RELEASE_NAMESPACE=$(CHART_NAMESPACE) \
-	REDFISH_SECRET=$(REDFISH_SECRET) \
-	REDFISH_PASSWORD=$(REDFISH_PASSWORD) \
-	IMAGE=$(IMAGE) \
-	hack/kind/control.sh
+KIND_CONTROL := IMAGE=$(IMAGE) hack/kind/control.sh
 
 helm-lint: ## Lint the Helm chart
 	@echo "$(green) helm lint$(reset)"
-	helm lint $(CHART_DIR) -f $(CHART_DIR)/ci/test-values.yaml
+	helm lint k8s_configuration/chart
 
 helm-template: ## Render the Helm chart to stdout
-	@helm template $(CHART_RELEASE) $(CHART_DIR) -f $(CHART_DIR)/ci/test-values.yaml
+	@helm template k8s_configuration/chart
 
-kind-cluster: ## Create the kind cluster if it does not exist
-	@$(KIND_CONTROL) create $(KIND_CLUSTER)
-
-kind-prepare: kind-cluster ## Build/load the mockup image, create namespace and credentials secret
-	@$(KIND_CONTROL) prepare
-
-kind-deploy: docker-build kind-cluster ## Build/load the rootstock image and install/upgrade the Helm chart
+kind-deploy: docker-build ## Build/load the rootstock image and install/upgrade the Helm chart
 	@$(KIND_CONTROL) deploy
 
-kind-up: kind-prepare kind-deploy ## Create kind cluster and deploy everything
-	@echo "$(green) rootstock is deployed. Run 'make kind-verify' to probe it.$(reset)"
+kind-up: kind-create kind-prepare kind-deploy ## Create kind cluster and deploy everything
+	@echo "$(green) rootstock is deployed. Run 'make kind-validate' to probe it.$(reset)"
 
-kind-verify: ## Port-forward and probe the running rootstock pod
-	@$(KIND_CONTROL) validate
-
-kind-cleanup: ## Uninstall rootstock and delete all cluster resources
-	@$(KIND_CONTROL) cleanup
-
-kind-down: ## Delete the kind cluster
-	@$(KIND_CONTROL) delete $(KIND_CLUSTER)
+kind-%: ## Execute command $* for the kind cluster - commands: [create, delete, prepare, deploy, validate, cleanup]
+	@echo "$(green) executing command: $(KIND_CONTROL) $*$(reset)"
+	@$(KIND_CONTROL) $*
 
 # Build everything that is necessary for testing prometheus locally
 prometheus-local-setup: build mockup-start prometheus-collector-start
@@ -255,7 +206,6 @@ run-redfish: build ## Build and run the rootstock binary with redfish credential
 prometheus-local-run: prometheus-local-setup run-redfish
 
 # Help
-
 help: ## Show available targets
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
-		awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-22s\033[0m %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z_%-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
+		awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-22s\033[0m\t\t%s\n", $$1, $$2}'
