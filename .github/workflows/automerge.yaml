@@ -127,7 +127,7 @@ jobs:
             echo "head_ref=$(echo "$PR" | jq -r .headRefName)"
             echo "base_sha=$(echo "$PR" | jq -r .baseRefOid)"
             printf 'pr_body<<__BODY__\n'
-            echo "$PR"
+            echo "$PR_BODY"
             printf '__BODY__\n'
           } >> "$GITHUB_OUTPUT"
 
