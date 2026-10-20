@@ -55,6 +55,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
 
+      - name: Check image tag does not already exist
+        if: inputs.release
+        env:
+          IMAGE: ${{ env.REGISTRY }}/${{ github.repository_owner }}/rootstock:${{ inputs.version }}
+        run: |
+          if docker manifest inspect "$IMAGE" > /dev/null 2>&1; then
+            echo "Image $IMAGE already exists — refusing to overwrite."
+            exit 1
+          fi
       # Install the cosign tool except on PR
       # https://github.com/sigstore/cosign-installer
       - name: Install cosign
