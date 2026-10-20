@@ -10,6 +10,13 @@ and this project adheres to
 
 ## 2026-10-20
 
+- (0.2.0 - 🚀) tooling: Local kind deployment in
+  [#80](https://github.com/cloudoperators/rootstock/pull/80)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.1.0...v0.2.0))
+  by [@mtrx1337](https://github.com/mtrx1337)
+
+## 2026-10-20
+
 - (0.1.0 - 🚀) tooling: Add a docker build
   [#78](https://github.com/cloudoperators/rootstock/pull/78)
   ([diff](https://github.com/cloudoperators/rootstock/compare/v0.0.2...v0.1.0))
