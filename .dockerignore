@@ -3,7 +3,6 @@
 
 bin
 tmp
-.git
 .github
 .vscode
 *.md

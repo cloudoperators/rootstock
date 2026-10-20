@@ -65,9 +65,6 @@ docker-build: ## Build the container image for rootstock
 		--build-arg GOCACHE=$(shell go env GOCACHE) \
 		--build-arg GOMODCACHE=$(shell go env GOMODCACHE) \
 		--build-arg VERSION=$(VERSION) \
-		--build-arg GIT_COMMIT=$(GIT_COMMIT) \
-		--build-arg GIT_TREE_STATE=$(GIT_TREE_STATE) \
-		--build-arg BUILD_DATE=$(BUILD_DATE) \
 		--platform $(PLATFORM) \
 		-t ${IMAGE} \
 		-f Dockerfile \
