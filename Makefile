@@ -17,8 +17,7 @@ endif
 
 ## Version setting
 VERSION ?= $(shell sed -n 's/^version:[[:space:]]*//p' VERSION.yaml)
-# Container image / local Kubernetes (kind) settings
-IMAGE          ?= ghcr.io/cloudoperators/rootstock:dev-$(USER)
+IMAGE   ?= ghcr.io/cloudoperators/rootstock:dev-$(USER)
 
 # Integration test mockup server
 # Requires pdu-mockup data at testdata/pdu-mockup (already added to the repo).
@@ -42,9 +41,9 @@ MOCKUP_CONTAINER := redfish-mockup
 
 # Build
 
-GIT_COMMIT     ?= $(shell git rev-parse HEAD 2>/dev/null)
-GIT_TREE_STATE ?= $(shell if [ -z "$$(git status --porcelain 2>/dev/null)" ]; then echo clean; else echo dirty; fi)
-BUILD_DATE     ?= $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
+build: GIT_COMMIT     ?= $(shell git rev-parse HEAD 2>/dev/null)
+build: GIT_TREE_STATE ?= $(shell if [ -z "$$(git status --porcelain 2>/dev/null)" ]; then echo clean; else echo dirty; fi)
+build: BUILD_DATE     ?= $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 
 build: LDFLAGS    = "-s -w \
 							-X main.version=$(VERSION) \
