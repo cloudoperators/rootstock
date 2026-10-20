@@ -42,13 +42,12 @@ MOCKUP_CONTAINER := redfish-mockup
 # Build
 
 build: GIT_COMMIT     ?= $(shell git rev-parse HEAD 2>/dev/null)
-build: GIT_TREE_STATE ?= $(shell if [ -z "$$(git status --porcelain 2>/dev/null)" ]; then echo clean; else echo dirty; fi)
+build: GIT_STATE ?= $(shell if [ -z "$$(git status --porcelain 2>/dev/null)" ]; then echo clean; else echo dirty; fi)
 build: BUILD_DATE     ?= $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
-
 build: LDFLAGS    = "-s -w \
 							-X main.version=$(VERSION) \
 							-X main.gitCommit=$(GIT_COMMIT) \
-							-X main.gitTreeState=$(GIT_TREE_STATE) \
+							-X main.gitTreeState=$(GIT_STATE) \
 							-X main.buildDate=$(BUILD_DATE)"
 build: ## Compile a static server binary to bin/
 	@echo "$(green) building binary$(reset)"
