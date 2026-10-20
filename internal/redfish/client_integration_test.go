@@ -23,9 +23,9 @@ import (
 //
 // Requires the DMTF mockup server running with the PDU mockup:
 //
-//	docker run -p 8000:8000 \
-//	  -v /path/to/pdu-mockup:/usr/src/app/pdu-mockup \
-//	  dmtf/redfish-mockup-server:latest -D pdu-mockup
+// docker run -p 8000:8000 \
+//   -v /path/to/pdu-mockup:/usr/src/app/pdu-mockup \
+//   dmtf/redfish-mockup-server:latest -D pdu-mockup
 
 var mockupBase = func() string {
 	if v := os.Getenv("REDFISH_MOCKUP_URL"); v != "" {
@@ -138,7 +138,7 @@ func TestGetPERackPDU(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetPDU failed: %v", err)
 	}
-	if result.ID == "0" {
+	if result.ID == 0 {
 		t.Fatal("response missing Id field")
 	}
 	if result.Metrics.ODataID == "" {

@@ -107,6 +107,11 @@ func registerCredentialsWatchAndRunServer() {
 			}
 
 			pduCredentials = newCreds
+			keys := make([]string, 0, len(pduCredentials))
+			for k := range pduCredentials {
+				keys = append(keys, k)
+			}
+			logger.Debug("pdu credentials registered", "pdus", keys)
 
 			dynamicRunServer(logger)
 

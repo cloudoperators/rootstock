@@ -80,7 +80,7 @@ type Link struct {
 type RackPDU struct {
 	ODataID         string `json:"@odata.id"`
 	ODataType       string `json:"@odata.type"`
-	ID              string `json:"Id"`
+	ID              int    `json:"Id"`
 	Name            string `json:"Name"`
 	EquipmentType   string `json:"EquipmentType"`
 	FirmwareVersion string `json:"FirmwareVersion"`

@@ -27,7 +27,7 @@ rootstock:
   log:
     level: debug
     format: text
-    trace: true
+    trace: false
   redfish:
     username: redfish
     # The password is ALWAYS consumed from a mounted file, never an environment

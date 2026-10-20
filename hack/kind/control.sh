@@ -195,7 +195,7 @@ cmd_deploy() {
         --set image.repository="${IMAGE_REPO}" \
         --set image.tag="${IMAGE_TAG}" \
         --set image.pullPolicy=IfNotPresent \
-        --set redfish.existingSecret="redfish-pdu-access" \
+        --set rootstock.redfish.existingSecret="redfish-pdu-access" \
         --wait --timeout 30s
 
     log "Rootstock deployed — run 'validate' to probe it."
