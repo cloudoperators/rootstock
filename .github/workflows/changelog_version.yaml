@@ -1,0 +1,77 @@
+# SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Greenhouse contributors
+# SPDX-License-Identifier: Apache-2.0
+
+name: Update Changelog and Version
+
+on:
+  workflow_call:
+    inputs:
+      head_ref:
+        type: string
+        required: true
+      pr_number:
+        type: string
+        required: true
+      pr_title:
+        type: string
+        required: true
+      pr_body:
+        type: string
+        required: false
+        default: ""
+      pr_url:
+        type: string
+        required: true
+      base_sha:
+        type: string
+        required: true
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  changelog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.head_ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: git-cliff
+
+      - name: Generate changelog entry from PR
+        env:
+          PR_TITLE: ${{ inputs.pr_title }}
+          PR_BODY: ${{ inputs.pr_body }}
+          PR_NUMBER: ${{ inputs.pr_number }}
+          PR_URL: ${{ inputs.pr_url }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPO: ${{ github.repository }}
+          BASE_SHA: ${{ inputs.base_sha }}
+        run: |
+          PR_AUTHOR=$(gh api "repos/${GITHUB_REPO}/pulls/${PR_NUMBER}" --jq '.user.login')
+
+          if [ -n "$PR_BODY" ]; then
+            commit_msg=$(printf '%s\n\n%s\n\nPR-Number: %s\nPR-Url: %s\nPR-Author: %s' "$PR_TITLE" "$PR_BODY" "$PR_NUMBER" "$PR_URL" "$PR_AUTHOR")
+          else
+            commit_msg=$(printf '%s\n\nPR-Number: %s\nPR-Url: %s\nPR-Author: %s' "$PR_TITLE" "$PR_NUMBER" "$PR_URL" "$PR_AUTHOR")
+          fi
+
+          export COMMIT_MSG="${commit_msg}"
+          export BASE_COMMIT="${BASE_SHA}"
+
+          make generate-changelog
+          make generate-version
+
+      - name: Commit changelog
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md VERSION.yaml
+          git diff --cached --quiet || git commit --signoff -m "chore: update CHANGELOG.md and VERSION.yaml [skip ci]"
+          git push
