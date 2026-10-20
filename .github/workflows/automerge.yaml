@@ -24,7 +24,6 @@ on:
 env:
   TARGET_BRANCH: main
   BLOCKED_LABELS: "invalid,WIP,wip,do-not-merge,DO-NOT-MERGE"
-  DEBUG: false
 
 permissions:
   contents: write
