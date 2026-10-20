@@ -12,9 +12,6 @@ ARG TARGETOS
 ARG TARGETARCH
 
 ARG VERSION
-ARG BUILD_DATE
-ARG GIT_COMMIT
-ARG GIT_TREE_STATE
 
 WORKDIR /src
 
@@ -31,11 +28,7 @@ RUN --mount=type=cache,target=${GOMODCACHE} \
         CGO_ENABLED=0 \
         GOOS=${TARGETOS} \
         GOARCH=${TARGETARCH} \
-        VERSION=${VERSION} \
-        GIT_COMMIT=${GIT_COMMIT} \
-        GIT_TREE_STATE=${GIT_TREE_STATE} \
-        BUILD_DATE=${BUILD_DATE}
-
+        VERSION=${VERSION}
 
 ##########################################################################################
 # Final image

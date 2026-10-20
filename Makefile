@@ -17,7 +17,6 @@ endif
 
 ## Version setting
 VERSION ?= $(shell sed -n 's/^version:[[:space:]]*//p' VERSION.yaml)
-BINARY         := rootstock
 # Container image / local Kubernetes (kind) settings
 IMAGE          ?= ghcr.io/cloudoperators/rootstock:dev-$(USER)
 
@@ -43,9 +42,6 @@ MOCKUP_CONTAINER := redfish-mockup
 
 # Build
 
-# Build metadata stamped into the binary via -ldflags. Each is overridable so
-# the Dockerfile can inject host-computed values (the container build context
-# excludes .git, so git must not be shelled out from inside the image).
 GIT_COMMIT     ?= $(shell git rev-parse HEAD 2>/dev/null)
 GIT_TREE_STATE ?= $(shell if [ -z "$$(git status --porcelain 2>/dev/null)" ]; then echo clean; else echo dirty; fi)
 BUILD_DATE     ?= $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
@@ -57,11 +53,10 @@ build: LDFLAGS    = "-s -w \
 							-X main.buildDate=$(BUILD_DATE)"
 build: ## Compile a static server binary to bin/
 	@echo "$(green) building binary$(reset)"
-	CGO_ENABLED=$(CGO_ENABLED) GOOS=$(OS) GOARCH=$(ARCH) GOFIPS140=certified \
-		go build \
+	CGO_ENABLED=0 go build \
 			-installsuffix 'static' \
 			-ldflags $(LDFLAGS) \
-			-o bin/$(BINARY) \
+			-o bin/rootstock \
 			.
 
 docker-build: ## Build the container image for rootstock
