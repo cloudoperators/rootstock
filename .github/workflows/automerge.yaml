@@ -75,8 +75,9 @@ jobs:
           fi
 
           PR=$(gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" \
-            --json number,title,body,headRefName,baseRefName,baseRefOid,mergeStateStatus,reviewDecision,url,isDraft,labels
+            --json number,title,headRefName,baseRefName,baseRefOid,mergeStateStatus,reviewDecision,url,isDraft,labels
           )
+          PR_BODY=$(gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --json body | jq -r '.body // ""' )
 
           BASE=$(echo "$PR" | jq -r .baseRefName)
           STATE=$(echo "$PR" | jq -r .mergeStateStatus)
@@ -101,7 +102,7 @@ jobs:
               echo "DEBUG: review_decision=$REVIEW ?= CHANGES_REQUESTED OR REVIEW_REQUIRED"
               echo "DEBUG: is_draft=$DRAFT ?= true"
               echo "DEBUG: blocked_label=${BLOCKED_LABEL:-<none>}"
-              echo "DEBUG: pr_json=$(echo "$PR" | jq -c .)"
+              echo "DEBUG: pr_body=$PR_BODY"
             fi
 
             exit 0
@@ -115,7 +116,7 @@ jobs:
             echo "DEBUG: head_ref=$(echo "$PR" | jq -r .headRefName)"
             echo "DEBUG: base_sha=$(echo "$PR" | jq -r .baseRefOid)"
             echo "DEBUG: blocked_label=<none>"
-            echo "DEBUG: pr_body=$(echo "$PR" | jq -r '.body // ""')"
+            eecho "DEBUG: pr_body=$PR_BODY"
           fi
 
           {
@@ -126,7 +127,7 @@ jobs:
             echo "head_ref=$(echo "$PR" | jq -r .headRefName)"
             echo "base_sha=$(echo "$PR" | jq -r .baseRefOid)"
             printf 'pr_body<<__BODY__\n'
-            echo "$PR" | jq -r '.body // ""'
+            echo "$PR"
             printf '__BODY__\n'
           } >> "$GITHUB_OUTPUT"
 
