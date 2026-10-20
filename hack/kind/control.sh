@@ -153,10 +153,6 @@ cmd_prepare() {
     kubectl --context "${CONTEXT}" -n "${CHART_NAMESPACE}" \
         rollout status deploy/redfish-mockup --timeout=120s
 
-    if [[ -z "${REDFISH_PASSWORD_FILE}" ]]; then
-        err "REDFISH_PASSWORD_FILE is not set — point it at a local file holding the redfish password."
-        exit 1
-    fi
     if [[ ! -f "${REDFISH_PASSWORD_FILE}" ]]; then
         err "REDFISH_PASSWORD_FILE '${REDFISH_PASSWORD_FILE}' does not exist or is not a file."
         exit 1

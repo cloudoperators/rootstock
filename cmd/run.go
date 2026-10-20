@@ -26,19 +26,16 @@ const (
 )
 
 var (
-	scrapeTimeoutDefault = 30 * time.Second
-	scrapeTimeoutValue   = scrapeTimeoutDefault
-	pduCredentials       map[string]rest.PDUCredentials
-
 	port = NewParameter(
 		"port", "PORT", "port",
 		"port of the rest server",
 		9220,
 	)
-	scrapeTimeout = NewParameter(
+	scrapeTimeoutValue = 30 * time.Second
+	scrapeTimeout      = NewParameter(
 		"scrape.timeout", "SCRAPE_TIMEOUT", "scrape-timeout",
 		"timeout for scraping upstream APIs (e.g. 15s, 1m)",
-		scrapeTimeoutDefault.String(),
+		scrapeTimeoutValue.String(),
 	)
 )
 
@@ -107,16 +104,18 @@ func registerCredentialsWatchAndRunServer() {
 				return fmt.Errorf("failed to parse credentials file: %w", err)
 			}
 
-			pduCredentials = newCreds
-
-			keys := make([]string, 0, len(pduCredentials))
-			for k := range pduCredentials {
+			keys := make([]string, 0, len(newCreds))
+			for k := range newCreds {
 				keys = append(keys, k)
 			}
 
 			logger.Debug("pdu credentials registered", "pdus", keys)
 
-			dynamicRunServer(logger)
+			if len(newCreds) == 0 {
+				logger.Warn("credentials file parsed but contains no PDUs — all probe requests will be rejected")
+			}
+
+			dynamicRunServer(logger, newCreds)
 
 			return nil
 		},
@@ -124,7 +123,7 @@ func registerCredentialsWatchAndRunServer() {
 	fatalOnError(err, fmt.Sprintf("failed to register file watch on %q", file))
 }
 
-func dynamicRunServer(l log.FullInterface) {
+func dynamicRunServer(l log.FullInterface, creds map[string]rest.PDUCredentials) {
 	serverLock.Lock()
 	defer serverLock.Unlock()
 
@@ -135,7 +134,7 @@ func dynamicRunServer(l log.FullInterface) {
 	server = rest.New(
 		port.Value(),
 		l,
-		pduCredentials,
+		creds,
 		scrapeTimeoutValue,
 	)
 	l.Info("starting HTTP server", "port", port.Value())

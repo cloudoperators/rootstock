@@ -133,8 +133,8 @@ func (s *server) probeHandler() http.HandlerFunc {
 		// Read PDU ID from "labels" query parameter
 		pduID := req.URL.Query().Get("labels")
 		if pduID == "" {
-			http.Error(w, "labels parameter is required", http.StatusBadRequest)
-			s.log.Warn("probe request missing labels parameter")
+			http.Error(w, "labels parameter is required (must be the PDU ID)", http.StatusBadRequest)
+			s.log.Warn("probe request missing labels parameter (PDU ID)")
 
 			return
 		}
