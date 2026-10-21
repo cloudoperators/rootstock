@@ -70,6 +70,7 @@ jobs:
           esac
 
           if [ -z "$PR_NUMBER" ]; then
+             echo "DEBUG: PR_NUMBER is empty - aborting"
             echo "eligible=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
