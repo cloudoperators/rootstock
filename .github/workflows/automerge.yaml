@@ -18,7 +18,7 @@ on:
       debug:
         description: enable for debug output
         required: false
-        default: false
+        default: True
         type: boolean
 
 env:
