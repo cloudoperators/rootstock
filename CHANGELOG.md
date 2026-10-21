@@ -10,7 +10,7 @@ and this project adheres to
 
 ## 2026-10-20
 
-- (0.2.0 - 🚀) tooling: Local kind deployment in
+- (0.2.0 - 🚀) tooling: Local kind deployment
   [#80](https://github.com/cloudoperators/rootstock/pull/80)
   ([diff](https://github.com/cloudoperators/rootstock/compare/v0.1.0...v0.2.0))
   by [@mtrx1337](https://github.com/mtrx1337)
