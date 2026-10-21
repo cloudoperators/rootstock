@@ -48,8 +48,8 @@ body = """
 - ({{ version | default(value="unreleased") | trim_start_matches(pat="v") }} - {% if commit.breaking %}❗ {% endif %}{{ type_icon }}) \
 {% if commit.scope %}{{ commit.scope }}: {% endif %}\
 {{ commit.message | upper_first | trim }}\
-{% if commit.remote.pr_number and commit.remote.pr_url %} in [#{{ commit.remote.pr_number }}]({{ commit.remote.pr_url }})\
-{% elif fp_num and fp_url %} in [#{{ fp_num.value }}]({{ fp_url.value }})\
+{% if commit.remote.pr_number and commit.remote.pr_url %} [#{{ commit.remote.pr_number }}]({{ commit.remote.pr_url }})\
+{% elif fp_num and fp_url %} [#{{ fp_num.value }}]({{ fp_url.value }})\
 {% endif %}\
 {% if diff_url %} ([diff]({{ diff_url }})) {% endif %}\
 {% if commit.remote.username %} by [@{{ commit.remote.username }}](https://github.com/{{ commit.remote.username }})\
