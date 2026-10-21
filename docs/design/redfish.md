@@ -40,48 +40,48 @@ We decided to implement **raw Redfish** for the following reasons:
 
 ## Client Structure
 
-The Redfish client is implemented as a Go struct with the following fields:
+The Redfish client is implemented using an interface-based design with a
+concrete implementation called `ClientImpl`. The implementation maintains the
+following fields:
 
-```go
-type Client struct {
-    baseURL    *url.URL      // Base URL of the PDU Redfish API (e.g., https://pdu01.example.com)
-    httpClient *http.Client  // HTTP client with timeout and TLS configuration
+**ClientImpl Structure:**
 
-    username   string        // Authentication username
-    password   string        // Authentication password
-
-    authToken  string        // Session authentication token (X-Auth-Token)
-    sessionURL string        // Session URL for logout
-
-    logger     *slog.Logger  // Structured logger for debugging and audit
-}
-```
+- **baseURL**: A parsed URL object containing the base address of the PDU
+  Redfish API (for example, https://pdu01.example.com)
+- **httpClient**: An HTTP client configured with timeout settings and TLS
+  security options
+- **username**: The authentication username for connecting to the PDU
+- **password**: The authentication password for connecting to the PDU
+- **authToken**: The session authentication token (X-Auth-Token) received after
+  successful login, used for subsequent API requests
+- **sessionURL**: The session URL path needed to properly logout and clean up
+  the session
+- **logger**: A structured logger (MinInterface) for debugging and audit trail
+  purposes
+- **timeout**: A configurable timeout duration for HTTP requests
 
 ### Client Constructor
 
-```go
-func NewClient(baseURL, username, password string) (*Client, error) {
-    parsedURL, err := url.Parse(baseURL)
-    if err != nil {
-        return nil, fmt.Errorf("invalid base URL: %w", err)
-    }
+The `NewClient` function creates and initializes a new Redfish client instance.
+It takes five parameters: a parsed base URL, a logger interface, username,
+password, and timeout duration.
 
-    return &Client{
-        baseURL:    parsedURL,
-        username:   username,
-        password:   password,
-        httpClient: &http.Client{
-            Timeout: 10 * time.Second,
-            Transport: &http.Transport{
-                TLSClientConfig: &tls.Config{
-                    InsecureSkipVerify: false, // Set to true only for development
-                },
-            },
-        },
-        logger: slog.Default(),
-    }, nil
-}
-```
+**Initialization steps:**
+
+1. **Logger Validation**: If no logger is provided (nil), a default logger is
+   assigned to ensure logging is always available.
+2. **Client Creation**: A new ClientImpl instance is created with:
+   - The provided parsed base URL
+   - The provided or default logger
+   - The username and password credentials
+   - The specified timeout duration
+   - An HTTP client configured with:
+     - The specified timeout for all requests
+     - TLS (Transport Layer Security) configuration with certificate
+       verification enabled by default (InsecureSkipVerify is set to false)
+   - Empty authToken and sessionURL (these are populated after successful login)
+
+The function returns the initialized client ready for use.
 
 ## Authentication Flow
 
