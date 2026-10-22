@@ -65,7 +65,7 @@ jobs:
             pr_number=$(resolve_pr_number)
 
             if [ -z "$pr_number" ]; then
-              echo "DEBUG: PR_NUMBER is empty - aborting"
+              [ "$DEBUG" = "true" ] && echo "DEBUG: PR_NUMBER is empty - aborting"
               echo "eligible=false" >> "$GITHUB_OUTPUT"
               return
             fi
@@ -128,15 +128,16 @@ jobs:
             teams=$(printf '%s' "$codeowners_raw" \
               | grep -v '^#' | grep -v '^[[:space:]]*$' \
               | grep -oE '@[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+' | sed 's/@//')
-            users=$(printf '%s' "$codeowners_raw" \
+            allowed_approvers=$(printf '%s' "$codeowners_raw" \
               | grep -v '^#' | grep -v '^[[:space:]]*$' \
-              | grep -oE '@[a-zA-Z0-9_.-]+' | grep -v '/' | sed 's/@//')
+              | sed 's/@[a-zA-Z0-9_.-]*\/[a-zA-Z0-9_.-]*//g' \
+              | grep -oE '@[a-zA-Z0-9_.-]+' | sed 's/@//')
 
             approved_logins=$(echo "$REVIEWS" \
               | jq -r '[.[] | select(.state == "APPROVED") | .login] | .[]')
 
             for login in $approved_logins; do
-              if printf '%s\n' "$users" | grep -qx "$login"; then
+              if printf '%s\n' "$allowed_approvers" | grep -qx "$login"; then
                 return 0
               fi
               for team in $teams; do
@@ -155,7 +156,7 @@ jobs:
           # check_eligibility: evaluates all conditions and returns 0 (eligible) or 1 (not)
           # ---------------------------------------------------------------------------
           check_eligibility() {
-            local base state draft blocked_label pending_reviews changes_requested codeowner_approved
+            local base state draft blocked_label pending_reviews changes_requested codeowner_approved eligible
 
             base=$(echo "$PR" | jq -r .baseRefName)
             state=$(echo "$PR" | jq -r .mergeStateStatus)
@@ -164,7 +165,7 @@ jobs:
               ($bl | split(",")) as $list | .labels[].name | select(IN($list[]))
             ' | head -1)
             pending_reviews=$(echo "$PR" | jq -r '
-              [.reviewRequests[].login | select(test("copilot"; "i") | not)] | length'
+              [.reviewRequests[] | select(.login != null) | .login | select(test("copilot"; "i") | not)] | length'
             )
             changes_requested=$(echo "$REVIEWS" \
               | jq '[.[] | select(.state == "CHANGES_REQUESTED")] | length')
