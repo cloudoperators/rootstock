@@ -183,7 +183,7 @@ jobs:
             debug_eligibility "$eligible" "$base" "$state" "$changes_requested" \
               "$codeowner_approved" "$pending_reviews" "$draft" "$blocked_label"
             
-            if [[ "$eligible"=="true" ]]; then
+            if [[ "$eligible" == "true" ]]; then
               return 0
             else
               return 1
