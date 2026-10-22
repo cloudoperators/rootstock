@@ -60,10 +60,6 @@ jobs:
               PR_NUMBER="$REVIEW_PR"
               ;;
             workflow_run)
-              if [ "$WORKFLOW_CONCLUSION" != "success" ]; then
-                echo "eligible=false" >> "$GITHUB_OUTPUT"
-                exit 0
-              fi
               PR_NUMBER=$(echo "$WORKFLOW_PRS" \
                 | jq -r 'if length > 0 then .[0].number else empty end')
               ;;
