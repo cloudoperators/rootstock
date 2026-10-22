@@ -72,22 +72,64 @@ jobs:
           fi
 
           PR=$(gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" \
-            --json number,title,headRefName,baseRefName,baseRefOid,mergeStateStatus,reviewDecision,url,isDraft,labels
+            --json number,title,headRefName,baseRefName,baseRefOid,mergeStateStatus,url,isDraft,labels,reviewRequests
           )
-          PR_BODY=$(gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --json body | jq -r '.body // ""' )
+          PR_BODY=$(gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --json body | jq -r '.body // ""')
 
           BASE=$(echo "$PR" | jq -r .baseRefName)
           STATE=$(echo "$PR" | jq -r .mergeStateStatus)
-          REVIEW=$(echo "$PR" | jq -r '.reviewDecision // empty')
           DRAFT=$(echo "$PR" | jq -r .isDraft)
           BLOCKED_LABEL=$(echo "$PR" | jq -r --arg bl "$BLOCKED_LABELS" '
             ($bl | split(",")) as $list | .labels[].name | select(IN($list[]))
           ' | head -1)
 
+          # Re-review requested by any non-Copilot reviewer means the latest approval is stale
+          PENDING_REVIEWS=$(echo "$PR" | jq -r '[.reviewRequests[].login] | length')
+
+          # Latest review state per reviewer (most recent submission wins)
+          REVIEWS=$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/reviews" \
+            --paginate \
+            --jq 'group_by(.user.login) | map(max_by(.submitted_at)) | map({login: .user.login, state})'
+          )
+
+          # Any reviewer whose latest review requests changes blocks the merge
+          CHANGES_REQUESTED=$(echo "$REVIEWS" | jq '[.[] | select(.state == "CHANGES_REQUESTED")] | length')
+
+          # Resolve codeowners from .github/CODEOWNERS (individual users and org teams)
+          CODEOWNERS_RAW=$(gh api "repos/${GITHUB_REPOSITORY}/contents/.github/CODEOWNERS" \
+            --jq '.content' | base64 -d)
+          CODEOWNER_TEAMS=$(printf '%s' "$CODEOWNERS_RAW" \
+            | grep -v '^#' | grep -v '^[[:space:]]*$' \
+            | grep -oE '@[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+' | sed 's/@//')
+          CODEOWNER_USERS=$(printf '%s' "$CODEOWNERS_RAW" \
+            | grep -v '^#' | grep -v '^[[:space:]]*$' \
+            | grep -oE '@[a-zA-Z0-9_.-]+' | grep -v '/' | sed 's/@//')
+
+          # At least one codeowner must have APPROVED as their latest review
+          APPROVED_LOGINS=$(echo "$REVIEWS" \
+            | jq -r '[.[] | select(.state == "APPROVED") | .login] | .[]')
+
+          CODEOWNER_APPROVED="false"
+          for login in $APPROVED_LOGINS; do
+            if printf '%s\n' "$CODEOWNER_USERS" | grep -qx "$login"; then
+              CODEOWNER_APPROVED="true"
+              break
+            fi
+            for team in $CODEOWNER_TEAMS; do
+              org="${team%%/*}"
+              slug="${team##*/}"
+              if gh api "orgs/${org}/teams/${slug}/memberships/${login}" --silent >/dev/null 2>&1; then
+                CODEOWNER_APPROVED="true"
+                break 2
+              fi
+            done
+          done
+
           if [ "$BASE" != "$TARGET_BRANCH" ] \
             || [ "$STATE" != "CLEAN" ] \
-            || [ "$REVIEW" = "CHANGES_REQUESTED" ] \
-            || [ "$REVIEW" = "REVIEW_REQUIRED" ] \
+            || [ "$CHANGES_REQUESTED" -gt 0 ] \
+            || [ "$CODEOWNER_APPROVED" != "true" ] \
+            || [ "$PENDING_REVIEWS" -gt 0 ] \
             || [ "$DRAFT" = "true" ] \
             || [ -n "$BLOCKED_LABEL" ]; then
             echo "eligible=false" >> "$GITHUB_OUTPUT"
@@ -96,7 +138,9 @@ jobs:
               echo "DEBUG: pr_number=$(echo "$PR" | jq -r .number)"
               echo "DEBUG: base=$BASE ?= $TARGET_BRANCH"
               echo "DEBUG: merge_state_status=$STATE ?= NOT CLEAN"
-              echo "DEBUG: review_decision=$REVIEW ?= CHANGES_REQUESTED OR REVIEW_REQUIRED"
+              echo "DEBUG: changes_requested=$CHANGES_REQUESTED ?= 0"
+              echo "DEBUG: codeowner_approved=$CODEOWNER_APPROVED ?= true"
+              echo "DEBUG: pending_reviews=$PENDING_REVIEWS ?= 0"
               echo "DEBUG: is_draft=$DRAFT ?= true"
               echo "DEBUG: blocked_label=${BLOCKED_LABEL:-<none>}"
               echo "DEBUG: pr_body=$PR_BODY"
@@ -113,6 +157,9 @@ jobs:
             echo "DEBUG: head_ref=$(echo "$PR" | jq -r .headRefName)"
             echo "DEBUG: base_sha=$(echo "$PR" | jq -r .baseRefOid)"
             echo "DEBUG: blocked_label=<none>"
+            echo "DEBUG: changes_requested=0"
+            echo "DEBUG: codeowner_approved=true"
+            echo "DEBUG: pending_reviews=0"
             echo "DEBUG: pr_body=$PR_BODY"
           fi
 
