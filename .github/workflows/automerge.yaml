@@ -159,8 +159,8 @@ jobs:
               ($bl | split(",")) as $list | .labels[].name | select(IN($list[]))
             ' | head -1)
             pending_reviews=$(echo "$PR" | jq -r '
-              [.reviewRequests[].requestedReviewer.login
-                | select(test("copilot"; "i") | not)] | length')
+              [.reviewRequests[].login | select(test("copilot"; "i") | not)] | length'
+            )
             changes_requested=$(echo "$REVIEWS" \
               | jq '[.[] | select(.state == "CHANGES_REQUESTED")] | length')
 
