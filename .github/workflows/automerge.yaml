@@ -72,13 +72,14 @@ jobs:
           fi
 
           PR=$(gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" \
-            --json number,title,headRefName,baseRefName,baseRefOid,mergeStateStatus,reviewDecision,url,isDraft,labels
+            --json number,title,headRefName,baseRefName,baseRefOid,mergeStateStatus,reviewDecision,url,isDraft,labels,reviewRequests
           )
           PR_BODY=$(gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --json body | jq -r '.body // ""' )
 
           BASE=$(echo "$PR" | jq -r .baseRefName)
           STATE=$(echo "$PR" | jq -r .mergeStateStatus)
           REVIEW=$(echo "$PR" | jq -r '.reviewDecision // empty')
+          PENDING_REVIEWS=$(echo "$PR" | jq -r '.reviewRequests | length')
           DRAFT=$(echo "$PR" | jq -r .isDraft)
           BLOCKED_LABEL=$(echo "$PR" | jq -r --arg bl "$BLOCKED_LABELS" '
             ($bl | split(",")) as $list | .labels[].name | select(IN($list[]))
@@ -88,6 +89,8 @@ jobs:
             || [ "$STATE" != "CLEAN" ] \
             || [ "$REVIEW" = "CHANGES_REQUESTED" ] \
             || [ "$REVIEW" = "REVIEW_REQUIRED" ] \
+            || [ "$REVIEW" != "APPROVED" ] \
+            || [ "$PENDING_REVIEWS" -gt 0 ] \
             || [ "$DRAFT" = "true" ] \
             || [ -n "$BLOCKED_LABEL" ]; then
             echo "eligible=false" >> "$GITHUB_OUTPUT"
@@ -96,7 +99,8 @@ jobs:
               echo "DEBUG: pr_number=$(echo "$PR" | jq -r .number)"
               echo "DEBUG: base=$BASE ?= $TARGET_BRANCH"
               echo "DEBUG: merge_state_status=$STATE ?= NOT CLEAN"
-              echo "DEBUG: review_decision=$REVIEW ?= CHANGES_REQUESTED OR REVIEW_REQUIRED"
+              echo "DEBUG: review_decision=$REVIEW ?= CHANGES_REQUESTED OR REVIEW_REQUIRED OR NOT APPROVED"
+              echo "DEBUG: pending_reviews=$PENDING_REVIEWS ?= 0"
               echo "DEBUG: is_draft=$DRAFT ?= true"
               echo "DEBUG: blocked_label=${BLOCKED_LABEL:-<none>}"
               echo "DEBUG: pr_body=$PR_BODY"
@@ -113,6 +117,7 @@ jobs:
             echo "DEBUG: head_ref=$(echo "$PR" | jq -r .headRefName)"
             echo "DEBUG: base_sha=$(echo "$PR" | jq -r .baseRefOid)"
             echo "DEBUG: blocked_label=<none>"
+            echo "DEBUG: pending_reviews=0"
             echo "DEBUG: pr_body=$PR_BODY"
           fi
 
