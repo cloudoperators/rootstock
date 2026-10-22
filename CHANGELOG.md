@@ -8,12 +8,24 @@ and this project adheres to
 
 <!-- git-cliff: end of header -->
 
-## 2026-10-20
+## 2026-10-22
 
 - (0.2.0 - 🚀) tooling: Local kind deployment
   [#80](https://github.com/cloudoperators/rootstock/pull/80)
   ([diff](https://github.com/cloudoperators/rootstock/compare/v0.1.0...v0.2.0))
   by [@mtrx1337](https://github.com/mtrx1337)
+- (0.2.0 - 🐛) tooling: Automerge with multiline pr description
+  [#96](https://github.com/cloudoperators/rootstock/pull/96)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.1.0...v0.2.0))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.2.0 - 📝) redfish: Remove code snippets from redfish.md
+  [#97](https://github.com/cloudoperators/rootstock/pull/97)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.1.0...v0.2.0))
+  by [@idafurjes](https://github.com/idafurjes)
+- (0.2.0 - 🐛) automerge: Workflow run case breaks off too early
+  [#98](https://github.com/cloudoperators/rootstock/pull/98)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.1.0...v0.2.0))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
 
 ## 2026-10-20
 
