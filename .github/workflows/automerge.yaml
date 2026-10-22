@@ -24,6 +24,7 @@ on:
 env:
   TARGET_BRANCH: main
   BLOCKED_LABELS: "invalid,WIP,wip,do-not-merge,DO-NOT-MERGE"
+  DEBUG: ${{ inputs.debug || vars.DEBUG || 'false' }}
 
 permissions:
   contents: write
@@ -50,130 +51,191 @@ jobs:
           REVIEW_PR: ${{ github.event.pull_request.number }}
           WORKFLOW_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
           WORKFLOW_PRS: ${{ toJson(github.event.workflow_run.pull_requests) }}
-          DEBUG: ${{ inputs.debug }}
         run: |
-          case "$EVENT_NAME" in
-            workflow_dispatch)
-              PR_NUMBER="$DISPATCH_PR"
-              ;;
-            pull_request_review)
-              PR_NUMBER="$REVIEW_PR"
-              ;;
-            workflow_run)
-              PR_NUMBER=$(echo "$WORKFLOW_PRS" \
-                | jq -r 'if length > 0 then .[0].number else empty end')
-              ;;
-          esac
+          # ---------------------------------------------------------------------------
+          # main
+          # ---------------------------------------------------------------------------
+          main() {
+            local pr_number
+            pr_number=$(resolve_pr_number)
 
-          if [ -z "$PR_NUMBER" ]; then
-             echo "DEBUG: PR_NUMBER is empty - aborting"
-            echo "eligible=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          PR=$(gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" \
-            --json number,title,headRefName,baseRefName,baseRefOid,mergeStateStatus,url,isDraft,labels,reviewRequests
-          )
-          PR_BODY=$(gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --json body | jq -r '.body // ""')
-
-          BASE=$(echo "$PR" | jq -r .baseRefName)
-          STATE=$(echo "$PR" | jq -r .mergeStateStatus)
-          DRAFT=$(echo "$PR" | jq -r .isDraft)
-          BLOCKED_LABEL=$(echo "$PR" | jq -r --arg bl "$BLOCKED_LABELS" '
-            ($bl | split(",")) as $list | .labels[].name | select(IN($list[]))
-          ' | head -1)
-
-          # Re-review requested by any non-Copilot reviewer means the latest approval is stale
-          PENDING_REVIEWS=$(echo "$PR" | jq -r '[.reviewRequests[].login] | length')
-
-          # Latest review state per reviewer (most recent submission wins)
-          REVIEWS=$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/reviews" \
-            --paginate \
-            --jq 'group_by(.user.login) | map(max_by(.submitted_at)) | map({login: .user.login, state})'
-          )
-
-          # Any reviewer whose latest review requests changes blocks the merge
-          CHANGES_REQUESTED=$(echo "$REVIEWS" | jq '[.[] | select(.state == "CHANGES_REQUESTED")] | length')
-
-          # Resolve codeowners from .github/CODEOWNERS (individual users and org teams)
-          CODEOWNERS_RAW=$(gh api "repos/${GITHUB_REPOSITORY}/contents/.github/CODEOWNERS" \
-            --jq '.content' | base64 -d)
-          CODEOWNER_TEAMS=$(printf '%s' "$CODEOWNERS_RAW" \
-            | grep -v '^#' | grep -v '^[[:space:]]*$' \
-            | grep -oE '@[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+' | sed 's/@//')
-          CODEOWNER_USERS=$(printf '%s' "$CODEOWNERS_RAW" \
-            | grep -v '^#' | grep -v '^[[:space:]]*$' \
-            | grep -oE '@[a-zA-Z0-9_.-]+' | grep -v '/' | sed 's/@//')
-
-          # At least one codeowner must have APPROVED as their latest review
-          APPROVED_LOGINS=$(echo "$REVIEWS" \
-            | jq -r '[.[] | select(.state == "APPROVED") | .login] | .[]')
-
-          CODEOWNER_APPROVED="false"
-          for login in $APPROVED_LOGINS; do
-            if printf '%s\n' "$CODEOWNER_USERS" | grep -qx "$login"; then
-              CODEOWNER_APPROVED="true"
-              break
+            if [ -z "$pr_number" ]; then
+              echo "DEBUG: PR_NUMBER is empty - aborting"
+              echo "eligible=false" >> "$GITHUB_OUTPUT"
+              return
             fi
-            for team in $CODEOWNER_TEAMS; do
-              org="${team%%/*}"
-              slug="${team##*/}"
-              if gh api "orgs/${org}/teams/${slug}/memberships/${login}" --silent >/dev/null 2>&1; then
-                CODEOWNER_APPROVED="true"
-                break 2
+
+            fetch_pr "$pr_number"
+            fetch_reviews "$pr_number"
+
+            if check_eligibility; then
+              emit_outputs
+            else
+              echo "eligible=false" >> "$GITHUB_OUTPUT"
+            fi
+          }
+
+          # ---------------------------------------------------------------------------
+          # resolve_pr_number: returns the PR number for the current trigger event
+          # ---------------------------------------------------------------------------
+          resolve_pr_number() {
+            case "$EVENT_NAME" in
+              workflow_dispatch)   echo "$DISPATCH_PR" ;;
+              pull_request_review) echo "$REVIEW_PR" ;;
+              workflow_run)
+                echo "$WORKFLOW_PRS" \
+                  | jq -r 'if length > 0 then .[0].number else empty end'
+                ;;
+            esac
+          }
+
+          # ---------------------------------------------------------------------------
+          # fetch_pr <pr_number>: populates globals PR and PR_BODY
+          # ---------------------------------------------------------------------------
+          fetch_pr() {
+            local pr_number="$1"
+            PR=$(gh pr view "$pr_number" --repo "$GITHUB_REPOSITORY" \
+              --json number,title,headRefName,baseRefName,baseRefOid,mergeStateStatus,url,isDraft,labels,reviewRequests)
+            PR_BODY=$(gh pr view "$pr_number" --repo "$GITHUB_REPOSITORY" \
+              --json body | jq -r '.body // ""')
+          }
+
+          # ---------------------------------------------------------------------------
+          # fetch_reviews <pr_number>: populates global REVIEWS as [{login, state}],
+          # keeping only the latest review per reviewer
+          # ---------------------------------------------------------------------------
+          fetch_reviews() {
+            local pr_number="$1"
+            REVIEWS=$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${pr_number}/reviews" \
+              --paginate \
+              --jq 'group_by(.user.login) | map(max_by(.submitted_at)) | map({login: .user.login, state})')
+          }
+
+          # ---------------------------------------------------------------------------
+          # has_codeowner_approved: returns 0 if a codeowner's latest review is APPROVED
+          # Reads individual @users and @org/teams from .github/CODEOWNERS
+          # ---------------------------------------------------------------------------
+          has_codeowner_approved() {
+            local codeowners_raw teams users approved_logins login team org slug
+
+            codeowners_raw=$(gh api "repos/${GITHUB_REPOSITORY}/contents/.github/CODEOWNERS" \
+              --jq '.content' | base64 -d)
+            teams=$(printf '%s' "$codeowners_raw" \
+              | grep -v '^#' | grep -v '^[[:space:]]*$' \
+              | grep -oE '@[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+' | sed 's/@//')
+            users=$(printf '%s' "$codeowners_raw" \
+              | grep -v '^#' | grep -v '^[[:space:]]*$' \
+              | grep -oE '@[a-zA-Z0-9_.-]+' | grep -v '/' | sed 's/@//')
+
+            approved_logins=$(echo "$REVIEWS" \
+              | jq -r '[.[] | select(.state == "APPROVED") | .login] | .[]')
+
+            for login in $approved_logins; do
+              if printf '%s\n' "$users" | grep -qx "$login"; then
+                return 0
               fi
+              for team in $teams; do
+                org="${team%%/*}"
+                slug="${team##*/}"
+                if gh api "orgs/${org}/teams/${slug}/memberships/${login}" \
+                    --silent >/dev/null 2>&1; then
+                  return 0
+                fi
+              done
             done
-          done
+            return 1
+          }
 
-          if [ "$BASE" != "$TARGET_BRANCH" ] \
-            || [ "$STATE" != "CLEAN" ] \
-            || [ "$CHANGES_REQUESTED" -gt 0 ] \
-            || [ "$CODEOWNER_APPROVED" != "true" ] \
-            || [ "$PENDING_REVIEWS" -gt 0 ] \
-            || [ "$DRAFT" = "true" ] \
-            || [ -n "$BLOCKED_LABEL" ]; then
-            echo "eligible=false" >> "$GITHUB_OUTPUT"
+          # ---------------------------------------------------------------------------
+          # check_eligibility: evaluates all conditions and returns 0 (eligible) or 1 (not)
+          # ---------------------------------------------------------------------------
+          check_eligibility() {
+            local base state draft blocked_label pending_reviews changes_requested codeowner_approved
 
-            if [ "$DEBUG" = "true" ]; then
-              echo "DEBUG: pr_number=$(echo "$PR" | jq -r .number)"
-              echo "DEBUG: base=$BASE ?= $TARGET_BRANCH"
-              echo "DEBUG: merge_state_status=$STATE ?= NOT CLEAN"
-              echo "DEBUG: changes_requested=$CHANGES_REQUESTED ?= 0"
-              echo "DEBUG: codeowner_approved=$CODEOWNER_APPROVED ?= true"
-              echo "DEBUG: pending_reviews=$PENDING_REVIEWS ?= 0"
-              echo "DEBUG: is_draft=$DRAFT ?= true"
-              echo "DEBUG: blocked_label=${BLOCKED_LABEL:-<none>}"
-              echo "DEBUG: pr_body=$PR_BODY"
+            base=$(echo "$PR" | jq -r .baseRefName)
+            state=$(echo "$PR" | jq -r .mergeStateStatus)
+            draft=$(echo "$PR" | jq -r .isDraft)
+            blocked_label=$(echo "$PR" | jq -r --arg bl "$BLOCKED_LABELS" '
+              ($bl | split(",")) as $list | .labels[].name | select(IN($list[]))
+            ' | head -1)
+            pending_reviews=$(echo "$PR" | jq -r '
+              [.reviewRequests[].requestedReviewer.login
+                | select(test("copilot"; "i") | not)] | length')
+            changes_requested=$(echo "$REVIEWS" \
+              | jq '[.[] | select(.state == "CHANGES_REQUESTED")] | length')
+
+            if has_codeowner_approved; then codeowner_approved="true"
+            else                            codeowner_approved="false"
             fi
 
-            exit 0
-          fi
+            eligible="true"
 
-          if [ "$DEBUG" = "true" ]; then
-            echo "DEBUG: eligible=true"
+            if [ "$base" != "$TARGET_BRANCH" ] \
+              || [ "$state" != "CLEAN" ] \
+              || [ "$changes_requested" -gt 0 ] \
+              || [ "$codeowner_approved" != "true" ] \
+              || [ "$pending_reviews" -gt 0 ] \
+              || [ "$draft" = "true" ] \
+              || [ -n "$blocked_label" ]; then
+              eligible="false"
+            fi
+
+            debug_eligibility "$eligible" "$base" "$state" "$changes_requested" \
+              "$codeowner_approved" "$pending_reviews" "$draft" "$blocked_label"
+            
+            if [[ "$eligible"=="true" ]]; then
+              return 0
+            else
+              return 1
+            fi
+          }
+
+          # ---------------------------------------------------------------------------
+          # debug_eligibility <eligible> <base> <state> <changes_requested>
+          #                   <codeowner_approved> <pending_reviews> <draft> <blocked_label>
+          # Prints all eligibility conditions; no-ops when DEBUG != true
+          # ---------------------------------------------------------------------------
+          debug_eligibility() {
+            [ "$DEBUG" != "true" ] && return
+            local eligible="$1" base="$2" state="$3" changes_requested="$4" \
+                  codeowner_approved="$5" pending_reviews="$6" draft="$7" blocked_label="$8"
+
+            echo "DEBUG: eligible=$eligible"
             echo "DEBUG: pr_number=$(echo "$PR" | jq -r .number)"
-            echo "DEBUG: pr_title=$(echo "$PR" | jq -r .title)"
-            echo "DEBUG: pr_url=$(echo "$PR" | jq -r .url)"
-            echo "DEBUG: head_ref=$(echo "$PR" | jq -r .headRefName)"
-            echo "DEBUG: base_sha=$(echo "$PR" | jq -r .baseRefOid)"
-            echo "DEBUG: blocked_label=<none>"
-            echo "DEBUG: changes_requested=0"
-            echo "DEBUG: codeowner_approved=true"
-            echo "DEBUG: pending_reviews=0"
+            if [ "$eligible" = "true" ]; then
+              echo "DEBUG: pr_title=$(echo "$PR" | jq -r .title)"
+              echo "DEBUG: pr_url=$(echo "$PR" | jq -r .url)"
+              echo "DEBUG: head_ref=$(echo "$PR" | jq -r .headRefName)"
+              echo "DEBUG: base_sha=$(echo "$PR" | jq -r .baseRefOid)"
+            fi
+            echo "DEBUG: base=$base ?= $TARGET_BRANCH"
+            echo "DEBUG: merge_state_status=$state ?= NOT CLEAN"
+            echo "DEBUG: changes_requested=$changes_requested ?= 0"
+            echo "DEBUG: codeowner_approved=$codeowner_approved ?= true"
+            echo "DEBUG: pending_reviews=$pending_reviews ?= 0"
+            echo "DEBUG: is_draft=$draft ?= true"
+            echo "DEBUG: blocked_label=${blocked_label:-<none>}"
             echo "DEBUG: pr_body=$PR_BODY"
-          fi
+          }
 
-          {
-            echo "eligible=true"
-            echo "pr_number=$(echo "$PR" | jq -r .number)"
-            echo "pr_title=$(echo "$PR" | jq -r .title)"
-            echo "pr_url=$(echo "$PR" | jq -r .url)"
-            echo "head_ref=$(echo "$PR" | jq -r .headRefName)"
-            echo "base_sha=$(echo "$PR" | jq -r .baseRefOid)"
-            printf 'pr_body<<__BODY__\n'
-            printf '%s\n' "$PR_BODY"
-            printf '__BODY__\n'
-          } >> "$GITHUB_OUTPUT"
+          # ---------------------------------------------------------------------------
+          # emit_outputs: writes eligible=true and all PR fields to GITHUB_OUTPUT
+          # ---------------------------------------------------------------------------
+          emit_outputs() {
+            {
+              echo "eligible=true"
+              echo "pr_number=$(echo "$PR" | jq -r .number)"
+              echo "pr_title=$(echo "$PR" | jq -r .title)"
+              echo "pr_url=$(echo "$PR" | jq -r .url)"
+              echo "head_ref=$(echo "$PR" | jq -r .headRefName)"
+              echo "base_sha=$(echo "$PR" | jq -r .baseRefOid)"
+              printf 'pr_body<<__BODY__\n'
+              printf '%s\n' "$PR_BODY"
+              printf '__BODY__\n'
+            } >> "$GITHUB_OUTPUT"
+          }
+
+          main
 
   update-changelog-and-version:
     needs: check-eligibility
