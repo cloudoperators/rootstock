@@ -42,10 +42,15 @@ jobs:
       head_ref: ${{ steps.check.outputs.head_ref }}
       base_sha: ${{ steps.check.outputs.base_sha }}
     steps:
+      - uses: actions/create-github-app-token@v2
+        id: app-token
+        with:
+          app-id: ${{ secrets.CLOUDOPERATOR_APP_ID }}
+          private-key: ${{ secrets.CLOUDOPERATOR_APP_PRIVATE_KEY }}
       - name: Check PR eligibility
         id: check
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
           EVENT_NAME: ${{ github.event_name }}
           DISPATCH_PR: ${{ inputs.pr_number }}
           REVIEW_PR: ${{ github.event.pull_request.number }}
