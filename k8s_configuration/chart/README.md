@@ -52,10 +52,10 @@ mounted file** and never passes credentials as environment variables.
 
 There are two mutually exclusive ways to provide credentials:
 
-| Mode                | Value                                      | Use case                                                       |
-| ------------------- | ------------------------------------------ | -------------------------------------------------------------- |
-| **Existing Secret** | `rootstock.redfish.existingSecret: <name>` | Production; Secret managed outside the chart.                  |
-| **Inline**          | `rootstock.redfish.access: {pdu1: {...}}`  | Self-contained / local (kind) runs; the chart renders a Secret.|
+| Mode                | Value                                      | Use case                                                        |
+| ------------------- | ------------------------------------------ | --------------------------------------------------------------- |
+| **Existing Secret** | `rootstock.redfish.existingSecret: <name>` | Production; Secret managed outside the chart.                   |
+| **Inline**          | `rootstock.redfish.access: {pdu1: {...}}`  | Self-contained / local (kind) runs; the chart renders a Secret. |
 
 In both modes the Secret must contain the key `redfish_pdus.yaml` in this
 format:
@@ -77,18 +77,18 @@ directly via `optionValues` if the Plugin operator supports map values.
 See [`values.yaml`](./values.yaml) for the full list and inline documentation.
 Key options:
 
-| Key                                  | Default                            | Description                                   |
-| ------------------------------------ | ---------------------------------- | --------------------------------------------- |
-| `image.repository`                   | `ghcr.io/cloudoperators/rootstock` | Image repository.                             |
-| `image.tag`                          | `""` (chart appVersion)            | Image tag.                                    |
-| `rootstock.redfish.username`         | `redfish`                          | Redfish auth username.                        |
-| `rootstock.redfish.existingSecret`   | `""`                               | Pre-created Secret holding credentials.       |
-| `rootstock.redfish.access`           | `{pdu1: {username: redfish, ...}}` | Inline per-PDU credentials (renders a Secret).|
-| `rootstock.config.folder`            | `/config`                          | Mount directory for config and credentials.   |
-| `rootstock.port`                     | `9220`                             | Container port.                               |
-| `rootstock.scrape.timeout`           | `30s`                              | Upstream Redfish scrape timeout.              |
-| `service.type` / `service.port`      | `ClusterIP` / `9220`               | Service exposure.                             |
-| `serviceMonitor.enabled`             | `false`                            | Create a Prometheus Operator ServiceMonitor.  |
+| Key                                | Default                            | Description                                    |
+| ---------------------------------- | ---------------------------------- | ---------------------------------------------- |
+| `image.repository`                 | `ghcr.io/cloudoperators/rootstock` | Image repository.                              |
+| `image.tag`                        | `""` (chart appVersion)            | Image tag.                                     |
+| `rootstock.redfish.username`       | `redfish`                          | Redfish auth username.                         |
+| `rootstock.redfish.existingSecret` | `""`                               | Pre-created Secret holding credentials.        |
+| `rootstock.redfish.access`         | `{pdu1: {username: redfish, ...}}` | Inline per-PDU credentials (renders a Secret). |
+| `rootstock.config.folder`          | `/config`                          | Mount directory for config and credentials.    |
+| `rootstock.port`                   | `9220`                             | Container port.                                |
+| `rootstock.scrape.timeout`         | `30s`                              | Upstream Redfish scrape timeout.               |
+| `service.type` / `service.port`    | `ClusterIP` / `9220`               | Service exposure.                              |
+| `serviceMonitor.enabled`           | `false`                            | Create a Prometheus Operator ServiceMonitor.   |
 
 ## Endpoints
 
