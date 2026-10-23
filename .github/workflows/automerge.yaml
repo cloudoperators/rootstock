@@ -24,7 +24,6 @@ on:
 env:
   TARGET_BRANCH: main
   BLOCKED_LABELS: "invalid,WIP,wip,do-not-merge,DO-NOT-MERGE"
-  DEBUG: ${{ inputs.debug || vars.DEBUG || 'false' }}
 
 permissions:
   contents: write
@@ -72,6 +71,7 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           PR_NUMBER: ${{ steps.resolve.outputs.pr_number }}
+          DEBUG: ${{ inputs.debug || vars.DEBUG || 'false' }}
         run: make automerge-check
 
   update-changelog-and-version:
