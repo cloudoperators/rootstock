@@ -43,6 +43,8 @@ jobs:
       base_sha: ${{ steps.check.outputs.base_sha }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TARGET_BRANCH }}
       - uses: actions/create-github-app-token@v2
         id: app-token
         with:
