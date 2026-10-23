@@ -36,7 +36,7 @@ jobs:
     name: Gate
     runs-on: ubuntu-latest
     outputs:
-      proceed: ${{ steps.decide.outputs.proceed }}
+      release: ${{ steps.decide.outputs.release }}
       version: ${{ steps.version.outputs.version }}
       tag: ${{ steps.version.outputs.tag }}
       major_tag: ${{ steps.version.outputs.major_tag }}
@@ -68,26 +68,25 @@ jobs:
           AUTO_RELEASE: ${{ vars.AUTO_RELEASE }}
           TAG: ${{ steps.version.outputs.tag }}
         run: |
-          # Manual runs always proceed; pushes only when AUTO_RELEASE == "true".
+          # Manual runs always release; pushes only when AUTO_RELEASE == "true".
           if [ "$EVENT_NAME" = "push" ] && [ "$AUTO_RELEASE" != "true" ]; then
             echo "AUTO_RELEASE is not enabled; skipping release on push."
-            echo "proceed=false" >> "$GITHUB_OUTPUT"
+            echo "release=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
           # Do not release a version that has already been tagged.
           if git rev-parse -q --verify "refs/tags/${TAG}" >/dev/null; then
             echo "Tag ${TAG} already exists; nothing to release."
-            echo "proceed=false" >> "$GITHUB_OUTPUT"
+            echo "release=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
-          echo "proceed=true" >> "$GITHUB_OUTPUT"
+          echo "release=true" >> "$GITHUB_OUTPUT"
 
   build:
     name: Build
     needs: [gate]
-    if: needs.gate.outputs.proceed == 'true'
     permissions:
       contents: read
       packages: write
@@ -99,12 +98,40 @@ jobs:
     uses: ./.github/workflows/docker-build.yaml
     with:
       version: ${{ needs.gate.outputs.version }}
-      release: true
+      release: ${{ needs.gate.outputs.release }}
+
+  unit-tests:
+    name: Unit Tests
+    uses: cloudoperators/common/.github/workflows/shared-go-test.yaml@main
+    with:
+      test-target: test-unit
+      upload-coverage: true
+      coverage-artifact-name: code-coverage
+      coverage-path: coverage.out
+  code_coverage:
+    name: Code coverage report
+    needs: [unit-tests]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Post coverage report
+        uses: fgrosse/go-coverage-report@c4bf7e78d1379325814b4dd42d80e526082e788b # v1.5.0
+        with:
+          coverage-artifact-name: code-coverage
+          coverage-file-name: coverage.out
+          root-package: github.com/cloudoperators/rootstock
+    permissions:
+      actions: read
+      contents: read
+
 
   github-release:
     name: GitHub Release
     needs: [gate, build]
-    if: needs.gate.outputs.proceed == 'true'
+    if: needs.gate.outputs.release == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: write
