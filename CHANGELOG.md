@@ -8,7 +8,7 @@ and this project adheres to
 
 <!-- git-cliff: end of header -->
 
-## 2026-10-22
+## 2026-10-23
 
 - (0.2.0 - 🚀) tooling: Local kind deployment
   [#80](https://github.com/cloudoperators/rootstock/pull/80)
@@ -24,6 +24,18 @@ and this project adheres to
   by [@idafurjes](https://github.com/idafurjes)
 - (0.2.0 - 🐛) automerge: Workflow run case breaks off too early
   [#98](https://github.com/cloudoperators/rootstock/pull/98)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.1.0...v0.2.0))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.2.0 - 🐛) tooling: Preserve newlines in release notes
+  [#99](https://github.com/cloudoperators/rootstock/pull/99)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.1.0...v0.2.0))
+  by [@Frazia04](https://github.com/Frazia04)
+- (0.2.0 - 🐛) automerge: Only merge on codeowner review
+  [#101](https://github.com/cloudoperators/rootstock/pull/101)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.1.0...v0.2.0))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.2.0 - ⚙️) automerge: Move automerge logic to scripts for local execution
+  [#103](https://github.com/cloudoperators/rootstock/pull/103)
   ([diff](https://github.com/cloudoperators/rootstock/compare/v0.1.0...v0.2.0))
   by [@blackhat-jan](https://github.com/blackhat-jan)
 
