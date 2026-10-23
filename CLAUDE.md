@@ -146,6 +146,23 @@ Integration tests require the DMTF Redfish mockup server and are tagged
 container via `hack/mockup-start.sh`. The PDU mockup data lives in
 `testdata/pdu-mockup/`.
 
+## Go test conventions
+
+Tests must use `github.com/stretchr/testify/assert` (and `require` where
+appropriate) for assertions.
+
+Tests must be written as **table-driven tests**. Each entry in the table is a
+struct with:
+
+- `name` — label passed to `t.Run`
+- input fields — values fed into the function under test
+- state modifier fields — setup functions or values that establish
+  pre-conditions (e.g. `fileContent string`, `monkeyPatchFunctionReturn error`)
+- expected output fields — the values or behavior the function should produce
+  (conventionally prefixed `want`)
+
+See [cmd/mountfile_test.go](cmd/mountfile_test.go) for a canonical example.
+
 ## Shell script conventions
 
 ### Logging
