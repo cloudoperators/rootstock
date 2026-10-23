@@ -9,6 +9,8 @@ on:
     types: [completed]
   pull_request_review:
     types: [submitted]
+  pull_request:
+    types: [review_requested, review_request_removed]
   workflow_dispatch:
     inputs:
       pr_number:
@@ -60,6 +62,7 @@ jobs:
           case "$EVENT_NAME" in
             workflow_dispatch)   pr_number="$DISPATCH_PR" ;;
             pull_request_review) pr_number="$REVIEW_PR" ;;
+            pull_request)        pr_number="$REVIEW_PR" ;;
             workflow_run)
               pr_number=$(echo "$WORKFLOW_PRS" \
                 | jq -r 'if length > 0 then .[0].number else empty end')
