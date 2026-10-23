@@ -131,7 +131,6 @@ jobs:
               -v ver="${VERSION}" \
               'BEGIN{pat="^- \\(" ver " -"} $0 ~ pat{capture=1; print; next} capture && /^  /{print; next} capture{capture=0}' \
               CHANGELOG.md \
-            | tr -d '\n'
           )
 
           git config user.name "github-actions[bot]"

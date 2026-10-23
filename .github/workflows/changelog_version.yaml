@@ -44,6 +44,11 @@ jobs:
         with:
           tool: git-cliff
 
+      - name: Pull latest CHANGELOG.md and VERSION.yaml from main
+        run: |
+          git fetch origin main
+          git checkout origin/main -- CHANGELOG.md VERSION.yaml
+
       - name: Generate changelog entry from PR
         env:
           PR_TITLE: ${{ inputs.pr_title }}
