@@ -1,0 +1,194 @@
+modules:
+  pdu:
+    walk: 
+      # System metrics
+      - sysUpTime
+      - sysName
+      - sysLocation
+      # Platform/hardware metrics
+      - platModelName
+      - invSerialNum
+      - platFwRev
+      # PDU configuration metrics
+      - pduMode
+      - pduFwVersCPU
+      - pduFwVersMeter
+      - pduCommsFail
+      - pduType
+      - pduNumber
+      - pduNumOutlets
+      - pduMeanKVAUCL
+      # PDU monitoring metrics (phase-level power)
+      - pduMonPduNumber
+      - pduCircuitName
+      - pduMeanKWattsValue
+      - pduTotalEnergyValue
+      # Phase metrics
+      - pduPhaseVoltsValue
+      - pduPhaseAmpsValue
+      - pduPhaseKVAValue
+      # Three-phase aggregate metrics (PDU-level power)
+      - pdu3PhPduNumber
+      - pdu3PhkWAgg
+      - pdu3PhkVAAgg
+      - pdu3PhkWhAgg
+      # Circuit breaker metrics
+      - pduP2BrCktMonBrCctNumber
+      - pduP2BrCktMonBrCctID
+      - pduP2BrCktMonBrCctPhases
+      - pduP2BrCktMonPduNumber
+      - pduP2BrCktMonBrCctCurrent
+      - pduP2BrCktMonBrCctBreakerContinuousLoadRatingAmps
+      - pduP2BrCktMonBrCctBreakerOutletMap
+      # PDU outlet metrics
+      - pduOutNumber
+      - pduOutName
+      - pduOutOn
+      - pduOutPduNumber
+      - pduOutPFactorValue
+      - pduOutRMSAmpsValue
+      - pduOutMeanKVAValue
+      - pduOutRMSAmpsUTL
+      - pduOutKWHrValue
+      # Environmental sensor metrics
+      - ipTHAChan
+      - ipTHAName
+      - ipTHAType
+      - ipTHAValue
+      # Contact sensor metrics
+      - ipContChan
+      - ipContName
+      - ipContCurrState
+      # Intelligent door module metrics
+      - idmNumber
+      - idmVersion
+      - idmStatus
+      # PDU-level metrics (existing)
+      - pduName
+      - pduRMSVoltsValue
+      - pduRMSAmpsValue
+      - pduMeanKWattsValue
+      - pduTotalEnergyValue
+      - pduPwrFactorValue
+      - pduMonRS
+    lookups:
+      # Outlet lookups
+      - source_indexes: [pduOutPduNumber, pduOutNumber]
+        lookup: pduOutRS
+      - source_indexes: [pduOutPduNumber, pduOutNumber]
+        lookup: pduOutName
+      - source_indexes: [pduOutPduNumber, pduOutNumber]
+        lookup: pduOutOn
+      # Circuit breaker lookups
+      - source_indexes: [pduP2BrCktMonPduNumber, pduP2BrCktMonBrCctNumber]
+        lookup: pduP2BrCktMonBrCctID
+      - source_indexes: [pduP2BrCktMonPduNumber, pduP2BrCktMonBrCctNumber]
+        lookup: pduP2BrCktMonBrCctPhases
+      - source_indexes: [pduP2BrCktMonPduNumber, pduP2BrCktMonBrCctNumber]
+        lookup: pduP2BrCktMonBrCctBreakerOutletMap
+      # Environmental sensor lookups
+      - source_indexes: [ipTHAChan]
+        lookup: ipTHAName
+      - source_indexes: [ipTHAChan]
+        lookup: ipTHAType
+      # Contact sensor lookups
+      - source_indexes: [ipContChan]
+        lookup: ipContName
+      # PDU-level lookups
+      - source_indexes: [pduIndex]
+        lookup: pduName
+      - source_indexes: [pduIndex]
+        lookup: pduMonRS
+    max_repetitions: 25
+    retries: 3
+    timeout: 10s
+
+  # =========================================================================
+  # panduit - Dedicated Panduit PDU monitoring module
+  # MIBs: SNMPv2-MIB, PANDUIT-MIB (panduit.mib)
+  # Supports: Panduit G5 PDUs
+  # =========================================================================
+  panduit:
+    walk:
+      # System metrics
+      - sysUpTime
+      - sysName
+      - sysLocation
+      # Panduit device identification
+      - pdug5Manufacturer
+      - pdug5PartNumber
+      - pdug5SerialNumber
+      - pdug5FirmwareVersion
+      # Panduit PDU identification table
+      - pdug5IdentTable
+      - pdug5Name
+      - pdug5Status
+      - pdug5OutletCount
+      # Panduit PDU input table
+      - pdug5InputTable
+      - pdug5InputType
+      - pdug5InputFrequency
+      - pdug5InputFrequencyStatus
+      - pdug5InputPowerVA
+      - pdug5InputPowerWatts
+      - pdug5InputPowerFactor
+      - pdug5InputPowerVAR
+      # - pdug5InputWattHours
+      # Panduit PDU input phase table
+      - pdug5InputPhaseTable
+      - pdug5InputPhaseVoltage
+      - pdug5InputPhaseCurrent
+      # Panduit environmental sensor metrics
+      - pdug5TemperatureTable
+      - pdug5TemperatureName
+      - pdug5TemperatureValue
+      - pdug5TemperatureProbeStatus
+      - pdug5HumidityTable
+      - pdug5HumidityName
+      - pdug5HumidityValue
+      - pdug5HumidityProbeStatus
+      # Panduit group/breaker metrics
+      - pdug5GroupTable
+      - pdug5GroupIndex
+      - pdug5GroupName
+      - pdug5GroupType
+      - pdug5GroupVoltageMeasType
+      - pdug5GroupVoltage
+      - pdug5GroupVoltageThStatus
+      - pdug5groupCurrentRating
+      - pdug5GroupCurrent
+      - pdug5GroupCurrentThStatus
+      - pdug5GroupCurrentPercentLoad
+      - pdug5GroupPowerWatts
+      - pdug5GroupPowerFactor
+      - pdug5GroupPowerVAR
+      - pdug5GroupOutletCount
+      - pdug5GroupBreakerStatus
+      # Panduit outlet metrics
+      - pdug5OutletTable
+      - pdug5OutletIndex
+      - pdug5OutletName
+      - pdug5OutletType
+      - pdug5OutletCurrentRating
+      - pdug5OutletCurrent
+      - pdug5OutletWatts
+      - pdug5OutletPowerFactor
+      - pdug5OutletCurrentPercentLoad
+    lookups:
+      # Panduit PDU identification lookups
+      - source_indexes: [pdug5IdentIndex]
+        lookup: pdug5Name
+      # Panduit environmental sensor lookups
+      - source_indexes: [pdug5TemperatureIndex]
+        lookup: pdug5TemperatureName
+      - source_indexes: [pdug5HumidityIndex]
+        lookup: pdug5HumidityName
+      # Panduit group/breaker lookups
+      - source_indexes: [pdug5GroupIndex]
+        lookup: pdug5GroupName
+      # Panduit outlet lookups
+      - source_indexes: [pdug5OutletIndex]
+        lookup: pdug5OutletName
+    max_repetitions: 50
+    retries: 3
+    timeout: 10s

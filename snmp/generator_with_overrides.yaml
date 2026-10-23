@@ -1,0 +1,506 @@
+modules:
+  pdu:
+    walk: 
+      # System metrics
+      - sysUpTime
+      - sysName
+      - sysLocation
+      # Platform/hardware metrics
+      - platModelName
+      - invSerialNum
+      - platFwRev
+      # PDU configuration metrics
+      - pduMode
+      - pduFwVersCPU
+      - pduFwVersMeter
+      - pduCommsFail
+      - pduType
+      - pduNumber
+      - pduNumOutlets
+      - pduMeanKVAUCL
+      # PDU monitoring metrics (phase-level power)
+      - pduMonPduNumber
+      - pduCircuitName
+      - pduMeanKWattsValue
+      - pduTotalEnergyValue
+      # Phase metrics
+      - pduPhaseVoltsValue
+      - pduPhaseAmpsValue
+      - pduPhaseKVAValue
+      # Three-phase aggregate metrics (PDU-level power)
+      - pdu3PhPduNumber
+      - pdu3PhkWAgg
+      - pdu3PhkVAAgg
+      - pdu3PhkWhAgg
+      # Circuit breaker metrics
+      - pduP2BrCktMonBrCctNumber
+      - pduP2BrCktMonBrCctID
+      - pduP2BrCktMonBrCctPhases
+      - pduP2BrCktMonPduNumber
+      - pduP2BrCktMonBrCctCurrent
+      - pduP2BrCktMonBrCctBreakerContinuousLoadRatingAmps
+      - pduP2BrCktMonBrCctBreakerOutletMap
+      # PDU outlet metrics
+      - pduOutNumber
+      - pduOutName
+      - pduOutOn
+      - pduOutPduNumber
+      - pduOutPFactorValue
+      - pduOutRMSAmpsValue
+      - pduOutMeanKVAValue
+      - pduOutRMSAmpsUTL
+      - pduOutKWHrValue
+      # Environmental sensor metrics
+      - ipTHAChan
+      - ipTHAName
+      - ipTHAType
+      - ipTHAValue
+      # Contact sensor metrics
+      - ipContChan
+      - ipContName
+      - ipContCurrState
+      # Intelligent door module metrics
+      - idmNumber
+      - idmVersion
+      - idmStatus
+      # PDU-level metrics (existing)
+      - pduName
+      - pduRMSVoltsValue
+      - pduRMSAmpsValue
+      - pduMeanKWattsValue
+      - pduTotalEnergyValue
+      - pduPwrFactorValue
+      - pduMonRS
+    lookups:
+      # Outlet lookups
+      - source_indexes: [pduOutPduNumber, pduOutNumber]
+        lookup: pduOutRS
+      - source_indexes: [pduOutPduNumber, pduOutNumber]
+        lookup: pduOutName
+      - source_indexes: [pduOutPduNumber, pduOutNumber]
+        lookup: pduOutOn
+      # Circuit breaker lookups
+      - source_indexes: [pduP2BrCktMonPduNumber, pduP2BrCktMonBrCctNumber]
+        lookup: pduP2BrCktMonBrCctID
+      - source_indexes: [pduP2BrCktMonPduNumber, pduP2BrCktMonBrCctNumber]
+        lookup: pduP2BrCktMonBrCctPhases
+      - source_indexes: [pduP2BrCktMonPduNumber, pduP2BrCktMonBrCctNumber]
+        lookup: pduP2BrCktMonBrCctBreakerOutletMap
+      # Environmental sensor lookups
+      - source_indexes: [ipTHAChan]
+        lookup: ipTHAName
+      - source_indexes: [ipTHAChan]
+        lookup: ipTHAType
+      # Contact sensor lookups
+      - source_indexes: [ipContChan]
+        lookup: ipContName
+      # PDU-level lookups
+      - source_indexes: [pduIndex]
+        lookup: pduName
+      - source_indexes: [pduIndex]
+        lookup: pduMonRS
+    overrides:
+      # System overrides
+      sysUpTime:
+        name: system_uptime
+        type: gauge
+        scale: 0.01
+      sysName:
+        name: hw_name
+        type: DisplayString
+      sysLocation:
+        name: hw_location
+        type: DisplayString
+      # Platform/hardware overrides
+      platModelName:
+        name: plat_model
+        type: DisplayString
+      invSerialNum:
+        name: serial_number
+        type: DisplayString
+      platFwRev:
+        name: firmware_revision
+        type: DisplayString
+      # PDU configuration overrides
+      pduMode:
+        name: phase_mode
+        type: EnumAsInfo
+      pduFwVersCPU:
+        name: pdu_firmware_revision
+        type: DisplayString
+      pduFwVersMeter:
+        name: pdu_meter_firmware_revision
+        type: DisplayString
+      pduCommsFail:
+        name: hw_plat_status
+        type: EnumAsInfo
+      pduType:
+        name: model
+        type: EnumAsInfo
+      pduNumber:
+        name: hw_pdu_id
+        type: gauge
+      pduNumOutlets:
+        name: hw_pdu_outlets
+        type: gauge
+      pduMeanKVAUCL:
+        name: hw_power_rating
+        type: gauge
+        scale: 100.0
+      # Three-phase aggregate overrides
+      pdu3PhPduNumber:
+        name: hw_3ph_pdu_id
+        type: gauge
+      pdu3PhkWAgg:
+        name: hw_3ph_power
+        type: gauge
+        scale: 100.0
+      pdu3PhkVAAgg:
+        name: hw_3ph_apparent_power
+        type: gauge
+        scale: 100.0
+      pdu3PhkWhAgg:
+        name: hw_3ph_energy
+        type: gauge
+        scale: 100.0
+      # PDU monitoring (phase-level) overrides
+      pduMonPduNumber:
+        name: hw_phase_pdu_id
+        type: gauge
+      pduCircuitName:
+        name: hw_pdu_circuit_name
+        type: DisplayString
+      pduMeanKWattsValue:
+        name: hw_mean_power
+        type: gauge
+        scale: 100.0
+      pduPhaseKVAValue:
+        name: hw_phase_apparent_power
+        type: gauge
+        scale: 100.0
+      pduTotalEnergyValue:
+        name: hw_phase_energy
+        type: gauge
+        scale: 100.0
+      pduPhaseVoltsValue:
+        name: hw_voltage
+        type: gauge
+      pduPhaseAmpsValue:
+        name: hw_phase_current
+        type: gauge
+        scale: 0.1
+      # Circuit breaker overrides
+      pduP2BrCktMonBrCctNumber:
+        name: hw_breaker_id
+        type: gauge
+      pduP2BrCktMonBrCctID:
+        name: hw_circuit_name
+        type: DisplayString
+      pduP2BrCktMonBrCctPhases:
+        name: hw_phase_name
+        type: DisplayString
+      pduP2BrCktMonBrCctCurrent:
+        name: hw_breaker_current
+        type: gauge
+        scale: 0.001
+      pduP2BrCktMonBrCctBreakerContinuousLoadRatingAmps:
+        name: hw_breaker_current_rating
+        type: gauge
+        scale: 0.001
+      pduP2BrCktMonBrCctBreakerOutletMap:
+        name: breaker_id
+        type: DisplayString
+      # PDU outlet overrides
+      pduOutNumber:
+        name: hw_outlet_id
+        type: gauge
+      pduOutName:
+        name: hw_outlet_name
+        type: DisplayString
+      pduOutOn:
+        name: hw_status
+        type: EnumAsInfo
+      pduOutKWHrValue:
+        name: hw_energy
+        type: gauge
+        scale: 100.0
+      pduOutRMSAmpsValue:
+        name: hw_current
+        type: gauge
+        scale: 0.1
+      pduOutRMSAmpsUTL:
+        name: hw_current_rating
+        type: gauge
+        scale: 0.1
+      pduOutMeanKVAValue:
+        name: hw_apparent_power
+        type: gauge
+        scale: 100.0
+      pduOutPFactorValue:
+        name: power_factor
+        type: gauge
+        scale: 0.01
+      pduOutRS:
+        type: DisplayString
+      # Environmental sensor overrides
+      ipTHAChan:
+        name: hw_sensor_id
+        type: gauge
+      ipTHAName:
+        name: hw_sensor_name
+        type: DisplayString
+      ipTHAType:
+        name: hw_type
+        type: EnumAsInfo
+      ipTHAValue:
+        name: hw_sensor_value
+        type: gauge
+        scale: 0.1
+      # Contact sensor overrides
+      ipContChan:
+        name: hw_contact_id
+        type: gauge
+      ipContName:
+        name: hw_contact_name
+        type: DisplayString
+      ipContCurrState:
+        name: hw_contact
+        type: gauge
+      # Intelligent door module overrides
+      idmNumber:
+        name: hw_idm_id
+        type: gauge
+      idmVersion:
+        name: idm_firmware_revision
+        type: DisplayString
+      idmStatus:
+        name: hw_idm
+        type: gauge
+      # PDU-level overrides
+      pduName:
+        name: hw_pdu_name
+        type: DisplayString
+      pduMonRS:
+        type: DisplayString  
+    max_repetitions: 25
+    retries: 3
+    timeout: 10s
+
+  # =========================================================================
+  # panduit - Dedicated Panduit PDU monitoring module
+  # MIBs: SNMPv2-MIB, PANDUIT-MIB (panduit.mib)
+  # Supports: Panduit G5 PDUs
+  # =========================================================================
+  panduit:
+    walk:
+      # System metrics
+      - sysUpTime
+      - sysName
+      - sysLocation
+      # Panduit device identification
+      - pdug5Manufacturer
+      - pdug5PartNumber
+      - pdug5SerialNumber
+      - pdug5FirmwareVersion
+      # Panduit PDU identification table
+      - pdug5IdentTable
+      - pdug5Name
+      - pdug5Status
+      - pdug5OutletCount
+      # Panduit PDU input table
+      - pdug5InputTable
+      - pdug5InputType
+      - pdug5InputFrequency
+      - pdug5InputFrequencyStatus
+      - pdug5InputPowerVA
+      - pdug5InputPowerWatts
+      - pdug5InputPowerFactor
+      - pdug5InputPowerVAR
+      # - pdug5InputWattHours
+      # Panduit PDU input phase table
+      - pdug5InputPhaseTable
+      - pdug5InputPhaseVoltage
+      - pdug5InputPhaseCurrent
+      # Panduit environmental sensor metrics
+      - pdug5TemperatureTable
+      - pdug5TemperatureName
+      - pdug5TemperatureValue
+      - pdug5TemperatureProbeStatus
+      - pdug5HumidityTable
+      - pdug5HumidityName
+      - pdug5HumidityValue
+      - pdug5HumidityProbeStatus
+      # Panduit group/breaker metrics
+      - pdug5GroupTable
+      - pdug5GroupIndex
+      - pdug5GroupName
+      - pdug5GroupType
+      - pdug5GroupVoltageMeasType
+      - pdug5GroupVoltage
+      - pdug5GroupVoltageThStatus
+      - pdug5groupCurrentRating
+      - pdug5GroupCurrent
+      - pdug5GroupCurrentThStatus
+      - pdug5GroupCurrentPercentLoad
+      - pdug5GroupPowerWatts
+      - pdug5GroupPowerFactor
+      - pdug5GroupPowerVAR
+      - pdug5GroupOutletCount
+      - pdug5GroupBreakerStatus
+      # Panduit outlet metrics
+      - pdug5OutletTable
+      - pdug5OutletIndex
+      - pdug5OutletName
+      - pdug5OutletType
+      - pdug5OutletCurrentRating
+      - pdug5OutletCurrent
+      - pdug5OutletWatts
+      - pdug5OutletPowerFactor
+      - pdug5OutletCurrentPercentLoad
+    lookups:
+      # Panduit PDU identification lookups
+      - source_indexes: [pdug5IdentIndex]
+        lookup: pdug5Name
+      # Panduit environmental sensor lookups
+      - source_indexes: [pdug5TemperatureIndex]
+        lookup: pdug5TemperatureName
+      - source_indexes: [pdug5HumidityIndex]
+        lookup: pdug5HumidityName
+      # Panduit group/breaker lookups
+      - source_indexes: [pdug5GroupIndex]
+        lookup: pdug5GroupName
+      # Panduit outlet lookups
+      - source_indexes: [pdug5OutletIndex]
+        lookup: pdug5OutletName
+    overrides:
+      # System overrides
+      sysUpTime:
+        name: system_uptime
+        type: gauge
+      sysName:
+        type: DisplayString
+      sysLocation:
+        type: DisplayString
+      # Device identification overrides
+      pdug5Manufacturer:
+        name: vendor
+        type: DisplayString
+      pdug5PartNumber:
+        name: model
+        type: DisplayString
+      pdug5SerialNumber:
+        name: serial_number
+        type: DisplayString
+      pdug5FirmwareVersion:
+        name: firmware_revision
+        type: DisplayString
+      # PDU identification overrides
+      pdug5Name:
+        name: hw_pdu_name
+        type: DisplayString
+      pdug5Status:
+        name: hw_pdu_status
+        type: EnumAsInfo
+      pdug5IPv6Address:
+        ignore: true
+      # Input metrics overrides
+      # pdug5InputWatts:
+      #   name: hw_input_power
+      #   type: gauge
+      # pdug5InputWattHours:
+      #   name: hw_input_energy
+      #   type: gauge
+      # Input phase overrides
+      pdug5InputPhaseVoltage:
+        name: hw_phase_voltage
+        type: gauge
+      pdug5InputPhaseCurrent:
+        name: hw_phase_current
+        type: gauge
+      # Environmental sensor overrides
+      pdug5TemperatureName:
+        name: hw_temperature_sensor_name
+        type: DisplayString
+      pdug5TemperatureValue:
+        name: hw_temperature
+        type: gauge
+      pdug5TemperatureProbeStatus:
+        name: hw_temperature_status
+        type: EnumAsInfo
+      pdug5HumidityName:
+        name: hw_humidity_sensor_name
+        type: DisplayString
+      pdug5HumidityValue:
+        name: hw_humidity
+        type: gauge
+      pdug5HumidityProbeStatus:
+        name: hw_humidity_status
+        type: EnumAsInfo
+      # Group/breaker overrides
+      pdug5GroupName:
+        name: hw_group_name
+        type: DisplayString
+      pdug5GroupType:
+        name: hw_group_type
+        type: EnumAsInfo
+      pdug5GroupVoltageMeasType:
+        name: hw_group_voltage_type
+        type: EnumAsInfo
+      pdug5GroupVoltage:
+        name: hw_group_voltage
+        type: gauge
+      pdug5GroupVoltageThStatus:
+        name: hw_group_voltage_status
+        type: EnumAsInfo
+      pdug5groupCurrentRating:
+        name: hw_group_current_rating
+        type: gauge
+      pdug5GroupCurrent:
+        name: hw_group_current
+        type: gauge
+      pdug5GroupCurrentThStatus:
+        name: hw_group_current_status
+        type: EnumAsInfo
+      pdug5GroupCurrentPercentLoad:
+        name: hw_group_current_percent
+        type: gauge
+      pdug5GroupPowerWatts:
+        name: hw_group_power
+        type: gauge
+      pdug5GroupPowerFactor:
+        name: hw_group_power_factor
+        type: gauge
+      pdug5GroupPowerVAR:
+        name: hw_group_reactive_power
+        type: gauge
+      pdug5GroupOutletCount:
+        name: hw_group_outlet_count
+        type: gauge
+      pdug5GroupBreakerStatus:
+        name: hw_breaker_status
+        type: EnumAsInfo
+      # Outlet overrides
+      pdug5OutletName:
+        name: hw_outlet_name
+        type: DisplayString
+      pdug5OutletType:
+        name: hw_outlet_type
+        type: EnumAsInfo
+      pdug5OutletCurrentRating:
+        name: hw_outlet_current_rating
+        type: gauge
+      pdug5OutletCurrent:
+        name: hw_outlet_current
+        type: gauge
+      pdug5OutletWatts:
+        name: hw_outlet_power
+        type: gauge
+      pdug5OutletPowerFactor:
+        name: hw_outlet_power_factor
+        type: gauge
+      pdug5OutletCurrentPercentLoad:
+        name: hw_outlet_current_percent
+        type: gauge
+    max_repetitions: 50
+    retries: 3
+    timeout: 10s
