@@ -37,6 +37,7 @@ MOCKUP_CONTAINER := redfish-mockup
         helm-lint helm-template \
 				generate generate-changelog generate-version \
 				get-version test-changelog \
+				automerge-check \
 				help
 
 # Build
@@ -136,6 +137,9 @@ generate-changelog: ## Update the local CHANGELOG.md file
 
 get-version: ## Prints out the current version as presented in the VERSION.yaml file
 	@echo $(VERSION)
+
+automerge-check: ## Check PR eligibility for automerge (GitHub Actions only)
+	@hack/automerge_check.sh
 
 # ---------------------------------------------------------------------------
 # Local Kubernetes deployment via kind + Helm
