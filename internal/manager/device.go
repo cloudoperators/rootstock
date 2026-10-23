@@ -3,36 +3,41 @@
 
 package manager
 
-import "time"
+import (
+	"time"
+)
 
-type Auth struct {
-	Username string
-	Password string
-}
-
-// ScrapeResult holds the outcome of a single scrape attempt against a device.
-type ScrapeResult struct {
-	StatusCode int
-	Err        error
+// scrapeStatus holds the outcome of a single scrape attempt against a device.
+// It is the internal type sent on the results channel after a scrape completes.
+type scrapeStatus struct {
+	deviceID   string
+	timestamp  time.Time
+	statusCode int
+	err        error
 }
 
 // DeviceConfig is the input configuration for a single device from the static list.
 type DeviceConfig struct {
-	IP string
+	IP       string
+	Protocol string // eg : "redfish", "snmp"
 }
 
 // ScrapeJob is returned by getScrapeJob and contains only what a scraper needs to do its work.
 type ScrapeJob struct {
 	DeviceID string
 	IP       string
-	Auth     Auth
+	Username string
+	Password string
+	Protocol string // identifies which scraper to call
 }
 
 type device struct {
 	deviceID            string
 	ip                  string
-	auth                Auth
+	username            string
+	password            string
+	protocol            string // matches a key in manager.scrapers
 	lastScraped         time.Time
 	currentlyScraped    bool
-	consecutiveFailures []ScrapeResult
+	consecutiveFailures int // counts consecutive failures for backoff calculation
 }

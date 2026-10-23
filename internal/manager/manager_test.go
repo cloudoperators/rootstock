@@ -4,6 +4,7 @@
 package manager
 
 import (
+	"context"
 	"errors"
 	"testing"
 	"time"
@@ -19,7 +20,9 @@ func newTestManager(ips ...string) *manager {
 		devices[ip] = &device{
 			deviceID: ip,
 			ip:       ip,
-			auth:     Auth{Username: "admin", Password: "pass"},
+			username: "admin",
+			password: "pass",
+			protocol: "redfish",
 		}
 	}
 
@@ -30,61 +33,8 @@ func newTestManager(ips ...string) *manager {
 		timeout:      5 * time.Second,
 		pollInterval: 1 * time.Second,
 		logger:       log.Default(),
-	}
-}
-
-// TestNewManager verifies that NewManager correctly registers all provided IPs as devices.
-func TestNewManager(t *testing.T) {
-	tests := []struct {
-		name      string
-		ips       []string
-		wantCount int
-	}{
-		{name: "no devices", ips: []string{}, wantCount: 0},
-		{name: "single device", ips: []string{"10.0.0.1"}, wantCount: 1},
-		{name: "multiple devices", ips: []string{"10.0.0.1", "10.0.0.2"}, wantCount: 2},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			configs := make([]DeviceConfig, len(tt.ips))
-			for i, ip := range tt.ips {
-				configs[i] = DeviceConfig{IP: ip}
-			}
-
-			m, ok := NewManager(
-				configs,
-				Auth{Username: "admin", Password: "pass"},
-				30*time.Second,
-				2,
-				5*time.Second,
-				1*time.Second,
-				nil,
-				log.Default(),
-			).(*manager)
-			if !ok {
-				t.Fatal("unexpected manager type")
-			}
-
-			if len(m.devices) != tt.wantCount {
-				t.Errorf("expected %d devices, got %d", tt.wantCount, len(m.devices))
-			}
-
-			for _, ip := range tt.ips {
-				d, exists := m.devices[ip]
-				if !exists {
-					t.Fatalf("expected device for IP %s, not found", ip)
-				}
-
-				if d.ip != ip {
-					t.Errorf("expected ip %s, got %s", ip, d.ip)
-				}
-
-				if d.currentlyScraped {
-					t.Errorf("new device should NOT be currently scraped")
-				}
-			}
-		})
+		jobs:         make(chan ScrapeJob, 2),    // buffered so tests can push without a goroutine already reading
+		results:      make(chan scrapeStatus, 2), // buffered so tests can push without a goroutine already reading
 	}
 }
 
@@ -95,10 +45,10 @@ func TestGetScrapeJob(t *testing.T) {
 		ips                 []string
 		currentlyScraped    bool
 		lastScraped         time.Time
-		consecutiveFailures []ScrapeResult
-		wantJob             bool
-		wantDeviceID        string
-		wantFailureCount    int
+		consecutiveFailures int
+		wantJob             bool   // whether getScrapeJob should return a non-nil job
+		wantDeviceID        string // expected DeviceID on the returned job; only checked when wantJob is true
+		wantFailureCount    int    // expected consecutiveFailures after getScrapeJob runs; only checked when wantJob is true
 	}{
 		{
 			name:         "device never scraped returns job",
@@ -126,30 +76,20 @@ func TestGetScrapeJob(t *testing.T) {
 			wantDeviceID: "10.0.0.1",
 		},
 		{
-			name:        "device with failures applies backoff and returns nil",
-			ips:         []string{"10.0.0.1"},
-			lastScraped: time.Now().Add(-31 * time.Second),
-			consecutiveFailures: []ScrapeResult{
-				{Err: errors.New("timeout")},
-				{Err: errors.New("timeout")},
-			},
-			wantJob: false,
+			name:                "device with failures applies backoff and returns nil",
+			ips:                 []string{"10.0.0.1"},
+			lastScraped:         time.Now().Add(-31 * time.Second),
+			consecutiveFailures: 2,
+			wantJob:             false,
 		},
 		{
-			name:        "device with 10 failures resets and returns job",
-			ips:         []string{"10.0.0.1"},
-			lastScraped: time.Now().Add(-31 * time.Second),
-			consecutiveFailures: func() []ScrapeResult {
-				failures := make([]ScrapeResult, 10)
-				for i := range failures {
-					failures[i] = ScrapeResult{Err: errors.New("timeout")}
-				}
-
-				return failures
-			}(),
-			wantJob:          true,
-			wantDeviceID:     "10.0.0.1",
-			wantFailureCount: 0,
+			name:                "device with 10 failures resets and returns job",
+			ips:                 []string{"10.0.0.1"},
+			lastScraped:         time.Now().Add(-31 * time.Second),
+			consecutiveFailures: 10,
+			wantJob:             true,
+			wantDeviceID:        "10.0.0.1",
+			wantFailureCount:    0,
 		},
 		{
 			name:    "no devices returns nil",
@@ -189,42 +129,216 @@ func TestGetScrapeJob(t *testing.T) {
 				t.Error("expected currentlyScraped to be true after getScrapeJob")
 			}
 
-			if len(m.devices["10.0.0.1"].consecutiveFailures) != tt.wantFailureCount {
-				t.Errorf("expected %d failures, got %d", tt.wantFailureCount, len(m.devices["10.0.0.1"].consecutiveFailures))
+			if m.devices["10.0.0.1"].consecutiveFailures != tt.wantFailureCount {
+				t.Errorf("expected %d failures, got %d", tt.wantFailureCount, m.devices["10.0.0.1"].consecutiveFailures)
 			}
 		})
 	}
 }
 
-// updateDevice should clear failures and mark device available on success.
-func TestUpdateDevice_Success(t *testing.T) {
-	m := newTestManager("10.0.0.1")
-	m.devices["10.0.0.1"].consecutiveFailures = []ScrapeResult{
-		{Err: errors.New("timeout")},
-		{Err: errors.New("timeout")},
+// TestUpdateState verifies that updateState correctly updates device state after a scrape result.
+func TestUpdateState(t *testing.T) {
+	tests := []struct {
+		name            string
+		initialFailures int   // consecutiveFailures on the device before the result arrives
+		err             error // error in the scrapeStatus sent on results channel; nil means success
+		wantFailures    int   // expected consecutiveFailures after updateState processes the result
+	}{
+		{
+			name:            "success clears consecutive failures and marks device available",
+			initialFailures: 2,
+			err:             nil,
+			wantFailures:    0,
+		},
+		{
+			name:            "error increments consecutive failures",
+			initialFailures: 0,
+			err:             errors.New("connection refused"),
+			wantFailures:    1,
+		},
 	}
 
-	m.updateDevice("10.0.0.1", time.Now(), ScrapeResult{Err: nil})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := newTestManager("10.0.0.1")
+			m.devices["10.0.0.1"].consecutiveFailures = tt.initialFailures
+			m.devices["10.0.0.1"].currentlyScraped = true
 
-	d := m.devices["10.0.0.1"]
-	if len(d.consecutiveFailures) != 0 {
-		t.Errorf("expected 0 failures after success, got %d", len(d.consecutiveFailures))
-	}
+			ctx := t.Context()
 
-	if d.currentlyScraped {
-		t.Error("expected currentlyScraped to be false after scrapeResult")
+			go m.updateState(ctx)
+
+			m.results <- scrapeStatus{
+				deviceID:  "10.0.0.1",
+				timestamp: time.Now(),
+				err:       tt.err,
+			}
+
+			time.Sleep(10 * time.Millisecond) // give the goroutine time to process the result before we read device state
+
+			d := m.devices["10.0.0.1"]
+			if d.consecutiveFailures != tt.wantFailures {
+				t.Errorf("expected %d failures, got %d", tt.wantFailures, d.consecutiveFailures)
+			}
+
+			if d.currentlyScraped {
+				t.Errorf("expected currentlyScraped to be false after scrape completes")
+			}
+		})
 	}
 }
 
-// updateDevice should append to consecutiveFailures on error.
-func TestUpdateDevice_Failures(t *testing.T) {
-	m := newTestManager("10.0.0.1")
+// dispatcher should push a ready device onto the jobs channel for the worker to pick it up
+func TestDispatcher(t *testing.T) {
+	tests := []struct {
+		name        string
+		lastScraped time.Time
+		wantJob     bool // whether we expect a job to appear on the jobs channel
+		cancelCtx   bool // if true, context is canceled before the dispatcher starts, so it exits immediately
+	}{
+		{
+			name:        "ready device: pushes job to channel",
+			lastScraped: time.Time{}, // never scraped
+			wantJob:     true,
+		},
+		{
+			name:        "recently scraped device: does not push job",
+			lastScraped: time.Now(), // just scraped
+			wantJob:     false,
+		},
+		{
+			name:        "context canceled before push: does not push job",
+			lastScraped: time.Time{}, // ready - never scraped, but context canceled before dispatcher runs
+			cancelCtx:   true,
+			wantJob:     false,
+		},
+	}
 
-	m.updateDevice("10.0.0.1", time.Now(), ScrapeResult{Err: errors.New("connection refused")})
-	m.updateDevice("10.0.0.1", time.Now(), ScrapeResult{Err: errors.New("timeout")})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := newTestManager("10.0.0.1")
+			m.pollInterval = 10 * time.Millisecond // reduced from 1s default so the test completes fast
+			m.devices["10.0.0.1"].lastScraped = tt.lastScraped
 
-	d := m.devices["10.0.0.1"]
-	if len(d.consecutiveFailures) != 2 {
-		t.Errorf("expected 2 failures, got %d", len(d.consecutiveFailures))
+			ctx, cancel := context.WithCancel(t.Context())
+			defer cancel()
+
+			if tt.cancelCtx {
+				cancel() // cancel before dispatcher starts so it exits immediately on ctx.Done()
+			}
+
+			go m.dispatcher(ctx)
+
+			select {
+			case job := <-m.jobs:
+				if !tt.wantJob {
+					t.Errorf("expected no job, got job for device %s", job.DeviceID)
+				}
+			case <-time.After(100 * time.Millisecond):
+				if tt.wantJob {
+					t.Fatal("timed out waiting for job on jobs channel")
+				}
+			}
+		})
+	}
+}
+
+// assertScrapeErr checks that err matches wantErrMsg. Empty wantErrMsg means no error is expected.
+func assertScrapeErr(t *testing.T, err error, wantErrMsg string) {
+	t.Helper()
+
+	if wantErrMsg == "" {
+		if err != nil {
+			t.Errorf("expected no error, got %v", err)
+		}
+
+		return
+	}
+
+	if err == nil {
+		t.Errorf("expected error %q, got nil", wantErrMsg)
+		return
+	}
+
+	if err.Error() != wantErrMsg {
+		t.Errorf("expected error %q, got %q", wantErrMsg, err.Error())
+	}
+}
+
+// TestRunner verifies that runner reads jobs, calls the correct scraper, and pushes results.
+func TestRunner(t *testing.T) {
+	tests := []struct {
+		name           string
+		protocol       string
+		scrapers       map[string]func(ctx context.Context, job ScrapeJob) (int, error)
+		wantResult     bool   // whether we expect a scrapeStatus to appear on the results channel
+		wantStatusCode int    // expected statusCode in the result; only checked when wantResult is true
+		wantErrMsg     string // expected error message; empty means no error expected
+	}{
+		{
+			name:     "known protocol calls scraper and pushes result",
+			protocol: "redfish",
+			scrapers: map[string]func(ctx context.Context, job ScrapeJob) (int, error){
+				"redfish": func(_ context.Context, _ ScrapeJob) (int, error) {
+					return 200, nil
+				},
+			},
+			wantResult:     true,
+			wantStatusCode: 200,
+		},
+		{
+			name:     "scraper returns error pushes result with error",
+			protocol: "redfish",
+			scrapers: map[string]func(ctx context.Context, job ScrapeJob) (int, error){
+				"redfish": func(_ context.Context, _ ScrapeJob) (int, error) {
+					return 0, errors.New("connection refused")
+				},
+			},
+			wantResult: true,
+			wantErrMsg: "connection refused",
+		},
+		{
+			name:       "unknown protocol does not push result",
+			protocol:   "abc",
+			scrapers:   map[string]func(ctx context.Context, job ScrapeJob) (int, error){},
+			wantResult: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := newTestManager("10.0.0.1")
+			m.scrapers = tt.scrapers
+
+			ctx := t.Context()
+
+			go m.runner(ctx, 0)
+
+			m.jobs <- ScrapeJob{
+				DeviceID: "10.0.0.1",
+				IP:       "10.0.0.1",
+				Username: "admin",
+				Password: "pass",
+				Protocol: tt.protocol,
+			}
+
+			select {
+			case result := <-m.results:
+				if !tt.wantResult {
+					t.Errorf("expected no result, got result for device %s", result.deviceID)
+					return
+				}
+
+				if result.statusCode != tt.wantStatusCode {
+					t.Errorf("expected status code %d, got %d", tt.wantStatusCode, result.statusCode)
+				}
+
+				assertScrapeErr(t, result.err, tt.wantErrMsg)
+			case <-time.After(100 * time.Millisecond):
+				if tt.wantResult {
+					t.Fatal("timed out waiting for result on results channel")
+				}
+			}
+		})
 	}
 }
