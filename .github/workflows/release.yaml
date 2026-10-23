@@ -1,0 +1,149 @@
+# SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Greenhouse contributors
+# SPDX-License-Identifier: Apache-2.0
+
+name: Release
+
+# The release workflow can run in two modes:
+#   * Automatically on every push to main   -> set repository variable
+#                                               AUTO_RELEASE to "true".
+#   * Manually                              -> triggered via the
+#                                               "Run workflow" button
+#                                               (workflow_dispatch), regardless
+#                                               of the AUTO_RELEASE value.
+#
+# On push to main the release only proceeds when AUTO_RELEASE == "true" AND the
+# version in VERSION.yaml has not been released yet (i.e. no matching tag
+# exists). This prevents re-releasing on pushes that did not bump the version
+# (for example the "[skip ci]" changelog commits).
+#
+# The CHANGELOG.md and VERSION.yaml are NOT updated here: they are already kept
+# up to date by the automerge / changelog_version workflow before the merge to
+# main happens.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  packages: write
+  id-token: write
+  security-events: write
+
+jobs:
+  gate:
+    name: Gate
+    runs-on: ubuntu-latest
+    outputs:
+      proceed: ${{ steps.decide.outputs.proceed }}
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+      major_tag: ${{ steps.version.outputs.major_tag }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          ref: ${{ github.sha }}
+
+      - name: Get version from VERSION.yaml
+        id: version
+        run: |
+          version=$(make get-version)
+          version="${version#v}"
+          tag="v${version}"
+          major_tag="v$(echo "$version" | cut -d. -f1)"
+          echo "version: $version (tag: $tag, major: $major_tag)"
+          {
+            echo "version=${version}"
+            echo "tag=${tag}"
+            echo "major_tag=${major_tag}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Decide whether to release
+        id: decide
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          AUTO_RELEASE: ${{ vars.AUTO_RELEASE }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          # Manual runs always proceed; pushes only when AUTO_RELEASE == "true".
+          if [ "$EVENT_NAME" = "push" ] && [ "$AUTO_RELEASE" != "true" ]; then
+            echo "AUTO_RELEASE is not enabled; skipping release on push."
+            echo "proceed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Do not release a version that has already been tagged.
+          if git rev-parse -q --verify "refs/tags/${TAG}" >/dev/null; then
+            echo "Tag ${TAG} already exists; nothing to release."
+            echo "proceed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "proceed=true" >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build
+    needs: [gate]
+    if: needs.gate.outputs.proceed == 'true'
+    permissions:
+      contents: read
+      packages: write
+      # This is used to complete the identity challenge
+      # with sigstore/fulcio when running outside of PRs.
+      id-token: write
+      security-events: write
+    secrets: inherit
+    uses: ./.github/workflows/docker-build.yaml
+    with:
+      version: ${{ needs.gate.outputs.version }}
+      release: true
+
+  github-release:
+    name: GitHub Release
+    needs: [gate, build]
+    if: needs.gate.outputs.proceed == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          ref: ${{ github.sha }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create release and update major tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPO: ${{ github.repository }}
+          VERSION: ${{ needs.gate.outputs.version }}
+          TAG: ${{ needs.gate.outputs.tag }}
+          MAJOR_TAG: ${{ needs.gate.outputs.major_tag }}
+        run: |
+          # Extract the release notes for this version from the changelog.
+          # Changelog entries look like: "- (0.1.0 - ...) ...".
+          RELEASE_NOTES=$(
+            awk \
+              -v ver="${VERSION}" \
+              'BEGIN{pat="^- \\(" ver " -"} $0 ~ pat{capture=1; print; next} capture && /^  /{print; next} capture{capture=0}' \
+              CHANGELOG.md \
+          )
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Create the full version tag v${major}.${minor}.${patch}.
+          git tag -a "$TAG" -m "Release $TAG"
+          git push origin "$TAG"
+
+          # Move the major version tag v${major} to the released commit.
+          git tag -fa "$MAJOR_TAG" -m "Release $TAG"
+          git push --force origin "$MAJOR_TAG"
+
+          gh release create "$TAG" \
+            --title "Release $TAG" \
+            --notes "$RELEASE_NOTES"

@@ -1,0 +1,132 @@
+# SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Greenhouse contributors
+# SPDX-License-Identifier: Apache-2.0
+
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+
+jobs:
+  variables:
+    name: Variables
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Get version from VERSION.yaml
+        id: version
+        run: |
+          version=$(make get-version)
+          echo "version: $version"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+
+  conventions:
+    name: Conventions
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/create-github-app-token@v2
+        id: app-token
+        with:
+          app-id: ${{ secrets.CLOUDOPERATOR_APP_ID }}
+          private-key: ${{ secrets.CLOUDOPERATOR_APP_PRIVATE_KEY }}
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.repo.full_name == github.repository && github.head_ref || github.ref }}
+          token: ${{ steps.app-token.outputs.token }}
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Install golangci-lint
+        uses: golangci/golangci-lint-action@v9
+        with:
+          install-only: true
+          version: v2.14
+
+      - name: Run lint-go
+        run: make lint-go
+      - name: Install prettier
+        run: npm install -g prettier
+      - name: Lint Markdown
+        run: make lint-md
+      - name: Lint Shell
+        run: make lint-shell
+      - name: Commit auto-fixes
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if ! git diff --quiet; then
+            git commit -am "chore: apply linter auto-fixes"
+            git push
+          fi
+
+  code-scans:
+    name: Code Scans
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Run code scans
+        run: make scan
+
+  unit-tests:
+    name: Unit Tests
+    uses: cloudoperators/common/.github/workflows/shared-go-test.yaml@main
+    with:
+      test-target: test-unit
+
+  build:
+    permissions:
+      contents: read
+      packages: write
+      # This is used to complete the identity challenge
+      # with sigstore/fulcio when running outside of PRs.
+      id-token: write
+      security-events: write
+    secrets: inherit
+    uses: ./.github/workflows/docker-build.yaml
+    needs:
+      - variables
+    with:
+      version: ${{ needs.variables.outputs.version }}-pr-${{ github.event.number }}
+
+  contract-tests:
+    name: Contract Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Run contract tests
+        run: make test-contract
+
+  file-generation:
+    name: File Generation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Run file generation
+        run: make generate

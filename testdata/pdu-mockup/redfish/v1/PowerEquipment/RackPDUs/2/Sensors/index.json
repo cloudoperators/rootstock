@@ -1,0 +1,531 @@
+{
+  "@odata.type": "#SensorCollection.SensorCollection",
+  "Name": "Rack PDU Sensor Collection",
+  "Members@data.count": 174,
+  "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/1/Sensors",
+  "@Redfish.Copyright": "Copyright 2014-2021 DMTF. For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright.",
+  "Members": [
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/CurrentMains1-1"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/CurrentMains1-2"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/CurrentMains1-3"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/VoltageMains1-4"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/VoltageMains1-5"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/VoltageMains1-6"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/PowerMains1-4"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/PowerMains1-5"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/PowerMains1-6"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/FreqMains"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/PDUPower"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/CabTempA"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/CurrentOUTLET1"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/CurrentOUTLET2"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/CurrentOUTLET3"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/CurrentOUTLET4"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/CurrentOUTLET5"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/CurrentOUTLET6"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/CurrentOUTLET7"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/CurrentOUTLET8"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/CurrentOUTLET9"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/CurrentOUTLET10"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/CurrentOUTLET11"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/CurrentOUTLET12"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/CurrentOUTLET13"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/CurrentOUTLET14"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/CurrentOUTLET15"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/CurrentOUTLET16"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/CurrentOUTLET17"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/CurrentOUTLET18"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/CurrentOUTLET19"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/CurrentOUTLET20"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/CurrentOUTLET21"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/CurrentOUTLET22"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/CurrentOUTLET23"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/CurrentOUTLET24"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/CurrentOUTLET25"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/CurrentOUTLET26"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/CurrentOUTLET27"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/CurrentOUTLET28"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/CurrentOUTLET29"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/CurrentOUTLET30"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/CurrentOUTLET31"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/CurrentOUTLET32"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/CurrentOUTLET33"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/CurrentOUTLET34"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/CurrentOUTLET35"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/CurrentOUTLET36"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/VoltageOUTLET1"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/VoltageOUTLET2"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/VoltageOUTLET3"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/VoltageOUTLET4"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/VoltageOUTLET5"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/VoltageOUTLET6"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/VoltageOUTLET7"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/VoltageOUTLET8"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/VoltageOUTLET9"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/VoltageOUTLET10"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/VoltageOUTLET11"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/VoltageOUTLET12"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/VoltageOUTLET13"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/VoltageOUTLET14"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/VoltageOUTLET15"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/VoltageOUTLET16"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/VoltageOUTLET17"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/VoltageOUTLET18"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/VoltageOUTLET19"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/VoltageOUTLET20"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/VoltageOUTLET21"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/VoltageOUTLET22"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/VoltageOUTLET23"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/VoltageOUTLET24"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/VoltageOUTLET25"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/VoltageOUTLET26"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/VoltageOUTLET27"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/VoltageOUTLET28"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/VoltageOUTLET29"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/VoltageOUTLET30"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/VoltageOUTLET31"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/VoltageOUTLET32"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/VoltageOUTLET33"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/VoltageOUTLET34"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/VoltageOUTLET35"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/VoltageOUTLET36"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/PowerOUTLET1"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/PowerOUTLET2"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/PowerOUTLET3"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/PowerOUTLET4"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/PowerOUTLET5"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/PowerOUTLET6"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/PowerOUTLET7"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/PowerOUTLET8"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/PowerOUTLET9"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/PowerOUTLET10"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/PowerOUTLET11"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/PowerOUTLET12"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/PowerOUTLET13"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/PowerOUTLET14"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/PowerOUTLET15"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/PowerOUTLET16"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/PowerOUTLET17"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/PowerOUTLET18"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/PowerOUTLET19"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/PowerOUTLET20"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/PowerOUTLET21"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/PowerOUTLET22"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/PowerOUTLET23"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/PowerOUTLET24"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/PowerOUTLET25"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/PowerOUTLET26"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/PowerOUTLET27"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/PowerOUTLET28"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/PowerOUTLET29"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/PowerOUTLET30"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/PowerOUTLET31"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/PowerOUTLET32"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/PowerOUTLET33"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/PowerOUTLET34"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/PowerOUTLET35"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/PowerOUTLET36"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/EnergyOUTLET1"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/EnergyOUTLET2"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/EnergyOUTLET3"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/EnergyOUTLET4"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/EnergyOUTLET5"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/EnergyOUTLET6"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/EnergyOUTLET7"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/EnergyOUTLET8"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/EnergyOUTLET9"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/EnergyOUTLET10"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/EnergyOUTLET11"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/EnergyOUTLET12"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/EnergyOUTLET13"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/EnergyOUTLET14"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/EnergyOUTLET15"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/EnergyOUTLET16"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/EnergyOUTLET17"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/EnergyOUTLET18"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/EnergyOUTLET19"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/EnergyOUTLET20"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/EnergyOUTLET21"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/EnergyOUTLET22"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/EnergyOUTLET23"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/EnergyOUTLET24"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/EnergyOUTLET25"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/EnergyOUTLET26"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/EnergyOUTLET27"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/EnergyOUTLET28"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/EnergyOUTLET29"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/EnergyOUTLET30"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/EnergyOUTLET31"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/EnergyOUTLET32"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/EnergyOUTLET33"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/EnergyOUTLET34"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/EnergyOUTLET35"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/EnergyOUTLET36"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/CurrentA"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/CurrentB"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/CurrentC"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/CurrentD"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/CurrentE"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/CurrentF"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/VoltageA"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/VoltageB"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/VoltageC"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/VoltageD"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/VoltageE"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/VoltageF"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/PowerA"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/PowerB"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/PowerC"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/PowerD"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/PowerE"
+    },
+    {
+      "@odata.id": "/redfish/v1/PowerEquipment/RackPDUs/2/Sensors/PowerF"
+    }
+  ]
+}

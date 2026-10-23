@@ -1,1 +1,13 @@
 .DS_Store
+
+
+
+tmp/
+bin/
+.vscode/
+
+go-report.xml
+coverage.out
+
+# Local Greenhouse verifier workdir (hack/greenhouse/verify-plugindefinition.sh)
+.greenhouse-verify/

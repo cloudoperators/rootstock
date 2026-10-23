@@ -1,0 +1,17 @@
+# SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Greenhouse contributors
+# SPDX-License-Identifier: Apache-2.0
+
+apiVersion: v2
+name: rootstock
+description: A Helm chart for rootstock, a data-center energy/carbon telemetry collector that scrapes Redfish targets and exposes Prometheus metrics.
+
+# A chart can be either an 'application' or a 'library' chart. rootstock ships as
+# a deployable application chart that is also compatible with Greenhouse plugins.
+type: application
+
+# Chart version. Increment on every change to the chart or its templates.
+# Follows Semantic Versioning (https://semver.org/).
+version: 0.1.0
+
+# Version of the application being deployed. Mirrors rootstock's VERSION.yaml.
+appVersion: "0.1.0"
