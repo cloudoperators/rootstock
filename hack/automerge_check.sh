@@ -3,6 +3,14 @@
 # SPDX-License-Identifier: Apache-2.0
 set -euo pipefail
 
+HC="\033[1m"
+FMAG="\033[35m"
+GREEN="\033[1;32m"
+NC="\033[0m"
+
+log_debug() { if [ "${DEBUG:-false}" = "true" ]; then printf "${HC}${FMAG}[.]${NC} %s\n" "$*" >&2; fi; }
+log_info()  { printf "${GREEN}[+]${NC} %s\n" "$*" >&2; }
+
 usage() {
   cat <<'EOF'
 Usage: automerge_check.sh [OPTIONS]
@@ -40,17 +48,20 @@ main() {
   parse_inputs "$@"
 
   if [ -z "${PR_NUMBER:-}" ]; then
-    [ "$DEBUG" = "true" ] && echo "DEBUG: PR_NUMBER is empty - aborting"
+    log_debug "PR_NUMBER is empty - aborting"
     echo "eligible=false" >> "$GITHUB_OUTPUT"
     return
   fi
 
+  log_info "Checking PR #${PR_NUMBER} for automerge eligibility"
   fetch_pr "$PR_NUMBER"
   fetch_reviews "$PR_NUMBER"
 
   if check_eligibility; then
+    log_info "PR #${PR_NUMBER} is eligible for automerge"
     emit_outputs
   else
+    log_info "PR #${PR_NUMBER} is not eligible for automerge"
     echo "eligible=false" >> "$GITHUB_OUTPUT"
   fi
 }
@@ -184,26 +195,25 @@ check_eligibility() {
 # Prints all eligibility conditions; no-ops when DEBUG != true
 # ---------------------------------------------------------------------------
 debug_eligibility() {
-  [ "$DEBUG" != "true" ] && return
   local eligible="$1" base="$2" state="$3" changes_requested="$4" \
         codeowner_approved="$5" pending_reviews="$6" draft="$7" blocked_label="$8"
 
-  echo "DEBUG: eligible=$eligible"
-  echo "DEBUG: pr_number=$(echo "$PR" | jq -r .number)"
+  log_debug "eligible=$eligible"
+  log_debug "pr_number=$(echo "$PR" | jq -r .number)"
   if [ "$eligible" = "true" ]; then
-    echo "DEBUG: pr_title=$(echo "$PR" | jq -r .title)"
-    echo "DEBUG: pr_url=$(echo "$PR" | jq -r .url)"
-    echo "DEBUG: head_ref=$(echo "$PR" | jq -r .headRefName)"
-    echo "DEBUG: base_sha=$(echo "$PR" | jq -r .baseRefOid)"
+    log_debug "pr_title=$(echo "$PR" | jq -r .title)"
+    log_debug "pr_url=$(echo "$PR" | jq -r .url)"
+    log_debug "head_ref=$(echo "$PR" | jq -r .headRefName)"
+    log_debug "base_sha=$(echo "$PR" | jq -r .baseRefOid)"
   fi
-  echo "DEBUG: base=$base ?= $TARGET_BRANCH"
-  echo "DEBUG: merge_state_status=$state ?= NOT CLEAN"
-  echo "DEBUG: changes_requested=$changes_requested ?= 0"
-  echo "DEBUG: codeowner_approved=$codeowner_approved ?= true"
-  echo "DEBUG: pending_reviews=$pending_reviews ?= 0"
-  echo "DEBUG: is_draft=$draft ?= true"
-  echo "DEBUG: blocked_label=${blocked_label:-<none>}"
-  echo "DEBUG: pr_body=$PR_BODY"
+  log_debug "base=$base ?= $TARGET_BRANCH"
+  log_debug "merge_state_status=$state ?= NOT CLEAN"
+  log_debug "changes_requested=$changes_requested ?= 0"
+  log_debug "codeowner_approved=$codeowner_approved ?= true"
+  log_debug "pending_reviews=$pending_reviews ?= 0"
+  log_debug "is_draft=$draft ?= true"
+  log_debug "blocked_label=${blocked_label:-<none>}"
+  log_debug "pr_body=$PR_BODY"
 }
 
 # ---------------------------------------------------------------------------
