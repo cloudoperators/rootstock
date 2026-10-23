@@ -46,6 +46,10 @@ and this project adheres to
   [#107](https://github.com/cloudoperators/rootstock/pull/107)
   ([diff](https://github.com/cloudoperators/rootstock/compare/v0.1.0...v0.2.0))
   by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.2.0 - ⚙️) tooling: Add coverage check in ci
+  [#104](https://github.com/cloudoperators/rootstock/pull/104)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.1.0...v0.2.0))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
 
 ## 2026-10-20
 
