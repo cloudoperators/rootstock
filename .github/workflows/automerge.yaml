@@ -81,7 +81,7 @@ jobs:
     needs: check-eligibility
     if: needs.check-eligibility.outputs.eligible == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     outputs:
       clear: ${{ steps.check.outputs.clear }}
     steps:
@@ -98,13 +98,11 @@ jobs:
         run: |
           interval=30
           while true; do
-            count=0
-            for status in in_progress queued waiting; do
-              n=$(gh api \
-                "repos/$GITHUB_REPOSITORY/actions/runs?branch=$TARGET_BRANCH&status=$status&per_page=100" \
-                --jq "[.workflow_runs[] | select(.id != $CURRENT_RUN_ID and .path != \".github/workflows/automerge.yaml\")] | length")
-              count=$((count + n))
-            done
+            count=$(gh api --paginate \
+              "repos/$GITHUB_REPOSITORY/actions/runs?branch=$TARGET_BRANCH&per_page=100" \
+              --jq "[.workflow_runs[] | select(.id != $CURRENT_RUN_ID and .path != \".github/workflows/automerge.yaml\" and .status != \"completed\")] | length"
+            )
+            count=$(awk '{n += $1} END {print n+0}' <<< "$count")
             if [ "$count" -eq 0 ]; then
               echo "clear=true" >> "$GITHUB_OUTPUT"
               echo "No active workflow runs on '$TARGET_BRANCH'. Proceeding."
