@@ -102,7 +102,7 @@ jobs:
             for status in in_progress queued waiting; do
               n=$(gh api \
                 "repos/$GITHUB_REPOSITORY/actions/runs?branch=$TARGET_BRANCH&status=$status&per_page=100" \
-                --jq "[.workflow_runs[] | select(.id != $CURRENT_RUN_ID)] | length")
+                --jq "[.workflow_runs[] | select(.id != $CURRENT_RUN_ID and .path != \".github/workflows/automerge.yaml\")] | length")
               count=$((count + n))
             done
             if [ "$count" -eq 0 ]; then
