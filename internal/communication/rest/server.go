@@ -29,7 +29,7 @@ const (
 	readyEndpoint   = "/ready"
 	probeEndpoint   = "/probe"
 
-	serverTimeout = 5 * time.Second
+	serverTimeout = 4 * time.Second
 )
 
 // PDUCredentials holds the username and password for a single PDU.
