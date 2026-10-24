@@ -77,9 +77,46 @@ jobs:
           DEBUG: ${{ inputs.debug || vars.DEBUG || 'false' }}
         run: make automerge-check
 
-  update-changelog-and-version:
+  check-branch-workflows:
     needs: check-eligibility
     if: needs.check-eligibility.outputs.eligible == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      clear: ${{ steps.check.outputs.clear }}
+    steps:
+      - uses: actions/create-github-app-token@v2
+        id: app-token
+        with:
+          app-id: ${{ secrets.CLOUDOPERATOR_APP_ID }}
+          private-key: ${{ secrets.CLOUDOPERATOR_APP_PRIVATE_KEY }}
+      - name: Wait for active workflows on target branch to complete
+        id: check
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          CURRENT_RUN_ID: ${{ github.run_id }}
+        run: |
+          interval=30
+          while true; do
+            count=0
+            for status in in_progress queued waiting; do
+              n=$(gh api \
+                "repos/$GITHUB_REPOSITORY/actions/runs?branch=$TARGET_BRANCH&status=$status&per_page=100" \
+                --jq "[.workflow_runs[] | select(.id != $CURRENT_RUN_ID)] | length")
+              count=$((count + n))
+            done
+            if [ "$count" -eq 0 ]; then
+              echo "clear=true" >> "$GITHUB_OUTPUT"
+              echo "No active workflow runs on '$TARGET_BRANCH'. Proceeding."
+              break
+            fi
+            echo "::notice::Branch '$TARGET_BRANCH' has $count active workflow run(s). Retrying in ${interval}s..."
+            sleep "$interval"
+          done
+
+  update-changelog-and-version:
+    needs: [check-eligibility, check-branch-workflows]
+    if: needs.check-eligibility.outputs.eligible == 'true' && needs.check-branch-workflows.outputs.clear == 'true'
     uses: ./.github/workflows/changelog_version.yaml
     with:
       head_ref: ${{ needs.check-eligibility.outputs.head_ref }}
@@ -92,8 +129,8 @@ jobs:
 
 
   merge:
-    needs: [check-eligibility, update-changelog-and-version]
-    if: needs.check-eligibility.outputs.eligible == 'true'
+    needs: [check-eligibility, check-branch-workflows, update-changelog-and-version]
+    if: needs.check-eligibility.outputs.eligible == 'true' && needs.check-branch-workflows.outputs.clear == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/create-github-app-token@v2
