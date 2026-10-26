@@ -70,9 +70,7 @@ jobs:
             gh api "repos/${GITHUB_REPOSITORY}/git/refs/heads/main" --jq '.object.sha'
           )
           jq_filter='(env.CURRENT_RUN_ID | tonumber) as $cur
-            | [.workflow_runs[]
-            | select(.id != $cur)
-            | select(.name != "Automerge")]
+            | [.workflow_runs[] | select(.id != $cur) | select(.name != "Automerge")]
             | length'
           running_on_main=$(
             gh api \
