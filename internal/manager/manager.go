@@ -5,6 +5,7 @@ package manager
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -27,6 +28,7 @@ type manager struct {
 	logger         log.FullInterface
 	jobs           chan ScrapeJob    // dispatcher pushes jobs, workers read from it
 	results        chan scrapeStatus // workers push outcomes, state updater reads from it
+	activeScrapes  int
 }
 
 // NewManager creates a manager from the given device configs and starts managing scrapes.
@@ -82,26 +84,15 @@ func (m *manager) dispatcher(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-time.After(m.pollInterval):
-		}
-
-		// push all ready devices onto the jobs channel
-		for {
-			job := m.getScrapeJob()
-			if job == nil {
-				break
-			}
-
-			select {
-			case m.jobs <- *job: // push job, blocks if channel is full
-			case <-ctx.Done():
-				return
+			for _, job := range m.getScrapeJobs() {
+				go m.scrape(ctx, job)
 			}
 		}
 	}
 }
 
 // getScrapeJob returns the next device that is due for scraping, or nil if none are ready.
-func (m *manager) getScrapeJob() *ScrapeJob {
+func (m *manager) getScrapeJobs() []*ScrapeJob {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -121,6 +112,7 @@ func (m *manager) getScrapeJob() *ScrapeJob {
 		if !d.currentlyScraped && time.Since(d.lastScraped) >= waitTime {
 			d.currentlyScraped = true
 
+			// TODO: fix return
 			return &ScrapeJob{
 				IP:       d.ip,
 				Username: d.username,
@@ -131,6 +123,57 @@ func (m *manager) getScrapeJob() *ScrapeJob {
 	}
 
 	return nil
+}
+
+func (m *manager) addScrape() error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.activeScrapes >= m.workerCount {
+		return fmt.Errorf("too many active scrapes: %d >= %d", m.activeScrapes, m.workerCount)
+	}
+	m.activeScrapes++
+	return nil
+}
+
+func (m *manager) subtractScrape() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.activeScrapes == 0 {
+		return
+	}
+	m.activeScrapes--
+}
+
+// TODO
+func (m *manager) scrape(ctx context.Context, job *ScrapeJob) {
+	if err := m.addScrape(); err != nil {
+		m.logger.Error("shedding job: too many active scrapes",
+			"ip", job.IP, "protocol", job.Protocol, log.KeyError, err,
+		)
+		return
+	}
+
+	scraper, ok := m.scrapers[job.Protocol]
+	if !ok {
+		m.logger.Error("no scraper found for protocol", "protocol", job.Protocol)
+		return
+	}
+
+	// child context limits how long this single scrape may take
+	scrapeCtx, cancel := context.WithTimeout(ctx, m.timeout)
+	defer cancel()
+
+	statusCode, err := scraper(scrapeCtx, *job)
+
+	// send outcome to results channel for updateState to process
+	m.results <- scrapeStatus{
+		ip:         job.IP,
+		timestamp:  time.Now(),
+		statusCode: statusCode,
+		err:        err,
+	}
+
+	m.subtractScrape()
 }
 
 // runner reads scrape jobs from the jobs channel, calls the appropriate
