@@ -176,12 +176,16 @@ func TestUpdateState(t *testing.T) {
 
 			time.Sleep(10 * time.Millisecond) // give the goroutine time to process the result before we read device state
 
-			d := m.devices["10.0.0.1"]
-			if d.consecutiveFailures != tt.wantFailures {
-				t.Errorf("expected %d failures, got %d", tt.wantFailures, d.consecutiveFailures)
+			m.mu.RLock()
+			failures := m.devices["10.0.0.1"].consecutiveFailures
+			scraped := m.devices["10.0.0.1"].currentlyScraped
+			m.mu.RUnlock()
+
+			if failures != tt.wantFailures {
+				t.Errorf("expected %d failures, got %d", tt.wantFailures, failures)
 			}
 
-			if d.currentlyScraped {
+			if scraped {
 				t.Errorf("expected currentlyScraped to be false after scrape completes")
 			}
 		})
