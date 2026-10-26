@@ -9,9 +9,8 @@ import (
 	"github.com/cloudoperators/rootstock/internal/manager"
 )
 
-type Scraper struct{}
-
-func (*Scraper) Scrape(_ context.Context, _ manager.ScrapeJob) manager.ScrapeResult {
+// Scrape implements the redfish scrape function and satisfies the manager scraper signature.
+func Scrape(_ context.Context, _ manager.ScrapeJob) (int, error) { //nolint:gocritic // must match manager scraper map
 	// implement redfish scraper logic
-	return manager.ScrapeResult{}
+	return 0, nil
 }
