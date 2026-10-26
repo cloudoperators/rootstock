@@ -18,7 +18,6 @@ func newTestManager(ips ...string) *manager {
 	devices := make(map[string]*device)
 	for _, ip := range ips {
 		devices[ip] = &device{
-			deviceID: ip,
 			ip:       ip,
 			username: "admin",
 			password: "pass",
@@ -47,14 +46,14 @@ func TestGetScrapeJob(t *testing.T) {
 		lastScraped         time.Time
 		consecutiveFailures int
 		wantJob             bool   // whether getScrapeJob should return a non-nil job
-		wantDeviceID        string // expected DeviceID on the returned job; only checked when wantJob is true
+		wantIP              string // expected IP on the returned job; only checked when wantJob is true
 		wantFailureCount    int    // expected consecutiveFailures after getScrapeJob runs; only checked when wantJob is true
 	}{
 		{
-			name:         "device never scraped returns job",
-			ips:          []string{"10.0.0.1"},
-			wantJob:      true,
-			wantDeviceID: "10.0.0.1",
+			name:    "device never scraped returns job",
+			ips:     []string{"10.0.0.1"},
+			wantJob: true,
+			wantIP:  "10.0.0.1",
 		},
 		{
 			name:             "device currently being scraped returns nil",
@@ -69,11 +68,11 @@ func TestGetScrapeJob(t *testing.T) {
 			wantJob:     false,
 		},
 		{
-			name:         "device scraped past interval returns job",
-			ips:          []string{"10.0.0.1"},
-			lastScraped:  time.Now().Add(-31 * time.Second),
-			wantJob:      true,
-			wantDeviceID: "10.0.0.1",
+			name:        "device scraped past interval returns job",
+			ips:         []string{"10.0.0.1"},
+			lastScraped: time.Now().Add(-31 * time.Second),
+			wantJob:     true,
+			wantIP:      "10.0.0.1",
 		},
 		{
 			name:                "device with failures applies backoff and returns nil",
@@ -88,7 +87,7 @@ func TestGetScrapeJob(t *testing.T) {
 			lastScraped:         time.Now().Add(-31 * time.Second),
 			consecutiveFailures: 10,
 			wantJob:             true,
-			wantDeviceID:        "10.0.0.1",
+			wantIP:              "10.0.0.1",
 			wantFailureCount:    0,
 		},
 		{
@@ -111,7 +110,7 @@ func TestGetScrapeJob(t *testing.T) {
 
 			if !tt.wantJob {
 				if job != nil {
-					t.Errorf("expected nil, got job for device %s", job.DeviceID)
+					t.Errorf("expected nil, got job for device %s", job.IP)
 				}
 
 				return
@@ -121,8 +120,8 @@ func TestGetScrapeJob(t *testing.T) {
 				t.Fatal("expected a job, got nil")
 			}
 
-			if job.DeviceID != tt.wantDeviceID {
-				t.Errorf("expected device %s, got %s", tt.wantDeviceID, job.DeviceID)
+			if job.IP != tt.wantIP {
+				t.Errorf("expected device %s, got %s", tt.wantIP, job.IP)
 			}
 
 			if !m.devices["10.0.0.1"].currentlyScraped {
@@ -169,7 +168,7 @@ func TestUpdateState(t *testing.T) {
 			go m.updateState(ctx)
 
 			m.results <- scrapeStatus{
-				deviceID:  "10.0.0.1",
+				ip:        "10.0.0.1",
 				timestamp: time.Now(),
 				err:       tt.err,
 			}
@@ -236,7 +235,7 @@ func TestDispatcher(t *testing.T) {
 			select {
 			case job := <-m.jobs:
 				if !tt.wantJob {
-					t.Errorf("expected no job, got job for device %s", job.DeviceID)
+					t.Errorf("expected no job, got job for device %s", job.IP)
 				}
 			case <-time.After(100 * time.Millisecond):
 				if tt.wantJob {
@@ -319,7 +318,6 @@ func TestRunner(t *testing.T) {
 			go m.runner(ctx, 0)
 
 			m.jobs <- ScrapeJob{
-				DeviceID: "10.0.0.1",
 				IP:       "10.0.0.1",
 				Username: "admin",
 				Password: "pass",
@@ -329,7 +327,7 @@ func TestRunner(t *testing.T) {
 			select {
 			case result := <-m.results:
 				if !tt.wantResult {
-					t.Errorf("expected no result, got result for device %s", result.deviceID)
+					t.Errorf("expected no result, got result for device %s", result.ip)
 					return
 				}
 

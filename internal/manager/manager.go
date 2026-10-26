@@ -45,7 +45,6 @@ func NewManager(
 
 	for _, cfg := range configs {
 		devices[cfg.IP] = &device{
-			deviceID: cfg.IP,
 			ip:       cfg.IP,
 			username: username,
 			password: password,
@@ -112,7 +111,7 @@ func (m *manager) getScrapeJob() *ScrapeJob {
 		failureCount := d.consecutiveFailures
 
 		if failureCount >= 10 {
-			m.logger.Error("device repeatedly failing, resetting", "device", d.deviceID)
+			m.logger.Error("device repeatedly failing, resetting", "device", d.ip)
 			d.consecutiveFailures = 0
 			failureCount = 0
 		}
@@ -123,7 +122,6 @@ func (m *manager) getScrapeJob() *ScrapeJob {
 			d.currentlyScraped = true
 
 			return &ScrapeJob{
-				DeviceID: d.deviceID,
 				IP:       d.ip,
 				Username: d.username,
 				Password: d.password,
@@ -161,7 +159,7 @@ func (m *manager) runner(ctx context.Context, id int) {
 
 			// send outcome to results channel for updateState to process
 			m.results <- scrapeStatus{
-				deviceID:   job.DeviceID,
+				ip:         job.IP,
 				timestamp:  timestamp,
 				statusCode: statusCode,
 				err:        err,
@@ -182,7 +180,7 @@ func (m *manager) updateState(ctx context.Context) {
 		case outcome := <-m.results:
 			m.mu.Lock()
 
-			d, exists := m.devices[outcome.deviceID]
+			d, exists := m.devices[outcome.ip]
 			if !exists {
 				m.mu.Unlock()
 				continue
@@ -194,7 +192,7 @@ func (m *manager) updateState(ctx context.Context) {
 			if outcome.err != nil {
 				d.consecutiveFailures++
 				logger.Error("scrape failed",
-					"device", outcome.deviceID,
+					"device", outcome.ip,
 					"consecutiveFailures", d.consecutiveFailures,
 					"error", outcome.err,
 				)

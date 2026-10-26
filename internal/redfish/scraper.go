@@ -10,7 +10,7 @@ import (
 )
 
 // Scrape implements the redfish scrape function and satisfies the manager scraper signature.
-func Scrape(_ context.Context, _ manager.ScrapeJob) (int, error) { //nolint:gocritic // must match manager scraper map
+func Scrape(_ context.Context, _ manager.ScrapeJob) (int, error) {
 	// implement redfish scraper logic
 	return 0, nil
 }

@@ -10,7 +10,7 @@ import (
 // scrapeStatus holds the outcome of a single scrape attempt against a device.
 // It is the internal type sent on the results channel after a scrape completes.
 type scrapeStatus struct {
-	deviceID   string
+	ip         string
 	timestamp  time.Time
 	statusCode int
 	err        error
@@ -24,7 +24,6 @@ type DeviceConfig struct {
 
 // ScrapeJob is returned by getScrapeJob and contains only what a scraper needs to do its work.
 type ScrapeJob struct {
-	DeviceID string
 	IP       string
 	Username string
 	Password string
@@ -32,7 +31,6 @@ type ScrapeJob struct {
 }
 
 type device struct {
-	deviceID            string
 	ip                  string
 	username            string
 	password            string
