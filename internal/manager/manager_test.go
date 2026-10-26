@@ -26,14 +26,14 @@ func newTestManager(ips ...string) *manager {
 	}
 
 	return &manager{
-		devices:      devices,
-		interval:     30 * time.Second,
-		workerCount:  2,
-		timeout:      5 * time.Second,
-		pollInterval: 1 * time.Second,
-		logger:       log.Default(),
-		jobs:         make(chan ScrapeJob, 2),    // buffered so tests can push without a goroutine already reading
-		results:      make(chan scrapeStatus, 2), // buffered so tests can push without a goroutine already reading
+		devices:        devices,
+		scrapeInterval: 30 * time.Second,
+		workerCount:    2,
+		timeout:        5 * time.Second,
+		pollInterval:   1 * time.Second,
+		logger:         log.Default(),
+		jobs:           make(chan ScrapeJob, 2),    // buffered so tests can push without a goroutine already reading
+		results:        make(chan scrapeStatus, 2), // buffered so tests can push without a goroutine already reading
 	}
 }
 

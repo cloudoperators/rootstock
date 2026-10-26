@@ -17,16 +17,16 @@ type Manager interface {
 }
 
 type manager struct {
-	devices      map[string]*device
-	mu           sync.RWMutex
-	interval     time.Duration // how often each device should be scraped
-	workerCount  int
-	timeout      time.Duration                                                    // max time per scrape attempt
-	pollInterval time.Duration                                                    // dispatcher scan frequency
-	scrapers     map[string]func(ctx context.Context, job ScrapeJob) (int, error) // maps protocol to scraper
-	logger       log.FullInterface
-	jobs         chan ScrapeJob    // dispatcher pushes jobs, workers read from it
-	results      chan scrapeStatus // workers push outcomes, state updater reads from it
+	devices        map[string]*device
+	mu             sync.RWMutex
+	scrapeInterval time.Duration // how often each device should be scraped
+	workerCount    int
+	timeout        time.Duration                                                    // max time per scrape attempt
+	pollInterval   time.Duration                                                    // dispatcher scan frequency
+	scrapers       map[string]func(ctx context.Context, job ScrapeJob) (int, error) // maps protocol to scraper
+	logger         log.FullInterface
+	jobs           chan ScrapeJob    // dispatcher pushes jobs, workers read from it
+	results        chan scrapeStatus // workers push outcomes, state updater reads from it
 }
 
 // NewManager creates a manager from the given device configs and starts managing scrapes.
@@ -34,7 +34,7 @@ func NewManager(
 	configs []DeviceConfig,
 	username string,
 	password string,
-	interval time.Duration,
+	scrapeInterval time.Duration,
 	workerCount int,
 	timeout time.Duration,
 	pollInterval time.Duration,
@@ -53,15 +53,15 @@ func NewManager(
 	}
 
 	return &manager{
-		devices:      devices,
-		interval:     interval,
-		workerCount:  workerCount,
-		timeout:      timeout,
-		pollInterval: pollInterval,
-		scrapers:     scrapers,
-		logger:       logger,
-		jobs:         make(chan ScrapeJob, workerCount),
-		results:      make(chan scrapeStatus, workerCount),
+		devices:        devices,
+		scrapeInterval: scrapeInterval,
+		workerCount:    workerCount,
+		timeout:        timeout,
+		pollInterval:   pollInterval,
+		scrapers:       scrapers,
+		logger:         logger,
+		jobs:           make(chan ScrapeJob, workerCount),
+		results:        make(chan scrapeStatus, workerCount),
 	}
 }
 
@@ -116,7 +116,7 @@ func (m *manager) getScrapeJob() *ScrapeJob {
 			failureCount = 0
 		}
 
-		waitTime := max(time.Duration(failureCount)*m.interval, m.interval)
+		waitTime := max(time.Duration(failureCount)*m.scrapeInterval, m.scrapeInterval)
 
 		if !d.currentlyScraped && time.Since(d.lastScraped) >= waitTime {
 			d.currentlyScraped = true
