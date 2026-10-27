@@ -57,9 +57,8 @@ jobs:
             --workflow=automerge.yaml \
             --status=in_progress \
             --json databaseId \
-            --jq "$jq_filter" \
-            2>/dev/null
-          ) || running="0"
+            --jq "$jq_filter"
+          )
           if [ "$running" -gt 0 ]; then
             echo "Another automerge run is already in progress — breaking off"
             echo "proceed=false" >> "$GITHUB_OUTPUT"
@@ -70,14 +69,16 @@ jobs:
             gh api "repos/${GITHUB_REPOSITORY}/git/refs/heads/main" --jq '.object.sha'
           )
           jq_filter='(env.CURRENT_RUN_ID | tonumber) as $cur
-            | [.workflow_runs[] | select(.id != $cur) | select(.name != "Automerge")]
+            | [.workflow_runs[]
+            | select(.id != $cur)
+            | select(.name != "Automerge")
+            | select(.status != "completed")]
             | length'
           running_on_main=$(
             gh api \
-            "repos/${GITHUB_REPOSITORY}/actions/runs?head_sha=${main_sha}&status=in_progress" \
-            --jq "$jq_filter" \
-            2>/dev/null
-          ) || running_on_main="0"
+            "repos/${GITHUB_REPOSITORY}/actions/runs?head_sha=${main_sha}" \
+            --jq "$jq_filter"
+          )
           if [ "$running_on_main" -gt 0 ]; then
             echo "Workflows are running on HEAD of main (${main_sha}) — breaking off"
             echo "proceed=false" >> "$GITHUB_OUTPUT"
@@ -129,12 +130,9 @@ jobs:
               ;;
             schedule)
               pr_nums=$(
-                gh pr list \
-                --repo "$GITHUB_REPOSITORY" \
-                --base "$TARGET_BRANCH" \
-                --state open \
-                --json number \
-                --jq '.[].number'
+                 gh api --paginate \
+                   "repos/${GITHUB_REPOSITORY}/pulls?state=open&base=${TARGET_BRANCH}&per_page=100" \
+                   --jq '.[].number'
               )
               for pr_num in $pr_nums; do
                 output=$(
