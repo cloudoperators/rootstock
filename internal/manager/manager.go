@@ -189,7 +189,22 @@ func (m *manager) scrape(ctx context.Context, job *ScrapeJob) {
 	m.subtractScrape()
 }
 
-func (m *manager) applyOutcome(logger log.FullInterface, outcome scrapeStatus) {
+// updateState reads scrape outcomes from the results channel and updates device state.
+// Runs as a single goroutine.
+func (m *manager) updateState(ctx context.Context) {
+	logger := m.logger.With("component", "updateState")
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case outcome := <-m.results:
+			m.recordScrapeResult(logger, outcome)
+		}
+	}
+}
+
+func (m *manager) recordScrapeResult(logger log.FullInterface, outcome scrapeStatus) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -216,20 +231,5 @@ func (m *manager) applyOutcome(logger log.FullInterface, outcome scrapeStatus) {
 		)
 	} else {
 		d.consecutiveFailures = 0
-	}
-}
-
-// updateState reads scrape outcomes from the results channel and updates device state.
-// Runs as a single goroutine.
-func (m *manager) updateState(ctx context.Context) {
-	logger := m.logger.With("component", "updateState")
-
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case outcome := <-m.results:
-			m.applyOutcome(logger, outcome)
-		}
 	}
 }
