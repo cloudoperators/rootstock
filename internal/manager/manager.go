@@ -61,7 +61,11 @@ func NewManager(
 		pollInterval:   pollInterval,
 		scrapers:       scrapers,
 		logger:         logger,
-		results:        make(chan scrapeStatus, workerCount),
+		// Buffer must be >= workerCount: at most workerCount scrapes are ever in
+		// flight, so a full buffer lets every scrape send its result without blocking
+		// (even during shutdown when updateState has stopped reading), guaranteeing
+		// no scrape goroutine leaks and every reserved worker slot is released.
+		results: make(chan scrapeStatus, workerCount),
 	}
 }
 
@@ -70,8 +74,8 @@ func (m *manager) Run(ctx context.Context) {
 	go m.updateState(ctx) // one state updater processing results
 }
 
-// dispatcher scans for devices ready to scrape and pushes jobs onto the jobs channel.
-// Runs as a single goroutine.
+// dispatcher scans for devices ready to scrape and launches a scrape goroutine
+// for each. Runs as a single goroutine.
 func (m *manager) dispatcher(ctx context.Context) {
 	for {
 		select {
@@ -85,7 +89,9 @@ func (m *manager) dispatcher(ctx context.Context) {
 	}
 }
 
-// getScrapeJob returns the all devices that are due for scraping, or nil if none are ready.
+// getScrapeJobs returns all devices due for scraping, up to the number of free
+// worker slots, reserving a slot for each. Devices beyond capacity wait for the
+// next poll rather than being launched and dropped.
 func (m *manager) getScrapeJobs() []*ScrapeJob {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -93,6 +99,11 @@ func (m *manager) getScrapeJobs() []*ScrapeJob {
 	var jobs []*ScrapeJob
 
 	for _, d := range m.devices {
+		// all worker slots are reserved; remaining devices wait for the next poll
+		if m.activeScrapes >= m.workerCount {
+			break
+		}
+
 		// failureCount drives the backoff: each consecutive failure adds one
 		// extra interval before the device is retried.
 		failureCount := d.consecutiveFailures
@@ -107,6 +118,8 @@ func (m *manager) getScrapeJobs() []*ScrapeJob {
 
 		if !d.currentlyScraped && time.Since(d.lastScraped) >= waitTime {
 			d.currentlyScraped = true
+			m.activeScrapes++
+
 			jobs = append(jobs, &ScrapeJob{
 				IP:       d.ip,
 				Username: d.username,
@@ -119,44 +132,7 @@ func (m *manager) getScrapeJobs() []*ScrapeJob {
 	return jobs
 }
 
-func (m *manager) addScrape() error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	if m.activeScrapes >= m.workerCount {
-		return fmt.Errorf("too many active scrapes: %d >= %d", m.activeScrapes, m.workerCount)
-	}
-
-	m.activeScrapes++
-
-	return nil
-}
-
-func (m *manager) subtractScrape() {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	if m.activeScrapes == 0 {
-		return
-	}
-
-	m.activeScrapes--
-}
-
 func (m *manager) scrape(ctx context.Context, job *ScrapeJob) {
-	if err := m.addScrape(); err != nil {
-		m.logger.Error("shedding job: too many active scrapes",
-			"ip", job.IP, "protocol", job.Protocol, log.KeyError, err,
-		)
-
-		m.results <- scrapeStatus{
-			ip:   job.IP,
-			shed: true,
-		}
-
-		return
-	}
-
 	scraper, ok := m.scrapers[job.Protocol]
 	if !ok {
 		m.logger.Error("no scraper found for protocol", "protocol", job.Protocol)
@@ -166,8 +142,6 @@ func (m *manager) scrape(ctx context.Context, job *ScrapeJob) {
 			timestamp: time.Now(),
 			err:       fmt.Errorf("no scraper for protocol %q", job.Protocol),
 		}
-
-		m.subtractScrape()
 
 		return
 	}
@@ -185,8 +159,6 @@ func (m *manager) scrape(ctx context.Context, job *ScrapeJob) {
 		statusCode: statusCode,
 		err:        err,
 	}
-
-	m.subtractScrape()
 }
 
 // updateState reads scrape outcomes from the results channel and updates device state.
@@ -208,14 +180,13 @@ func (m *manager) recordScrapeResult(logger log.FullInterface, outcome scrapeSta
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	d, exists := m.devices[outcome.ip]
-	if !exists {
-		return
+	// release the worker slot reserved for this job in getScrapeJobs
+	if m.activeScrapes > 0 {
+		m.activeScrapes--
 	}
 
-	if outcome.shed {
-		d.currentlyScraped = false
-
+	d, exists := m.devices[outcome.ip]
+	if !exists {
 		return
 	}
 

@@ -43,6 +43,7 @@ func TestGetScrapeJobs(t *testing.T) {
 		currentlyScraped    bool
 		lastScraped         time.Time
 		consecutiveFailures int
+		activeScrapes       int    // pre-set reserved slots to simulate worker usage
 		wantCount           int    // expected number of jobs returned
 		wantIP              string // checked only when wantCount == 1
 		wantFailureCount    int    // checked only when wantCount == 1
@@ -98,11 +99,25 @@ func TestGetScrapeJobs(t *testing.T) {
 			ips:       []string{"10.0.0.1", "10.0.0.2"},
 			wantCount: 2,
 		},
+		{
+			name:          "no free slots returns nothing",
+			ips:           []string{"10.0.0.1"},
+			activeScrapes: 2, // workerCount = 2, all slots reserved
+			wantCount:     0,
+		},
+		{
+			name:          "more ready devices than free slots claims only up to capacity",
+			ips:           []string{"10.0.0.1", "10.0.0.2", "10.0.0.3"},
+			activeScrapes: 0,
+			wantCount:     2, // workerCount = 2, claims only 2 of the 3 ready
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := newTestManager(tt.ips...)
+			m.activeScrapes = tt.activeScrapes
+
 			for _, ip := range tt.ips {
 				m.devices[ip].currentlyScraped = tt.currentlyScraped
 				m.devices[ip].lastScraped = tt.lastScraped
@@ -113,6 +128,11 @@ func TestGetScrapeJobs(t *testing.T) {
 
 			if len(jobs) != tt.wantCount {
 				t.Fatalf("expected %d jobs, got %d", tt.wantCount, len(jobs))
+			}
+
+			// each claimed job reserves one worker slot
+			if m.activeScrapes != tt.activeScrapes+len(jobs) {
+				t.Errorf("expected activeScrapes %d, got %d", tt.activeScrapes+len(jobs), m.activeScrapes)
 			}
 
 			if tt.wantCount != 1 {
@@ -140,28 +160,18 @@ func TestUpdateState(t *testing.T) {
 		initialFailures int
 		outcome         scrapeStatus
 		wantFailures    int
-		wantLastScraped bool // true = lastScraped should be set to a non-zero time
 	}{
 		{
 			name:            "success clears consecutive failures",
 			initialFailures: 2,
 			outcome:         scrapeStatus{ip: "10.0.0.1", timestamp: time.Now(), err: nil},
 			wantFailures:    0,
-			wantLastScraped: true,
 		},
 		{
 			name:            "error increments consecutive failures",
 			initialFailures: 0,
 			outcome:         scrapeStatus{ip: "10.0.0.1", timestamp: time.Now(), err: errors.New("connection refused")},
 			wantFailures:    1,
-			wantLastScraped: true,
-		},
-		{
-			name:            "shed does not count as failure and does not update lastScraped",
-			initialFailures: 3,
-			outcome:         scrapeStatus{ip: "10.0.0.1", shed: true},
-			wantFailures:    3,
-			wantLastScraped: false,
 		},
 	}
 
@@ -170,13 +180,14 @@ func TestUpdateState(t *testing.T) {
 			m := newTestManager("10.0.0.1")
 			m.devices["10.0.0.1"].consecutiveFailures = tt.initialFailures
 			m.devices["10.0.0.1"].currentlyScraped = true
+			m.activeScrapes = 1 // one slot reserved for this in-flight scrape
 
 			go m.updateState(t.Context())
 
 			m.results <- tt.outcome
 
-			// Poll until currentlyScraped is false — applyOutcome sets this last under the lock,
-			// so once we observe it, all other state changes are also done.
+			// Poll until currentlyScraped is false — recordScrapeResult sets this under the
+			// lock alongside every other change, so once we observe it, all writes are done.
 			require.Eventually(t, func() bool {
 				m.mu.RLock()
 				defer m.mu.RUnlock()
@@ -187,18 +198,19 @@ func TestUpdateState(t *testing.T) {
 			m.mu.RLock()
 			failures := m.devices["10.0.0.1"].consecutiveFailures
 			lastScraped := m.devices["10.0.0.1"].lastScraped
+			active := m.activeScrapes
 			m.mu.RUnlock()
 
 			if failures != tt.wantFailures {
 				t.Errorf("expected %d failures, got %d", tt.wantFailures, failures)
 			}
 
-			if tt.wantLastScraped && lastScraped.IsZero() {
+			if lastScraped.IsZero() {
 				t.Error("expected lastScraped to be updated, got zero value")
 			}
 
-			if !tt.wantLastScraped && !lastScraped.IsZero() {
-				t.Error("expected lastScraped to remain zero for shed job")
+			if active != 0 {
+				t.Errorf("expected worker slot to be released (activeScrapes 0), got %d", active)
 			}
 		})
 	}
@@ -209,8 +221,6 @@ func TestScrape(t *testing.T) {
 		name           string
 		protocol       string
 		scrapers       map[string]func(ctx context.Context, job ScrapeJob) (int, error)
-		preFillScrapes int // pre-set activeScrapes to simulate being at capacity
-		wantShed       bool
 		wantErr        bool
 		wantStatusCode int
 	}{
@@ -238,22 +248,12 @@ func TestScrape(t *testing.T) {
 			scrapers: map[string]func(ctx context.Context, job ScrapeJob) (int, error){},
 			wantErr:  true,
 		},
-		{
-			name:           "at capacity sheds job without counting as failure",
-			protocol:       "redfish",
-			preFillScrapes: 2, // workerCount = 2, already at capacity
-			scrapers: map[string]func(ctx context.Context, job ScrapeJob) (int, error){
-				"redfish": func(_ context.Context, _ ScrapeJob) (int, error) { return 200, nil },
-			},
-			wantShed: true,
-		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := newTestManager("10.0.0.1")
 			m.scrapers = tt.scrapers
-			m.activeScrapes = tt.preFillScrapes
 
 			go m.scrape(t.Context(), &ScrapeJob{
 				IP:       "10.0.0.1",
@@ -264,15 +264,11 @@ func TestScrape(t *testing.T) {
 
 			select {
 			case result := <-m.results:
-				if result.shed != tt.wantShed {
-					t.Errorf("expected shed=%v, got %v", tt.wantShed, result.shed)
-				}
-
 				if tt.wantErr && result.err == nil {
 					t.Error("expected an error, got nil")
 				}
 
-				if !tt.wantErr && !tt.wantShed && result.err != nil {
+				if !tt.wantErr && result.err != nil {
 					t.Errorf("expected no error, got %v", result.err)
 				}
 
