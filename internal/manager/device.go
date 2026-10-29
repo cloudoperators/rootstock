@@ -14,6 +14,7 @@ type scrapeStatus struct {
 	timestamp  time.Time
 	statusCode int
 	err        error
+	shed       bool // true when the job was dropped due to capacity, not a device error
 }
 
 // DeviceConfig is the input configuration for a single device from the static list.
