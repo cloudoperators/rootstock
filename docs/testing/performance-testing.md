@@ -3,18 +3,6 @@
 This document describes the performance-testing approach for rootstock and the
 metrics we intend to measure.
 
-## Open questions
-
-- if we need to adhere to product standards it would make sense to either mirror
-  the repository or somehow direct the internal tools at the public repository
-
-- do we want to performance test the prometheus collector (and set the result
-  cache (buffer) static)?
-  - measures peak request per second and response time
-  - requires feature flag to set the cache static
-  - security risk if you enable the flag in production -> risk / reward
-    potentially low
-
 ## Notes
 
 - do we need to adhere to SAPs product standards
@@ -47,6 +35,15 @@ cache
 testing against the deployed container in a kind cluster is currently off the
 table as we deem it not necessary to benchmark test relevant components and
 measuring relative deviations.
+
+## Open questions
+
+- do we want to performance test the prometheus collector (and set the result
+  cache (buffer) static)?
+  - measures peak request per second and response time
+  - requires feature flag to set the cache static
+  - security risk if you enable the flag in production -> risk / reward
+    potentially low
 
 ## In-code benchmark harness
 
