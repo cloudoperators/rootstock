@@ -24,7 +24,7 @@ import (
 // Fetch a URL from the PDU and return the JSON
 // Log out and close the connection cleanly
 
-type Client interface {
+type Client interface { //nolint:interfacebloat // PDU client requires one method per Redfish endpoint
 	// Login opens an authenticated Redfish session with the PDU.
 	Login(context.Context) error
 	// Close terminates the Redfish session.
@@ -296,8 +296,8 @@ func (c *ClientImpl) Close(ctx context.Context) error {
 	return nil
 }
 
-func (c *ClientImpl) get(ctx context.Context, path string, result any) error {
-	fullURL := c.baseURL.ResolveReference(&url.URL{Path: path})
+func (c *ClientImpl) get(ctx context.Context, urlPath string, result any) error {
+	fullURL := c.baseURL.ResolveReference(&url.URL{Path: urlPath})
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fullURL.String(), http.NoBody)
 	if err != nil {
@@ -310,7 +310,7 @@ func (c *ClientImpl) get(ctx context.Context, path string, result any) error {
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("GET %s: %w", path, err)
+		return fmt.Errorf("GET %s: %w", urlPath, err)
 	}
 
 	defer func() {
@@ -320,11 +320,11 @@ func (c *ClientImpl) get(ctx context.Context, path string, result any) error {
 	}()
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("GET %s: unexpected status code %d", path, resp.StatusCode)
+		return fmt.Errorf("GET %s: unexpected status code %d", urlPath, resp.StatusCode)
 	}
 
 	if err := json.NewDecoder(resp.Body).Decode(result); err != nil {
-		return fmt.Errorf("decode GET %s response: %w", path, err)
+		return fmt.Errorf("decode GET %s response: %w", urlPath, err)
 	}
 
 	return nil
@@ -453,5 +453,4 @@ func (c *ClientImpl) GetRackPDUMainIDs(ctx context.Context, pduID string) ([]str
 	}
 
 	return ids, nil
-
 }
