@@ -32,13 +32,17 @@ type rackPDU struct {
 }
 
 type energetics struct {
-	power         *prometheus.Desc
+	// power holds the active power consumption in watts.
+	power *prometheus.Desc
+	// apparentPower holds the apparent power in volt-amperes.
 	apparentPower *prometheus.Desc
-	energykWk     *prometheus.Desc
+	// energy holds the measured energy throughput in kWh.
+	energy *prometheus.Desc
 }
 
 type powerRating struct {
-	powerRating *prometheus.Desc
+	// powerCapacity holds the rated power capacity in volt-amperes.
+	powerCapacity *prometheus.Desc
 }
 
 // type outletElectricals struct {
@@ -84,7 +88,7 @@ func NewCollector(redfishClient redfish.Client, pduID string) *Collector {
 					[]string{"pdu_id"},
 					nil,
 				),
-				energykWk: prometheus.NewDesc(
+				energy: prometheus.NewDesc(
 					"energy_kwh",
 					"PDU energy kWh",
 					[]string{"pdu_id"},
@@ -92,7 +96,7 @@ func NewCollector(redfishClient redfish.Client, pduID string) *Collector {
 				),
 			},
 			powerRating: powerRating{
-				powerRating: prometheus.NewDesc(
+				powerCapacity: prometheus.NewDesc(
 					"power_rating",
 					"PDU power rating",
 					[]string{"pdu_id"},
@@ -108,9 +112,9 @@ func (c *Collector) Describe(ch chan<- *prometheus.Desc) {
 	// Energetics
 	ch <- c.rackPDU.energetics.power
 	ch <- c.rackPDU.energetics.apparentPower
-	ch <- c.rackPDU.energetics.energykWk
+	ch <- c.rackPDU.energetics.energy
 	// Power rating
-	ch <- c.rackPDU.powerRating.powerRating
+	ch <- c.rackPDU.powerRating.powerCapacity
 }
 
 // Collect implements prometheus.Collector.
@@ -168,7 +172,7 @@ func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 	// EnergykWh metric
 	if rackPDUEnergetics.EnergykWh.EnergykWh != 0 {
 		metric, err := prometheus.NewConstMetric(
-			c.rackPDU.energetics.energykWk,
+			c.rackPDU.energetics.energy,
 			prometheus.GaugeValue,
 			rackPDUEnergetics.EnergykWh.EnergykWh,
 			c.pduID,
@@ -191,7 +195,7 @@ func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 	}
 
 	metric, err := prometheus.NewConstMetric(
-		c.rackPDU.powerRating.powerRating,
+		c.rackPDU.powerRating.powerCapacity,
 		prometheus.GaugeValue,
 		rackPDU.PowerCapacityVA,
 		c.pduID,
