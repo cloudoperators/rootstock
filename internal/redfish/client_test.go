@@ -72,11 +72,11 @@ func TestLogin(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name          string
-		responseToken string
+		name             string
+		responseToken    string
 		responseLocation string
 		responseStatus   int
-		wantErr       bool
+		wantErr          bool
 	}{
 		{
 			name:             "success",
@@ -157,7 +157,7 @@ func TestClose(t *testing.T) {
 			deleteCalled := false
 
 			server := setupTestServer(t, map[string]http.HandlerFunc{
-				"/redfish/v1/SessionService/Sessions":   loginHandler,
+				"/redfish/v1/SessionService/Sessions": loginHandler,
 				"/redfish/v1/SessionService/Sessions/1": func(w http.ResponseWriter, r *http.Request) {
 					if r.Method == http.MethodDelete {
 						deleteCalled = true
@@ -213,7 +213,7 @@ func TestGetPowerEquipment(t *testing.T) {
 				"/redfish/v1/PowerEquipment": func(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(tc.serverStatus)
 					if tc.serverBody != nil {
-						json.NewEncoder(w).Encode(tc.serverBody) //nolint:errcheck
+						_ = json.NewEncoder(w).Encode(tc.serverBody)
 					}
 				},
 			})
@@ -275,7 +275,7 @@ func TestGetRackPDUs(t *testing.T) {
 				"/redfish/v1/PowerEquipment/RackPDUs": func(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(tc.serverStatus)
 					if tc.serverBody != nil {
-						json.NewEncoder(w).Encode(tc.serverBody) //nolint:errcheck
+						_ = json.NewEncoder(w).Encode(tc.serverBody)
 					}
 				},
 			})
@@ -346,7 +346,7 @@ func TestGetRackPDUPowerRating(t *testing.T) {
 				"/redfish/v1/PowerEquipment/RackPDUs/" + tc.pduID: func(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(tc.serverStatus)
 					if tc.serverBody != nil {
-						json.NewEncoder(w).Encode(tc.serverBody) //nolint:errcheck
+						_ = json.NewEncoder(w).Encode(tc.serverBody)
 					}
 				},
 			})
@@ -362,7 +362,7 @@ func TestGetRackPDUPowerRating(t *testing.T) {
 			}
 			require.NoError(t, err)
 			assert.Equal(t, tc.wantName, result.Name)
-			assert.Equal(t, tc.wantCapacity, result.PowerCapacityVA)
+			assert.InDelta(t, tc.wantCapacity, result.PowerCapacityVA, 1e-6)
 			assert.Equal(t, tc.wantState, result.Status.State)
 		})
 	}
@@ -372,16 +372,16 @@ func TestGetRackPDUEnergetics(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name           string
-		pduID          string
-		serverStatus   int
-		serverBody     map[string]any
-		wantErr        bool
-		wantPower      float64
-		wantApparent   float64
-		wantReactive   float64
-		wantPwrFactor  float64
-		wantEnergykWh  float64
+		name          string
+		pduID         string
+		serverStatus  int
+		serverBody    map[string]any
+		wantErr       bool
+		wantPower     float64
+		wantApparent  float64
+		wantReactive  float64
+		wantPwrFactor float64
+		wantEnergykWh float64
 	}{
 		{
 			name:         "success",
@@ -391,8 +391,8 @@ func TestGetRackPDUEnergetics(t *testing.T) {
 				"Id":   "Metrics",
 				"Name": "PDU-01 Metrics",
 				"PowerWatts": map[string]float64{
-					"Reading":    3500.5,
-					"ApparentVA": 3600.0,
+					"Reading":     3500.5,
+					"ApparentVA":  3600.0,
 					"ReactiveVAR": 150.0,
 					"PowerFactor": 0.97,
 				},
@@ -424,7 +424,7 @@ func TestGetRackPDUEnergetics(t *testing.T) {
 				"/redfish/v1/PowerEquipment/RackPDUs/" + tc.pduID + "/Metrics": func(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(tc.serverStatus)
 					if tc.serverBody != nil {
-						json.NewEncoder(w).Encode(tc.serverBody) //nolint:errcheck
+						_ = json.NewEncoder(w).Encode(tc.serverBody)
 					}
 				},
 			})
@@ -439,11 +439,11 @@ func TestGetRackPDUEnergetics(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-			assert.Equal(t, tc.wantPower, result.PowerWatts.Power)
-			assert.Equal(t, tc.wantApparent, result.PowerWatts.ApparentPower)
-			assert.Equal(t, tc.wantReactive, result.PowerWatts.ReactivePower)
-			assert.Equal(t, tc.wantPwrFactor, result.PowerWatts.PowerFactor)
-			assert.Equal(t, tc.wantEnergykWh, result.EnergykWh.EnergykWh)
+			assert.InDelta(t, tc.wantPower, result.PowerWatts.Power, 1e-6)
+			assert.InDelta(t, tc.wantApparent, result.PowerWatts.ApparentPower, 1e-6)
+			assert.InDelta(t, tc.wantReactive, result.PowerWatts.ReactivePower, 1e-6)
+			assert.InDelta(t, tc.wantPwrFactor, result.PowerWatts.PowerFactor, 1e-6)
+			assert.InDelta(t, tc.wantEnergykWh, result.EnergykWh.EnergykWh, 1e-6)
 		})
 	}
 }
@@ -452,18 +452,18 @@ func TestGetRackPDUOutletElectricals(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name         string
-		pduID        string
-		outletID     string
-		serverStatus int
-		serverBody   map[string]any
-		wantErr      bool
-		wantState    string
-		wantOutletType string
+		name             string
+		pduID            string
+		outletID         string
+		serverStatus     int
+		serverBody       map[string]any
+		wantErr          bool
+		wantState        string
+		wantOutletType   string
 		wantRatedCurrent float64
-		wantVoltage  float64
-		wantCurrent  float64
-		wantPower    float64
+		wantVoltage      float64
+		wantCurrent      float64
+		wantPower        float64
 	}{
 		{
 			name:         "success",
@@ -471,12 +471,12 @@ func TestGetRackPDUOutletElectricals(t *testing.T) {
 			outletID:     "OUTLET1",
 			serverStatus: http.StatusOK,
 			serverBody: map[string]any{
-				"Status":          map[string]string{"State": "Enabled", "Health": "OK"},
-				"OutletType":      "IEC_60320_C13",
+				"Status":           map[string]string{"State": "Enabled", "Health": "OK"},
+				"OutletType":       "IEC_60320_C13",
 				"RatedCurrentAmps": 16.0,
-				"Voltage":         map[string]float64{"Reading": 231.0},
-				"CurrentAmps":     map[string]float64{"Reading": 3.5},
-				"PowerWatts":      map[string]float64{"Reading": 808.5, "ApparentVA": 808.5},
+				"Voltage":          map[string]float64{"Reading": 231.0},
+				"CurrentAmps":      map[string]float64{"Reading": 3.5},
+				"PowerWatts":       map[string]float64{"Reading": 808.5, "ApparentVA": 808.5},
 			},
 			wantErr:          false,
 			wantState:        "Enabled",
@@ -499,12 +499,13 @@ func TestGetRackPDUOutletElectricals(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
+			outletPath := "/redfish/v1/PowerEquipment/RackPDUs/" + tc.pduID + "/Outlets/" + tc.outletID
 			server := setupTestServer(t, map[string]http.HandlerFunc{
 				"/redfish/v1/SessionService/Sessions": loginHandler,
-				"/redfish/v1/PowerEquipment/RackPDUs/" + tc.pduID + "/Outlets/" + tc.outletID: func(w http.ResponseWriter, r *http.Request) {
+				outletPath: func(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(tc.serverStatus)
 					if tc.serverBody != nil {
-						json.NewEncoder(w).Encode(tc.serverBody) //nolint:errcheck
+						_ = json.NewEncoder(w).Encode(tc.serverBody)
 					}
 				},
 			})
@@ -521,10 +522,10 @@ func TestGetRackPDUOutletElectricals(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, tc.wantState, result.Status.State)
 			assert.Equal(t, tc.wantOutletType, result.OutletType)
-			assert.Equal(t, tc.wantRatedCurrent, result.RatedCurrent)
-			assert.Equal(t, tc.wantVoltage, result.Voltage.Voltage)
-			assert.Equal(t, tc.wantCurrent, result.Current.Current)
-			assert.Equal(t, tc.wantPower, result.ApparentPower.Power)
+			assert.InDelta(t, tc.wantRatedCurrent, result.RatedCurrent, 1e-6)
+			assert.InDelta(t, tc.wantVoltage, result.Voltage.Voltage, 1e-6)
+			assert.InDelta(t, tc.wantCurrent, result.Current.Current, 1e-6)
+			assert.InDelta(t, tc.wantPower, result.ApparentPower.Power, 1e-6)
 		})
 	}
 }
@@ -558,9 +559,15 @@ func TestGetRackPDUMainCurrent(t *testing.T) {
 					map[string]any{"Line3": map[string]float64{"Reading": 5.96}},
 				},
 				"PolyPhasePowerWatts": []any{
-					map[string]any{"Line1ToNeutral": map[string]float64{"Reading": 1535.0, "ApparentVA": 1544.0, "ReactiveVAR": 166.0, "PowerFactor": 0.994}},
-					map[string]any{"Line2ToNeutral": map[string]float64{"Reading": 1423.0, "ApparentVA": 1435.0, "ReactiveVAR": 185.0, "PowerFactor": 0.991}},
-					map[string]any{"Line3ToNeutral": map[string]float64{"Reading": 1370.0, "ApparentVA": 1379.0, "ReactiveVAR": 157.0, "PowerFactor": 0.993}},
+					map[string]any{"Line1ToNeutral": map[string]float64{
+						"Reading": 1535.0, "ApparentVA": 1544.0, "ReactiveVAR": 166.0, "PowerFactor": 0.994,
+					}},
+					map[string]any{"Line2ToNeutral": map[string]float64{
+						"Reading": 1423.0, "ApparentVA": 1435.0, "ReactiveVAR": 185.0, "PowerFactor": 0.991,
+					}},
+					map[string]any{"Line3ToNeutral": map[string]float64{
+						"Reading": 1370.0, "ApparentVA": 1379.0, "ReactiveVAR": 157.0, "PowerFactor": 0.993,
+					}},
 				},
 			},
 			wantErr: false,
@@ -597,7 +604,7 @@ func TestGetRackPDUMainCurrent(t *testing.T) {
 				"/redfish/v1/PowerEquipment/RackPDUs/" + tc.pduID + "/Mains/AC1": func(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(tc.serverStatus)
 					if tc.serverBody != nil {
-						json.NewEncoder(w).Encode(tc.serverBody) //nolint:errcheck
+						_ = json.NewEncoder(w).Encode(tc.serverBody)
 					}
 				},
 			})
@@ -623,12 +630,12 @@ func TestGetRackPDUBranchCurrent(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name         string
-		pduID        string
-		branchID     string
-		serverStatus int
-		serverBody   map[string]any
-		wantErr      bool
+		name             string
+		pduID            string
+		branchID         string
+		serverStatus     int
+		serverBody       map[string]any
+		wantErr          bool
 		wantRatedCurrent float64
 		wantCurrent      float64
 		wantVoltage      map[string]redfish.PhaseReading
@@ -646,7 +653,9 @@ func TestGetRackPDUBranchCurrent(t *testing.T) {
 					"Line1ToNeutral": map[string]float64{"Reading": 231.0},
 				},
 				"PolyPhasePowerWatts": map[string]any{
-					"Line1ToNeutral": map[string]float64{"Reading": 4273.5, "ApparentVA": 4281.0, "ReactiveVAR": 250.0, "PowerFactor": 0.998},
+					"Line1ToNeutral": map[string]float64{
+						"Reading": 4273.5, "ApparentVA": 4281.0, "ReactiveVAR": 250.0, "PowerFactor": 0.998,
+					},
 				},
 			},
 			wantErr:          false,
@@ -672,12 +681,13 @@ func TestGetRackPDUBranchCurrent(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
+			branchPath := "/redfish/v1/PowerEquipment/RackPDUs/" + tc.pduID + "/Branches/" + tc.branchID
 			server := setupTestServer(t, map[string]http.HandlerFunc{
 				"/redfish/v1/SessionService/Sessions": loginHandler,
-				"/redfish/v1/PowerEquipment/RackPDUs/" + tc.pduID + "/Branches/" + tc.branchID: func(w http.ResponseWriter, r *http.Request) {
+				branchPath: func(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(tc.serverStatus)
 					if tc.serverBody != nil {
-						json.NewEncoder(w).Encode(tc.serverBody) //nolint:errcheck
+						_ = json.NewEncoder(w).Encode(tc.serverBody)
 					}
 				},
 			})
@@ -692,8 +702,8 @@ func TestGetRackPDUBranchCurrent(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-			assert.Equal(t, tc.wantRatedCurrent, result.RatedCurrent)
-			assert.Equal(t, tc.wantCurrent, result.Current.Current)
+			assert.InDelta(t, tc.wantRatedCurrent, result.RatedCurrent, 1e-6)
+			assert.InDelta(t, tc.wantCurrent, result.Current.Current, 1e-6)
 			assert.Equal(t, tc.wantVoltage, result.PolyPhaseVoltage)
 			assert.Equal(t, tc.wantPower, result.PolyPhasePowerWatts)
 		})
@@ -742,7 +752,7 @@ func TestGetRackPDUOutletsIDs(t *testing.T) {
 				"/redfish/v1/PowerEquipment/RackPDUs/" + tc.pduID + "/Outlets": func(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(tc.serverStatus)
 					if tc.serverBody != nil {
-						json.NewEncoder(w).Encode(tc.serverBody) //nolint:errcheck
+						_ = json.NewEncoder(w).Encode(tc.serverBody)
 					}
 				},
 			})
@@ -804,7 +814,7 @@ func TestGetRackPDUBranchIDs(t *testing.T) {
 				"/redfish/v1/PowerEquipment/RackPDUs/" + tc.pduID + "/Branches": func(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(tc.serverStatus)
 					if tc.serverBody != nil {
-						json.NewEncoder(w).Encode(tc.serverBody) //nolint:errcheck
+						_ = json.NewEncoder(w).Encode(tc.serverBody)
 					}
 				},
 			})
@@ -865,7 +875,7 @@ func TestGetRackPDUMainIDs(t *testing.T) {
 				"/redfish/v1/PowerEquipment/RackPDUs/" + tc.pduID + "/Mains": func(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(tc.serverStatus)
 					if tc.serverBody != nil {
-						json.NewEncoder(w).Encode(tc.serverBody) //nolint:errcheck
+						_ = json.NewEncoder(w).Encode(tc.serverBody)
 					}
 				},
 			})
