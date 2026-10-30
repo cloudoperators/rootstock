@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"path"
 	"time"
 
 	"github.com/cloudoperators/rootstock/pkg/log"
@@ -42,6 +43,12 @@ type Client interface {
 	GetRackPDUMainCurrent(context.Context, string) (*MainCurrent, error)
 	// GetRackPDUBranchCurrent returns the current metrics for a single branch Rack PDU by ID.
 	GetRackPDUBranchCurrent(context.Context, string, string) (*BranchCurrent, error)
+	// GetRackPDUOutletsIDs returns the outlet IDs for a single Rack PDU.
+	GetRackPDUOutletsIDs(context.Context, string) ([]string, error)
+	// GetRackPDUBranchIDs returns the branch IDs for a single Rack PDU.
+	GetRackPDUBranchIDs(context.Context, string) ([]string, error)
+	// GetRackPDUMainIDs returns the main IDs for a single Rack PDU.
+	GetRackPDUMainIDs(context.Context, string) ([]string, error)
 }
 
 type ClientImpl struct {
@@ -67,6 +74,7 @@ type PowerEquipment struct {
 type RackPDUsCollection struct {
 	Name         string `json:"Name"`
 	MembersCount int    `json:"Members@odata.count"`
+	Members      []Link `json:"Members"`
 }
 
 // RackPDU represents a single RackPDU device.
@@ -83,6 +91,21 @@ type Status struct {
 	Health string `json:"Health"`
 }
 
+// Link represents a Redfish link to another resource
+type Link struct {
+	ODataID string `json:"@odata.id"`
+}
+
+// OutletCollection represents the collection of outlets for a PDU.
+type OutletCollection struct {
+	Outlets []Link `json:"Outlets"`
+}
+
+// BranchCollection represents the collection of branch circuits for a PDU.
+type BranchCollection struct {
+	Branch []Link `json:"Branch"`
+}
+
 // PDUEnergeticsMetrics represents the metrics for a PDU.
 type PDUEnergetics struct {
 	ID         string     `json:"Id"`
@@ -95,11 +118,13 @@ type PDUEnergetics struct {
 type PowerWatts struct {
 	Power         float64 `json:"Reading"`
 	ApparentPower float64 `json:"ApparentVA"`
+	ReactivePower float64 `json:"ReactiveVAR"`
+	PowerFactor   float64 `json:"PowerFactor"`
 }
 
 // EnergykWh represents energy value.
 type EnergykWh struct {
-	EnergykWh float64 `json:"EnergykWh"` // we need this value in watts
+	EnergykWh float64 `json:"Reading"` // we need this value in watts
 }
 
 // OutletElectricals represent outlet metrics.
@@ -122,34 +147,42 @@ type Current struct {
 	Current float64 `json:"Reading"`
 }
 
+// PhaseReading represents a single reading value for a poly-phase measurement.
+type PhaseReading struct {
+	Reading float64 `json:"Reading"`
+}
+
 // MainCurrent represents main current power metrics.
 type MainCurrent struct {
-	PolyPhaseVoltage    PolyPhaseVoltage    `json:"PolyPhaseVoltage"`
-	PolyPhasePowerWatts PolyPhasePowerWatts `json:"PolyPhasePowerWatts"`
+	PolyPhaseVoltage     []map[string]PhaseReading `json:"PolyPhaseVoltage"`
+	PolyPhaseCurrentAmps []map[string]PhaseReading `json:"PolyPhaseCurrentAmps"`
+	PolyPhasePowerWatts  []map[string]PowerWatts   `json:"PolyPhasePowerWatts"`
 }
 
 // PolyPhaseVoltage returns voltage per phase.
-type PolyPhaseVoltage struct {
-	Line1ToLine2 LineToLine `json:"Line1ToLine2"`
-	Line2ToLine3 LineToLine `json:"Line2ToLine3"`
-	Line3ToLine1 LineToLine `json:"Line3ToLine1"`
-}
+// type PolyPhaseVoltage struct {
+// 	Line1ToLine2 LineToLine `json:"Line1ToLine2"`
+// 	Line2ToLine3 LineToLine `json:"Line2ToLine3"`
+// 	Line3ToLine1 LineToLine `json:"Line3ToLine1"`
+// }
 
-type LineToLine struct {
-	Voltage float64 `json:"Reading"`
-}
+// type LineToLine struct {
+// 	Voltage float64 `json:"Reading"`
+// }
 
-// PolyPhaseVoltage returns voltage per phase.
-type PolyPhasePowerWatts struct {
-	Line1ToLine2 PowerWatts `json:"Line1ToLine2"`
-	Line2ToLine3 PowerWatts `json:"Line2ToLine3"`
-	Line3ToLine1 PowerWatts `json:"Line3ToLine1"`
-}
+// // PolyPhaseVoltage returns voltage per phase.
+// type PolyPhasePowerWatts struct {
+// 	Line1ToLine2 PowerWatts `json:"Line1ToLine2"`
+// 	Line2ToLine3 PowerWatts `json:"Line2ToLine3"`
+// 	Line3ToLine1 PowerWatts `json:"Line3ToLine1"`
+// }
 
 // BranchCurrent represents branch current metrics.
 type BranchCurrent struct {
-	RatedCurrent float64     `json:"RatedCurrentAmps"`
-	Current      CurrentAmps `json:"CurrentAmps"`
+	RatedCurrent        float64                 `json:"RatedCurrentAmps"`
+	Current             CurrentAmps             `json:"CurrentAmps"`
+	PolyPhaseVoltage    map[string]PhaseReading `json:"PolyPhaseVoltage"`
+	PolyPhasePowerWatts map[string]PowerWatts   `json:"PolyPhasePowerWatts"`
 }
 
 // CurrentAmps represents current metric.
@@ -372,4 +405,53 @@ func (c *ClientImpl) GetRackPDUBranchCurrent(ctx context.Context, pduID, branch 
 	}
 
 	return &result, nil
+}
+
+func (c *ClientImpl) GetRackPDUOutletsIDs(ctx context.Context, pduID string) ([]string, error) {
+	var result OutletCollection
+
+	endpoint := fmt.Sprintf("/redfish/v1/PowerEquipment/RackPDUs/%s/Outlets", pduID)
+	if err := c.get(ctx, endpoint, &result); err != nil {
+		return nil, err
+	}
+
+	ids := make([]string, 0, len(result.Outlets))
+	for _, link := range result.Outlets {
+		ids = append(ids, path.Base(link.ODataID))
+	}
+
+	return ids, nil
+}
+
+func (c *ClientImpl) GetRackPDUBranchIDs(ctx context.Context, pduID string) ([]string, error) {
+	var result BranchCollection
+
+	endpoint := fmt.Sprintf("/redfish/v1/PowerEquipment/RackPDUs/%s/Branches", pduID)
+	if err := c.get(ctx, endpoint, &result); err != nil {
+		return nil, err
+	}
+
+	ids := make([]string, 0, len(result.Branch))
+	for _, link := range result.Branch {
+		ids = append(ids, path.Base(link.ODataID))
+	}
+
+	return ids, nil
+}
+
+func (c *ClientImpl) GetRackPDUMainIDs(ctx context.Context, pduID string) ([]string, error) {
+	var result RackPDUsCollection
+
+	endpoint := fmt.Sprintf("/redfish/v1/PowerEquipment/RackPDUs/%s/Mains", pduID)
+	if err := c.get(ctx, endpoint, &result); err != nil {
+		return nil, err
+	}
+
+	ids := make([]string, 0, len(result.Members))
+	for _, link := range result.Members {
+		ids = append(ids, path.Base(link.ODataID))
+	}
+
+	return ids, nil
+
 }
