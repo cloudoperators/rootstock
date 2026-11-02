@@ -21,8 +21,12 @@ ROOTSTOCK_BENCH_CPU="${ROOTSTOCK_BENCH_CPU:-1}"           # pin GOMAXPROCS for r
 ROOTSTOCK_BENCH_TIMEOUT="${ROOTSTOCK_BENCH_TIMEOUT:-10m}" # hard ceiling so the run can never hang
 ROOTSTOCK_BENCH_OUT="${ROOTSTOCK_BENCH_OUT:-bench.txt}"
 
-# Packages to benchmark. Word-split intentionally so multiple packages work.
-read -r -a bench_pkgs <<<"${ROOTSTOCK_BENCH_PKGS:-./internal/perf/... ./internal/collectors/cache/...}"
+# Packages to benchmark. Defaults to the whole internal tree so any package that
+# gains a Benchmark* function is picked up automatically (auto-discovery). The
+# trade-off vs a curated allowlist: auto-discovery can't go stale, but it also
+# compiles every internal package and will silently include any future
+# benchmark. Override ROOTSTOCK_BENCH_PKGS to pin an explicit allowlist instead.
+ROOTSTOCK_BENCH_PKGS="${ROOTSTOCK_BENCH_PKGS:-./internal/...}"
 
 cd "${REPO_ROOT}"
 
@@ -36,7 +40,7 @@ go test \
 	-count="${ROOTSTOCK_BENCH_COUNT}" \
 	-cpu="${ROOTSTOCK_BENCH_CPU}" \
 	-timeout="${ROOTSTOCK_BENCH_TIMEOUT}" \
-	"${bench_pkgs[@]}" | tee "${ROOTSTOCK_BENCH_OUT}"
+	"${ROOTSTOCK_BENCH_PKGS}" | tee "${ROOTSTOCK_BENCH_OUT}"
 
 cat <<'EOF'
 How to read the results above:

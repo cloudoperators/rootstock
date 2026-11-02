@@ -27,6 +27,11 @@ import (
 // mockupRoot resolves the testdata/pdu-mockup directory relative to this source
 // file, so fixtures load correctly regardless of the process working directory
 // (Go runs benchmarks from their package directory, not the repo root).
+//
+// The benchmarks read from testdata/pdu-mockup rather than a private copy so the
+// mocked device data has a single source of truth shared with the integration
+// tests: there is one set of fixtures to keep faithful to real devices, and the
+// two test suites can never drift apart.
 func mockupRoot() string {
 	_, thisFile, _, _ := runtime.Caller(0) //nolint:dogsled // only the file path is needed
 	// this file: <repo>/internal/perf/mockpdu/mockpdu.go

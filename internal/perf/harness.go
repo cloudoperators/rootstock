@@ -12,7 +12,7 @@
 // Scope note: the real processing-layer stages (ingestion queue, processor,
 // result queue/cache wiring) described in docs/design/architecture.md do not
 // exist yet. This package deliberately does NOT implement them. Instead it
-// provides the measurement scaffolding and a single extension seam — the
+// provides the measurement scaffolding and a single extension point — the
 // Processor interface — so that once a real processor is implemented it can be
 // dropped into the existing benchmarks without rewriting the harness.
 package perf
@@ -38,7 +38,7 @@ type Result struct {
 	PowerCapacityVA float64
 }
 
-// Processor is the extension seam for the (not-yet-implemented) processing
+// Processor is the extension point for the (not-yet-implemented) processing
 // layer. An implementation takes the raw PDU documents scraped from a source
 // and transforms them into a cache-ready Result.
 //
@@ -83,10 +83,13 @@ func DefaultProcessor() Processor {
 	})
 }
 
-// Pipeline wires the three measured stages together: a source (mocked PDU
-// redfish.Client), a Processor, and the result cache. Run drives one full pass
-// — scrape every PDU, process it, and store the Result in the cache — which is
-// the unit a benchmark iterates over.
+// Pipeline wires the three measured stages together:
+// a source (mocked PDU redfish.Client), a Processor, and the result cache.
+//
+// Running it will
+// - scrape every PDU
+// - process it
+// - store the Result in the result cache
 type Pipeline struct {
 	source    redfish.Client
 	processor Processor
