@@ -66,6 +66,10 @@ and this project adheres to
   [#116](https://github.com/cloudoperators/rootstock/pull/116)
   ([diff](https://github.com/cloudoperators/rootstock/compare/v0.1.0...v0.2.0))
   by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.2.0 - 🚀) automerge: Harden automerge
+  [#112](https://github.com/cloudoperators/rootstock/pull/112)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.1.0...v0.2.0))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
 
 ## 2026-10-20
 
