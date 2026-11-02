@@ -124,6 +124,7 @@ jobs:
           coverage-artifact-name: code-coverage
           coverage-file-name: coverage.out
           root-package: github.com/cloudoperators/rootstock
+          skip-comment: true
     permissions:
       actions: read
       contents: read
