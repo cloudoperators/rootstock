@@ -28,6 +28,8 @@ rootstock:
     level: debug
     format: text
     trace: false
+  snmp:
+    enabled: true
   redfish:
     username: redfish
     # The password is ALWAYS consumed from a mounted file, never an environment
@@ -36,12 +38,12 @@ rootstock:
     # 1. existingSecret: reference a pre-created, externally-managed Kubernetes
     #    Secret (recommended when the Secret is managed outside the chart). The
     #    secret content must have the format
-    # 
+    #
     #     redfish_pdus.yaml: |
     #       pdu1:
     #         password: password_value
     #         username: user_value
-    # 
+    #
     # 2. password: provide the value inline and let the chart render a Secret.
     #    Used for self-contained / local (kind) deployments AND by Greenhouse:
     #    a Plugin's redfish.password (valueFrom.secret) feeds this value.

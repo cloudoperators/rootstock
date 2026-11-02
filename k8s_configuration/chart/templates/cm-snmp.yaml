@@ -1,0 +1,12 @@
+{{- if .Values.rootstock.snmp.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: snmp-config
+  namespace: {{ include "rootstock.namespace" . }}
+  labels:
+    {{- include "rootstock.labels" . | nindent 4 }}
+data:
+  snmp.yaml: |
+{{ .Files.Get "snmp.yaml" | indent 4 }}
+{{- end }}

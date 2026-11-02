@@ -40,6 +40,7 @@ spec:
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
+        # TODO: add snmp-exporter sidecar container similar (but simpler) to here https://github.com/prometheus-community/helm-charts/blob/main/charts/prometheus-snmp-exporter/templates/deployment.yaml
         - name: {{ .Chart.Name }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
@@ -83,6 +84,11 @@ spec:
             items:
               - key: redfish_pdus.yaml
                 path: redfish_pdus.yaml
+      {{- if .Values.rootstock.snmp.enabled }}
+        - name: snmp-config
+          configMap:
+            name: snmp-config
+      {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
