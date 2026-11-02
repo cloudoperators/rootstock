@@ -50,10 +50,11 @@ measuring relative deviations.
 The native Go benchmarks live beside the code they measure and are driven by a
 reusable harness under `internal/perf`:
 
-- `internal/perf/mockpdu` — a fixture-backed implementation of `redfish.Client`
-  (the "mock PDU" edge). Fixtures are a copy of the DMTF Redfish PDU mockup
-  (`testdata/pdu-mockup`) embedded via `go:embed`, decoded once at construction
-  so per-iteration cost reflects processing, not JSON parsing or network I/O.
+- `internal/perf/mockpdu` — an implementation of `redfish.Client` using fixtures.
+  Fixtures are read once at construction from the DMTF Redfish PDU mockup under
+  `testdata/pdu-mockup` (the same data the integration tests use, so there is a
+  single source of truth), decoded before the benchmark timer starts so
+  per-iteration cost reflects processing, not JSON parsing or network I/O.
 - `internal/perf/harness.go` — the `Pipeline` that wires the three measured
   stages together: mock PDU source → `Processor` → result cache. The benchmark
   observes results landing in the abstract result cache, which is the

@@ -7,28 +7,33 @@
 // It represents the "mock PDU" edge of the processing pipeline: benchmarks feed
 // mocked PDU data in through this client without touching the network, so the
 // measurement captures processing cost rather than I/O latency. The fixtures
-// are a copy of the DMTF Redfish PDU mockup also used by the integration tests
-// (testdata/pdu-mockup) and are embedded at build time so the mock is
-// self-contained and independent of the working directory.
+// are read once at startup from the DMTF Redfish PDU mockup under
+// testdata/pdu-mockup — the same data the integration tests use — so there is a
+// single source of truth for the mocked device data.
 package mockpdu
 
 import (
 	"context"
-	"embed"
 	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
+	"runtime"
 	"strconv"
 
 	"github.com/cloudoperators/rootstock/internal/redfish"
 )
 
-// fixtures embeds the per-protocol fixtures required to drive the processing
-// pipeline. Each protocol has two documents: its PDU resource (<protocol>.json)
-// and its metrics (<protocol>-metrics.json). Today only the Redfish fixture
-// exists; an SNMP fixture would be added as snmp.json / snmp-metrics.json.
-//
-//go:embed fixtures/*.json
-var fixtures embed.FS
+// mockupRoot resolves the testdata/pdu-mockup directory relative to this source
+// file, so fixtures load correctly regardless of the process working directory
+// (Go runs benchmarks from their package directory, not the repo root).
+func mockupRoot() string {
+	_, thisFile, _, _ := runtime.Caller(0) //nolint:dogsled // only the file path is needed
+	// this file: <repo>/internal/perf/mockpdu/mockpdu.go
+	repoRoot := filepath.Join(filepath.Dir(thisFile), "..", "..", "..")
+
+	return filepath.Join(repoRoot, "testdata", "pdu-mockup")
+}
 
 // Fixture holds the pre-decoded Redfish documents for a single mocked PDU.
 // Decoding happens once when the mock is constructed so that per-iteration
@@ -47,20 +52,20 @@ type Client struct {
 // compile-time assertion that the mock satisfies the production interface.
 var _ redfish.Client = (*Client)(nil)
 
-// Protocol identifies which device protocol a fixture represents. It doubles
-// as the fixture file stem (fixtures/<protocol>.json and
-// fixtures/<protocol>-metrics.json) and as the default PDU key exposed by the
-// mock client. Naming by protocol keeps the fixtures self-documenting and makes
-// the extension path for future protocols (e.g. SNMP) explicit.
+// Protocol identifies which device protocol a fixture represents. It maps to a
+// subtree of the testdata/pdu-mockup directory and doubles as the default PDU
+// key exposed by the mock client. Naming by protocol keeps the source data
+// self-documenting and makes the extension path for future protocols (e.g.
+// SNMP) explicit.
 type Protocol string
 
 const (
-	// Redfish is a representative, fully-populated Redfish RackPDU fixture.
+	// Redfish is a representative, fully-populated Redfish RackPDU.
 	Redfish Protocol = "redfish"
 )
 
-// New returns a mock redfish.Client backed by the embedded Redfish PDU fixture,
-// exposed under the "redfish" key.
+// New returns a mock redfish.Client backed by the Redfish PDU fixture read from
+// testdata/pdu-mockup, exposed under the "redfish" key.
 //
 // It represents a single representative PDU, which is sufficient to characterize
 // per-PDU processing cost. Use NewScaled to replicate it into many PDUs for
@@ -170,32 +175,54 @@ func (c *Client) GetPERackPDUMetrics(_ context.Context, pduID string) (*redfish.
 	return &metrics, nil
 }
 
-// loadFixture decodes the embedded resource and metrics documents for the given
-// protocol fixture (fixtures/<protocol>.json and fixtures/<protocol>-metrics.json).
+// loadFixture reads and decodes the PDU resource and metrics documents for the
+// given protocol from the testdata/pdu-mockup directory. Reading happens once at
+// construction time, before the benchmark timer starts.
 func loadFixture(proto Protocol) (Fixture, error) {
 	var f Fixture
 
-	stem := "fixtures/" + string(proto)
-
-	if err := decode(stem+".json", &f.PDU); err != nil {
+	pduPath, metricsPath, err := fixturePaths(proto)
+	if err != nil {
 		return Fixture{}, err
 	}
 
-	if err := decode(stem+"-metrics.json", &f.Metrics); err != nil {
+	if err := decode(pduPath, &f.PDU); err != nil {
+		return Fixture{}, err
+	}
+
+	if err := decode(metricsPath, &f.Metrics); err != nil {
 		return Fixture{}, err
 	}
 
 	return f, nil
 }
 
-func decode(name string, out any) error {
-	data, err := fixtures.ReadFile(name)
+// fixturePaths maps a protocol to the resource and metrics documents within the
+// testdata/pdu-mockup directory. Each supported protocol declares its own paths
+// here; adding SNMP means adding a case, not restructuring the mock.
+func fixturePaths(proto Protocol) (pduPath, metricsPath string, err error) {
+	root := mockupRoot()
+
+	switch proto {
+	case Redfish:
+		base := filepath.Join(root, "redfish", "v1", "PowerEquipment", "RackPDUs", "1")
+
+		return filepath.Join(base, "index.json"),
+			filepath.Join(base, "Metrics", "index.json"),
+			nil
+	default:
+		return "", "", fmt.Errorf("mockpdu: unsupported protocol %q", proto)
+	}
+}
+
+func decode(path string, out any) error {
+	data, err := os.ReadFile(path)
 	if err != nil {
-		return fmt.Errorf("mockpdu: read fixture %s: %w", name, err)
+		return fmt.Errorf("mockpdu: read fixture %s: %w", path, err)
 	}
 
 	if err := json.Unmarshal(data, out); err != nil {
-		return fmt.Errorf("mockpdu: decode fixture %s: %w", name, err)
+		return fmt.Errorf("mockpdu: decode fixture %s: %w", path, err)
 	}
 
 	return nil
