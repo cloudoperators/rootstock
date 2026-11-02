@@ -8,7 +8,7 @@ and this project adheres to
 
 <!-- git-cliff: end of header -->
 
-## 2026-10-23
+## 2026-11-02
 
 - (0.2.0 - 🚀) tooling: Local kind deployment
   [#80](https://github.com/cloudoperators/rootstock/pull/80)
@@ -52,6 +52,18 @@ and this project adheres to
   by [@blackhat-jan](https://github.com/blackhat-jan)
 - (0.2.0 - ⚙️) tooling: Add claude.md file
   [#102](https://github.com/cloudoperators/rootstock/pull/102)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.1.0...v0.2.0))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.2.0 - 🐛) tooling: Coverage report on main
+  [#109](https://github.com/cloudoperators/rootstock/pull/109)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.1.0...v0.2.0))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.2.0 - 🚀) manager: Add redfish scrape manager logic
+  [#83](https://github.com/cloudoperators/rootstock/pull/83)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.1.0...v0.2.0))
+  by [@Frazia04](https://github.com/Frazia04)
+- (0.2.0 - 🐛) tooling: Coverage report creation on main
+  [#116](https://github.com/cloudoperators/rootstock/pull/116)
   ([diff](https://github.com/cloudoperators/rootstock/compare/v0.1.0...v0.2.0))
   by [@blackhat-jan](https://github.com/blackhat-jan)
 
