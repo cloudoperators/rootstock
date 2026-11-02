@@ -92,9 +92,9 @@ test-integration: mockup-start ## Start mockup server, run integration tests, st
 test-contract: ## Run contract tests (TODO: not yet implemented)
 	@echo "TODO: contract tests not yet implemented"
 
-test-performance: ## Run performance tests (TODO: not yet implemented)
-	@echo "TODO: performance tests not yet implemented"
-	@echo "TODO: will cover queue length and concurrent API request limits"
+test-performance: ## Run in-code Go performance benchmarks (processing pipeline + result cache)
+	@echo "$(green) performance testing$(reset)"
+	@hack/performance-test.sh
 
 test-changelog: ## Run the local changelog generation test suite
 	@echo "$(green) testing changelog generation$(reset)"
