@@ -6,14 +6,16 @@ metrics we intend to measure.
 ## Notes
 
 ### Do we need to adhere to SAPs product standards
-  We don't need to adhere to SLC (pipeline) standards. SCI is exempt. Also,
-  this project is not supposed to be owned by SAP in the future. We want
-  transparent pipeline runs and builds to open registries
+
+We don't need to adhere to SLC (pipeline) standards. SCI is exempt. Also, this
+project is not supposed to be owned by SAP in the future. We want transparent
+pipeline runs and builds to open registries
 
 ### Should we run the tests on a public github runner?
-  yes, for now. running tests on a public virtualized environment will
-  probably cause erratic absolute response measurements. depending on how
-  erratic it is, we can consider self-hosting our own runner later on.
+
+yes, for now. running tests on a public virtualized environment will probably
+cause erratic absolute response measurements. depending on how erratic it is, we
+can consider self-hosting our own runner later on.
 
 ### How often and when do we test?
 
@@ -35,9 +37,10 @@ the performance of the processing pipeline using a static set of mocked
 2. redfish PDUs
 
 later, we can test at the prometheus collector using a statically filled result
-cache. see [Open Questions](#do-we-want-to-performance-test-the-prometheus-collector)
+cache. see
+[Open Questions](#do-we-want-to-performance-test-the-prometheus-collector)
 
-### Do we performance test against a deployment of rootstock? 
+### Do we performance test against a deployment of rootstock?
 
 testing against the deployed container in a kind cluster is currently off the
 table as we deem it not necessary to benchmark test relevant components and
@@ -46,11 +49,13 @@ measuring relative deviations.
 ## Open questions
 
 ### Do we want to performance test the prometheus collector
-  (and set the result cache (buffer) static)?
-  - measures peak request per second and response time
-  - requires feature flag to set the cache static
-  - security risk if you enable the flag in production -> risk / reward
-    potentially low
+
+(and set the result cache (buffer) static)?
+
+- measures peak request per second and response time
+- requires feature flag to set the cache static
+- security risk if you enable the flag in production -> risk / reward
+  potentially low
 
 ## In-code benchmark harness
 
