@@ -8,6 +8,12 @@ import (
 	"testing"
 )
 
+// keyCount is the size of the precomputed key set used by the parallel
+// benchmarks. The keys are built once before the timer starts so the measured
+// loop reflects cache operations, not strconv formatting; using many distinct
+// keys (rather than one) exercises the map instead of a single hot entry.
+const keyCount = 1024
+
 // BenchmarkCacheSet measures the cost of writing to the result cache, the final
 // stage of the processing pipeline.
 func BenchmarkCacheSet(b *testing.B) {
@@ -41,25 +47,11 @@ func BenchmarkCacheGet(b *testing.B) {
 func BenchmarkCacheSetParallel(b *testing.B) {
 	c := New[int]()
 
-	b.ReportAllocs()
-	b.ResetTimer()
-
-	b.RunParallel(func(pb *testing.PB) {
-		i := 0
-
-		for pb.Next() {
-			c.Set(strconv.Itoa(i%1024), i)
-
-			i++
-		}
-	})
-}
-
-// BenchmarkCacheGetParallel measures read contention under concurrent access.
-func BenchmarkCacheGetParallel(b *testing.B) {
-	c := New[int]()
-	for i := range 1024 {
-		c.Set(strconv.Itoa(i), i)
+	// Precompute the keys so strconv formatting and its string allocation stay
+	// out of the timed loop; the measurement then isolates the cache write.
+	keys := make([]string, keyCount)
+	for i := range keys {
+		keys[i] = strconv.Itoa(i)
 	}
 
 	b.ReportAllocs()
@@ -69,7 +61,34 @@ func BenchmarkCacheGetParallel(b *testing.B) {
 		i := 0
 
 		for pb.Next() {
-			_, _ = c.Get(strconv.Itoa(i % 1024))
+			c.Set(keys[i%keyCount], i)
+
+			i++
+		}
+	})
+}
+
+// BenchmarkCacheGetParallel measures read contention under concurrent access.
+func BenchmarkCacheGetParallel(b *testing.B) {
+	c := New[int]()
+
+	// Precompute the keys (and populate the cache with them) so strconv
+	// formatting and its string allocation stay out of the timed loop; the
+	// measurement then isolates the cache read.
+	keys := make([]string, keyCount)
+	for i := range keys {
+		keys[i] = strconv.Itoa(i)
+		c.Set(keys[i], i)
+	}
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	b.RunParallel(func(pb *testing.PB) {
+		i := 0
+
+		for pb.Next() {
+			_, _ = c.Get(keys[i%keyCount])
 
 			i++
 		}
