@@ -5,22 +5,16 @@ metrics we intend to measure.
 
 ## Notes
 
-### Do we need to adhere to SAPs product standards
+### Should we run the tests on a public GitHub runner?
 
-We don't need to adhere to SLC (pipeline) standards. SCI is exempt. Also, this
-project is not supposed to be owned by SAP in the future. We want transparent
-pipeline runs and builds to open registries
-
-### Should we run the tests on a public github runner?
-
-yes, for now. running tests on a public virtualized environment will probably
-cause erratic absolute response measurements. depending on how erratic it is, we
+Yes, for now. Running tests on a public virtualized environment will probably
+cause erratic absolute response measurements. Depending on how erratic it is, we
 can consider self-hosting our own runner later on.
 
 ### How often and when do we test?
 
-test frequency -> fail early. which stage the tests run depends on how expensive
-(runtime) they are if cheaper, higher up
+Test frequency -> fail early. Which stage the tests run depends on how expensive
+(runtime) they are; if cheaper, higher up.
 
 - on-commit
 - on-automerge
@@ -28,34 +22,34 @@ test frequency -> fail early. which stage the tests run depends on how expensive
 
 ### Test Cases
 
-we will test two initial cases for rootstock
+We will test two initial cases for rootstock.
 
-we run two test cases directly at the code level. At the result cache, we verify
-the performance of the processing pipeline using a static set of mocked
+We run two test cases directly at the code level. At the result cache, we verify
+the performance of the processing pipeline using a static set of mocked:
 
 1. SNMP PDUs
-2. redfish PDUs
+2. Redfish PDUs
 
-later, we can test at the prometheus collector using a statically filled result
-cache. see
+Later, we can test at the Prometheus collector using a statically filled result
+cache. See
 [Open Questions](#do-we-want-to-performance-test-the-prometheus-collector)
 
 ### Do we performance test against a deployment of rootstock?
 
-testing against the deployed container in a kind cluster is currently off the
-table as we deem it not necessary to benchmark test relevant components and
-measuring relative deviations.
+Testing against the deployed container in a kind cluster is currently off the
+table, as we deem it not necessary to benchmark relevant components and measure
+relative deviations.
 
 ## Open questions
 
-### Do we want to performance test the prometheus collector
+### Do we want to performance test the Prometheus collector
 
 (and set the result cache (buffer) static)?
 
-- measures peak request per second and response time
-- requires feature flag to set the cache static
-- security risk if you enable the flag in production -> risk / reward
-  potentially low
+- Measures peak request per second and response time.
+- Requires a feature flag to set the cache static.
+- Security risk if you enable the flag in production -> risk / reward
+  potentially low.
 
 ## In-code benchmark harness
 
