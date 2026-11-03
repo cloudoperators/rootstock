@@ -63,7 +63,7 @@ format:
 ```yaml
 pdu1:
   username: redfish
-  password: s3cr3t
+  password: changeThis
 ```
 
 ### Greenhouse
@@ -86,6 +86,7 @@ Key options:
 | `rootstock.redfish.access`         | `{pdu1: {username: redfish, ...}}` | Inline per-PDU credentials (renders a Secret). |
 | `rootstock.config.folder`          | `/config`                          | Mount directory for config and credentials.    |
 | `rootstock.port`                   | `9220`                             | Container port.                                |
+| `rootstock.log.level`              | `debug`                            | Log level (`debug`, `info`, `warn`, `error`).  |
 | `rootstock.scrape.timeout`         | `30s`                              | Upstream Redfish scrape timeout.               |
 | `service.type` / `service.port`    | `ClusterIP` / `9220`               | Service exposure.                              |
 | `serviceMonitor.enabled`           | `false`                            | Create a Prometheus Operator ServiceMonitor.   |
