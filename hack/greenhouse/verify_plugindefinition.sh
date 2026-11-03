@@ -2,30 +2,13 @@
 # SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Greenhouse contributors
 # SPDX-License-Identifier: Apache-2.0
 #
-# verify-plugindefinition.sh
-# -----------------------------------------------------------------------------
-# Verifier for the rootstock Greenhouse PluginDefinition.
+# verify-plugindefinition.sh — verify the rootstock Greenhouse PluginDefinition.
 #
-# Requires a running local Greenhouse-in-kind environment.
-# Run hack/greenhouse/setup_greenhouse.sh first to provision it.
-#
-# Default run (fast path):
-#   1. preflight tool checks
-#   2. helm package + push the rootstock chart to the local registry
-#   3. apply the PluginDefinition (temp copy, repository rewritten) and
-#      assert READY=True   <-- primary pass/fail signal
-#
-# Opt-in full end-to-end (--with-plugin):
-#   4. load the rootstock image into the remote cluster, create the redfish
-#      Secret, apply a Plugin and assert it is Ready, deploy the bundled DMTF
-#      Redfish mockup (unless TARGET is overridden), then port-forward and
-#      assert /healthz + /probe emit real metrics.
-#
-# Teardown runs by default; pass --no-teardown to retain clusters for debugging.
-#
-# Everything is overridable via environment variables (see below). The committed
-# plugindefinition.yaml is NEVER mutated -- all rewrites happen on temp copies.
-# -----------------------------------------------------------------------------
+# Requires a running Greenhouse-in-kind environment (run setup_greenhouse.sh first).
+# Default: preflight → helm package+push → apply PluginDefinition and assert READY=True.
+# --with-plugin: also load image, create Redfish Secret, apply Plugin, deploy mockup,
+#               assert /healthz + /probe emit real metrics.
+# Committed plugindefinition.yaml is NEVER mutated; all rewrites happen on temp copies.
 set -euo pipefail
 
 # --- Configuration (all overridable) -----------------------------------------
@@ -33,59 +16,36 @@ set -euo pipefail
 admin_cluster="greenhouse-admin"
 remote_cluster="greenhouse-remote"
 admin_context="kind-${admin_cluster}"
-# Name under which the remote cluster is *onboarded* into Greenhouse (the
-# greenhouse.sap/Cluster object + its kubeconfig Secret). Greenhouse's
-# setup-demo registers it from the kube-context name, i.e. "kind-<cluster>",
-# which differs from the bare kind cluster name used for `kind load`/contexts.
-# This is what a Plugin's spec.clusterName must reference.
+# Greenhouse onboards the remote cluster under its kube-context name ("kind-<cluster>"),
+# which is what Plugin spec.clusterName must reference.
 remote_context="kind-${remote_cluster}"
 
 DEMO_ORG="${DEMO_ORG:-demo}"
 
 # Local registry provided by Greenhouse's hack/registry/setup.sh (zot).
-#   - REGISTRY_HOST  : how the host (helm push) reaches it.
-#   - REGISTRY_INCLUSTER : how kind nodes / Flux reach it (docker "kind" network).
+# REGISTRY_HOST: host-visible address (helm push); REGISTRY_INCLUSTER: in-cluster address (Flux).
 REGISTRY_HOST="${REGISTRY_HOST:-localhost:5000}"
 REGISTRY_INCLUSTER="${REGISTRY_INCLUSTER:-registry:5000}"
 # OCI path (without the oci:// scheme) under which the chart is pushed.
 REGISTRY_CHART_REPO="${REGISTRY_CHART_REPO:-charts}"
 
-# rootstock image coordinates (built by `make build` / `make kind-up`).
-# Default tag is resolved dynamically from VERSION.yaml in resolve_versions()
-# (matching the Makefile's single-source-of-truth). Set ROOTSTOCK_IMAGE to pin.
-#   - ROOTSTOCK_IMAGE          : the local build tag on the host docker daemon
-#                                (source image), e.g. rootstock:0.1.0.
-#   - ROOTSTOCK_REGISTRY_IMAGE : the reference the Plugin/HelmRelease pulls from.
-#       Greenhouse's demo org rewrites images on known upstream domains
-#       (docker.io, gcr.io, ghcr.io, quay.io, registry.k8s.io) to its on-demand
-#       zot mirror sub-paths. A bare/docker.io "rootstock" ref would be rewritten
-#       to registry:5000/greenhouse-dockerhub-mirror/library/rootstock and zot
-#       would try (and fail) to sync it from Docker Hub. Pointing at the local
-#       registry path (REGISTRY_INCLUSTER/rootstock) is NOT a known upstream
-#       domain, so it passes through un-rewritten and resolves to the OCI image
-#       we push into zot in run_plugin_e2e().
+# rootstock image coordinates. Default tag comes from VERSION.yaml via resolve_versions().
+# ROOTSTOCK_IMAGE: local build tag on the host docker daemon (source image).
+# ROOTSTOCK_REGISTRY_IMAGE: in-cluster ref the Plugin/HelmRelease pulls from; must point at
+#   REGISTRY_INCLUSTER (not docker.io etc.) so Greenhouse's mirror rewrite doesn't break it.
 ROOTSTOCK_IMAGE="${ROOTSTOCK_IMAGE:-}"
 ROOTSTOCK_REGISTRY_IMAGE="${ROOTSTOCK_REGISTRY_IMAGE:-}"
 
-# Image used by the chart's Helm test hook (templates/tests/test-connection.yaml).
-# The chart defaults this to curlimages/curl on Docker Hub, which the Greenhouse
-# dev-env registry cannot mirror (its zot refuses Docker-format upstream
-# manifests: "http.compat docker2s2 not enabled"). We therefore re-publish it as
-# an OCI image under a plain local-registry path (NOT the dockerhub mirror
-# sub-path, which is sync-only and rejects pushes) and point the Plugin's
-# testConnection.image.* optionValues at it. See run_plugin_e2e().
-#   - TESTCONN_SOURCE_IMAGE   : upstream image pulled once at push time.
-#   - TESTCONN_REGISTRY_IMAGE : in-cluster ref the test pod pulls from.
+# Helm test hook image. The chart defaults to curlimages/curl (Docker Hub), which the
+# dev-env zot registry cannot mirror (docker2s2 disabled). We re-publish it as OCI under
+# a plain local-registry path and override testConnection.image.* in the Plugin.
 TESTCONN_SOURCE_IMAGE="${TESTCONN_SOURCE_IMAGE:-curlimages/curl:8.11.1}"
 TESTCONN_REGISTRY_IMAGE="${TESTCONN_REGISTRY_IMAGE:-}"
 
-# Chart version packaged, pushed and requested by the PluginDefinition.
-#   - Authority: k8s_configuration/chart/Chart.yaml `version`.
-#   - Override via CHART_VERSION to test a different version (e.g. an old tag).
-#     NOTE: this repackages the *current* chart source under that version number;
-#     it does not check out the historical chart templates.
+# Chart version packaged and pushed. Authority: k8s_configuration/chart/Chart.yaml `version`.
+# Override via CHART_VERSION (repackages current chart source under that version number).
 CHART_VERSION="${CHART_VERSION:-}"
-# Application/CLI version (image tag source). Authority: VERSION.yaml `version`.
+# App/image version. Authority: VERSION.yaml `version`.
 APP_VERSION="${APP_VERSION:-}"
 
 # Polling.
@@ -198,9 +158,7 @@ publish_chart() {
 
     local pkgdir="${workdir}/chart"
     mkdir -p "$pkgdir"
-    # --version overrides the chart version at package time without mutating
-    # Chart.yaml, so CHART_VERSION (default: Chart.yaml .version) drives the
-    # tarball name and OCI tag.
+    # --version overrides the chart version without mutating Chart.yaml.
     helm package "$chart_dir" --version "$CHART_VERSION" -d "$pkgdir" >/dev/null \
         || die "helm package failed"
     local tgz="${pkgdir}/rootstock-${CHART_VERSION}.tgz"
@@ -212,14 +170,9 @@ publish_chart() {
         || die "helm push to oci://${REGISTRY_HOST}/${REGISTRY_CHART_REPO} failed"
     ok "pushed chart to oci://${REGISTRY_HOST}/${REGISTRY_CHART_REPO}/rootstock:${CHART_VERSION}"
 
-    # Invalidate any cached Flux HelmChart artifact for this version. Flux keys
-    # its OCI chart cache by VERSION, so re-pushing an edited chart under the
-    # SAME version does NOT trigger
-    # a re-pull -- Greenhouse would keep rendering the stale artifact and miss
-    # our edits (e.g. the parameterized test-connection image). Nudging the
-    # HelmRepository to reconcile and deleting the HelmChart (Greenhouse
-    # recreates it) forces a fresh pull of the digest we just pushed.
-    # Best-effort: on a clean run these objects do not exist yet, which is fine.
+    # Flux keys its OCI chart cache by version; re-pushing the same version without
+    # invalidating the HelmChart causes Greenhouse to render the stale artifact.
+    # Nudge the HelmRepository and delete the HelmChart to force a fresh pull.
     local hr_names
     hr_names="$(kubectl --context "$admin_context" -n "$DEMO_ORG" get helmrepository \
         -o jsonpath='{.items[*].metadata.name}' 2>/dev/null || true)"
@@ -264,18 +217,10 @@ wait_ready() {
 apply_plugindefinition() {
     log "Phase 2: apply PluginDefinition and assert READY=True"
 
-    # Operate on a TEMP COPY -- never mutate the committed plugindefinition.yaml.
-    # Rewrite helmChart.repository to the in-cluster registry address that Flux
-    # (running inside the kind cluster) can resolve, and pin spec.version /
-    # helmChart.version to the chart version that was just packaged and pushed
-    # (CHART_VERSION) so Greenhouse pulls exactly that artifact.
-    #
-    # NOTE: PluginDefinition is a *namespaced* resource in Greenhouse. The
-    # reconciler resolves the registry-mirror config from the Organization whose
-    # name equals the object's namespace, so the object MUST live in the org
-    # namespace (${DEMO_ORG}); applied cluster-scoped it defaults to namespace
-    # "default" and never reconciles (org "default" not found). The global,
-    # cluster-scoped catalog variant is a separate kind (ClusterPluginDefinition).
+    # Operate on a TEMP COPY — never mutate the committed plugindefinition.yaml.
+    # Rewrite helmChart.repository to the in-cluster address, pin versions to CHART_VERSION.
+    # NOTE: PluginDefinition is namespaced in Greenhouse; it must live in the org namespace
+    # (${DEMO_ORG}) or the reconciler won't find the org and will never become Ready.
     local pd="${workdir}/plugindefinition.yaml"
     cp "$plugin_def" "$pd"
     yq -i "
@@ -300,33 +245,19 @@ apply_plugindefinition() {
 # =============================================================================
 # Push an image into the Greenhouse local registry (zot) as an OCI image.
 #
-# Why not `kind load` + pullPolicy:Never? Under the Greenhouse demo org the
-# HelmRelease image reference is resolved from the registry (see the
-# ROOTSTOCK_REGISTRY_IMAGE comment), not the node's containerd store, so the
-# image must live in zot. zot (the dev-env build) rejects Docker schema2
-# manifests (`manifest invalid`) and only accepts OCI manifests, which the
-# default `docker` buildx driver / `docker push` cannot produce. We therefore
-# build+push via a throwaway `docker-container` buildx builder on the host
-# network (so it can reach ${REGISTRY_HOST}) with an insecure (HTTP) registry
-# and OCI output.
+# Why not `kind load` + pullPolicy:Never? The HelmRelease image reference is
+# resolved from the registry, so the image must live in zot. zot only accepts
+# OCI manifests (`manifest invalid` on Docker schema2), so we use a throwaway
+# docker-container buildx builder on the host network with an insecure registry.
 #
 # Two modes:
-#   push_image_oci <dest_host>                  # build from the repo Dockerfile
-#   push_image_oci <dest_host> <from_image>     # trivial "FROM <from_image>"
-#                                               # (re-publish an upstream image
-#                                               #  as OCI, e.g. the test curl)
-# dest_host is the destination reference as the HOST sees it (REGISTRY_HOST/...).
+#   push_image_oci <dest_host>              # build from the repo Dockerfile
+#   push_image_oci <dest_host> <from_image> # re-publish an upstream image as OCI
+# dest_host is the HOST-visible registry address (REGISTRY_HOST/...).
 #
-# Builder lifecycle: a single dedicated host-network docker-container builder is
-# created once (idempotently) and reused across calls, then removed in
-# teardown(). Both the host-network driver-opt and the docker-container driver
-# are REQUIRED and were verified empirically:
+# Builder notes: docker-container driver + network=host are both required:
 #   - the plain `docker` driver cannot push to an insecure registry;
-#   - a docker-container builder WITHOUT network=host cannot reach
-#     localhost:5000 (it resolves ::1 in its own netns and times out);
-#   - plain `docker push` / `crane push` of a `docker save` tarball are rejected
-#     by zot with `manifest invalid` because they carry Docker schema2 media
-#     types -- only buildkit's native OCI output is accepted.
+#   - without network=host the builder cannot reach localhost:5000.
 OCI_BUILDER="rootstock-ghverify-oci"
 
 # Create the shared OCI builder once; safe to call repeatedly.
@@ -391,18 +322,13 @@ run_plugin_e2e() {
     if ! docker image inspect "$ROOTSTOCK_IMAGE" >/dev/null 2>&1; then
         die "image ${ROOTSTOCK_IMAGE} not found locally; build it first (e.g. 'make docker-build' / 'make kind-up')"
     fi
-    # Push using the HOST-visible registry address; the Plugin references the
-    # in-cluster address (REGISTRY_INCLUSTER) that resolves to the same zot.
+    # Push using the HOST-visible address; the Plugin references REGISTRY_INCLUSTER
+    # (same zot, but reachable in-cluster).
     push_image_oci "${REGISTRY_HOST}/rootstock:${ROOTSTOCK_IMAGE##*:}"
     ok "image available in registry as ${ROOTSTOCK_REGISTRY_IMAGE}"
 
-    # 1b. The chart's Helm test hook (templates/tests/test-connection.yaml) curls
-    #     the pod's health endpoints. Greenhouse pre-validates EVERY chart image
-    #     -- including test-hook images -- before creating the HelmRelease, so the
-    #     default curlimages/curl must resolve too. The dev-env registry cannot
-    #     mirror it from Docker Hub (docker2s2 disabled), so re-publish it as OCI
-    #     under a plain local path and point the Plugin's testConnection.image.*
-    #     at it. (TESTCONN_REGISTRY_IMAGE resolved in resolve_versions().)
+    # Re-publish the test-connection curl image as OCI; dev-env zot can't mirror
+    # Docker Hub (docker2s2 disabled), so override testConnection.image.* in the Plugin.
     push_image_oci \
         "${REGISTRY_HOST}/${TESTCONN_REGISTRY_IMAGE#*/}" \
         "$TESTCONN_SOURCE_IMAGE"
@@ -416,20 +342,11 @@ run_plugin_e2e() {
         || die "failed to create rootstock-redfish secret"
     ok "created Secret rootstock-redfish in ns ${DEMO_ORG}"
 
-    # 3. Apply the Plugin (temp copy with placeholders substituted).
-    #    spec.clusterName must match the *onboarded* Greenhouse Cluster name
-    #    (remote_context, "kind-<remote>"), not the bare kind cluster name.
+    # Apply the Plugin on a temp copy. Normalize to the pinned Greenhouse CRD schema
+    # (spec.pluginDefinitionRef, drop legacy spec.pluginDefinition/disabled), repoint
+    # image.repository/tag at the local registry, and flip pullPolicy to IfNotPresent.
     local plugin="${workdir}/plugin.yaml"
     cp "${greenhouse_test_dir}/plugin.yaml" "$plugin"
-    # Normalize the Plugin into the schema served by the pinned Greenhouse
-    # (GREENHOUSE_REF, default v0.17.2): that CRD requires spec.pluginDefinitionRef
-    # ({kind,name}) and rejects the legacy spec.pluginDefinition / spec.disabled
-    # fields under strict decoding. The committed source manifest keeps the
-    # human-facing shape; we rewrite it here so the apply matches the live CRD.
-    # We also repoint image.repository/tag at the local registry (zot) and flip
-    # image.pullPolicy away from the source's "Never" (which assumes a node
-    # containerd preload) to "IfNotPresent" so the kubelet pulls from the
-    # registry we pushed to in step 1.
     yq -i "
       .metadata.namespace = \"${DEMO_ORG}\" |
       .spec.clusterName = \"${remote_context}\" |
@@ -579,9 +496,8 @@ resolve_versions() {
         ok "image ${ROOTSTOCK_IMAGE} (ROOTSTOCK_IMAGE override)"
     fi
 
-    # Registry reference the Plugin pulls from (see the ROOTSTOCK_REGISTRY_IMAGE
-    # comment near the top): the in-cluster local registry path, which Greenhouse
-    # does NOT rewrite through its upstream mirror. Keep the image's tag.
+    # Registry image the Plugin pulls from; use REGISTRY_INCLUSTER so Greenhouse's
+    # upstream-mirror rewrite doesn't intercept it.
     if [[ -z "$ROOTSTOCK_REGISTRY_IMAGE" ]]; then
         ROOTSTOCK_REGISTRY_IMAGE="${REGISTRY_INCLUSTER}/rootstock:${ROOTSTOCK_IMAGE##*:}"
         ok "registry image ${ROOTSTOCK_REGISTRY_IMAGE} (derived)"
@@ -589,20 +505,14 @@ resolve_versions() {
         ok "registry image ${ROOTSTOCK_REGISTRY_IMAGE} (ROOTSTOCK_REGISTRY_IMAGE override)"
     fi
 
-    # Test-hook image reference the Plugin pulls from: the local registry path,
-    # keyed by the source image's name/tag (see the TESTCONN_* comment near the
-    # top). The leading registry/host portion of the source is dropped so a
-    # docker.io ref like curlimages/curl:8.11.1 maps to
-    # ${REGISTRY_INCLUSTER}/curlimages/curl:8.11.1.
+    # Test-hook image; drop the registry host from the source ref so
+    # curlimages/curl:8.11.1 maps to ${REGISTRY_INCLUSTER}/curlimages/curl:8.11.1.
     if [[ -z "$TESTCONN_REGISTRY_IMAGE" ]]; then
-        # Preserve the repo path minus any registry host. curlimages/curl has no
-        # host component, so keep it as-is; a host like docker.io/foo/bar keeps
-        # foo/bar. Detect a host by a dot/colon in the first path segment.
         local tc_repo="${TESTCONN_SOURCE_IMAGE%:*}"
         local tc_tag="${TESTCONN_SOURCE_IMAGE##*:}"
         local first="${tc_repo%%/*}"
         if [[ "$tc_repo" == */* && ( "$first" == *.* || "$first" == *:* || "$first" == "localhost" ) ]]; then
-            tc_repo="${tc_repo#*/}"                    # drop registry host segment
+            tc_repo="${tc_repo#*/}"
         fi
         TESTCONN_REGISTRY_IMAGE="${REGISTRY_INCLUSTER}/${tc_repo}:${tc_tag}"
         ok "test-connection image ${TESTCONN_REGISTRY_IMAGE} (derived)"
