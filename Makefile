@@ -37,6 +37,7 @@ MOCKUP_CONTAINER := redfish-mockup
         helm-lint helm-template \
 				generate generate-changelog generate-version \
 				get-version test-changelog \
+				automerge-check \
 				help
 
 # Build
@@ -72,10 +73,13 @@ docker-build: ## Build the container image for rootstock
 
 test-unit: ## Run unit tests with race detection and coverage
 	@echo "$(green) unit testing$(reset)"
-	CGO_ENABLED=1 go test ./... -race -parallel=10 -timeout=10m \
+	CGO_ENABLED=1 go test ./... \
+		-race \
+		-parallel=10 \
+		-timeout=10m \
 		-covermode=atomic \
 		-coverprofile=coverage.out
-	go tool cover -func=coverage.out -o=coverage.out
+	go tool cover -func=coverage.out -o=coverage.summary
 
 test: test-unit ## Alias for test-unit
 
@@ -137,6 +141,9 @@ generate-changelog: ## Update the local CHANGELOG.md file
 get-version: ## Prints out the current version as presented in the VERSION.yaml file
 	@echo $(VERSION)
 
+automerge-check: ## Check PR eligibility for automerge (GitHub Actions only)
+	@hack/automerge_check.sh
+
 # ---------------------------------------------------------------------------
 # Local Kubernetes deployment via kind + Helm
 # Requires: docker, kind, kubectl, helm
@@ -192,7 +199,7 @@ run-redfish: build ## Build and run the rootstock binary with redfish credential
 		--config-folder tmp \
 		--redfish-credentials-file redfish_password
 
-# Setup Prometheus locally and run the binary 
+# Setup Prometheus locally and run the binary
 prometheus-local-run: prometheus-local-setup run-redfish
 
 # Help

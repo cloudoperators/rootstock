@@ -44,10 +44,10 @@ jobs:
         with:
           tool: git-cliff
 
-      - name: Pull latest CHANGELOG.md and VERSION.yaml from main
+      - name: Merge main into the current branch
         run: |
           git fetch origin main
-          git checkout origin/main -- CHANGELOG.md VERSION.yaml
+          git pull origin main
 
       - name: Generate changelog entry from PR
         env:

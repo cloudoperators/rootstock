@@ -89,6 +89,30 @@ jobs:
     uses: cloudoperators/common/.github/workflows/shared-go-test.yaml@main
     with:
       test-target: test-unit
+      upload-coverage: true
+      coverage-artifact-name: code-coverage
+      coverage-path: coverage.out
+  code_coverage:
+    name: Code coverage report
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    needs: [unit-tests]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: true
+      - name: Post coverage report
+        uses: fgrosse/go-coverage-report@c4bf7e78d1379325814b4dd42d80e526082e788b # v1.5.0
+        with:
+          coverage-artifact-name: code-coverage
+          coverage-file-name: coverage.out
+          root-package: github.com/cloudoperators/rootstock
+          github-baseline-workflow-ref: main.yaml
+    permissions:
+      actions: read
+      contents: read
+      pull-requests: write
 
   build:
     permissions:

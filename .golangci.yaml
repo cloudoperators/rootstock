@@ -71,6 +71,8 @@ linters:
       min-len: 2
       min-occurrences: 3
       ignore-tests: true
+      ignore-string-values:
+        - '^[a-zA-Z_-]{1,12}$' # ignore short identifiers like "account" or "project_id"
     gocritic:
       disabled-checks:
         - dupImport
@@ -96,6 +98,9 @@ linters:
             - (github.com/golangci/golangci-lint/pkg/logutils.Log).Fatalf
     lll:
       line-length: 120
+    whitespace:
+      # Enforce newlines (or comments) after multi-line function signatures.
+      multi-func: true
     godoclint:
       # Default set of rules to enable.
       # Possible values are: `basic`, `all` or `none`.
@@ -163,6 +168,45 @@ linters:
       require-explanation: true
       require-specific: true
       allow-unused: false
+    forbidigo:
+      analyze-types: true # required for pkg:
+      forbid:
+        # ioutil package has been deprecated: https://github.com/golang/go/issues/42026
+        - pattern: ^ioutil\..*$
+        # Using http.DefaultServeMux is discouraged because it's a global variable that some packages silently and magically add handlers to (esp. net/http/pprof).
+        # Applications wishing to use http.ServeMux should obtain local instances through http.NewServeMux() instead of using the global default instance.
+        - pattern: ^http\.DefaultServeMux$
+        - pattern: ^http\.Handle(?:Func)?$
+        - pkg: ^gopkg\.in/square/go-jose\.v2
+          msg: gopk.in/square/go-jose is archived and has CVEs. Replace it with gopkg.in/go-jose/go-jose.v2
+        - pkg: ^github\.com/coreos/go-oidc$
+          msg: github.com/coreos/go-oidc depends on gopkg.in/square/go-jose which has CVEs. Replace it with github.com/coreos/go-oidc/v3
+        - pkg: ^github\.com/howeyc/gopass
+          msg: github.com/howeyc/gopass is archived, use golang.org/x/term instead
+        - pkg: ^github\.com/containers/image/v5
+          msg: github.com/containers/image/v5 is deprecated and was replaced with go.podman.io/image/v5
+        - pkg: ^github.com/gofrs/uuid
+          msg: github.com/gofrs/uuid should be replaced with the stdlib uuid package introduced in Go 1.27
+        - pkg: ^github.com/google/uuid
+          msg: github.com/google/uuid should be replaced with the stdlib uuid package introduced in Go 1.27
+    gosec:
+      excludes:
+        # gosec wants us to set a short ReadHeaderTimeout to avoid Slowloris attacks, but doing so would expose us to Keep-Alive race conditions (see https://iximiuz.com/en/posts/reverse-proxy-http-keep-alive-and-502s/
+        - G112
+        # if we put a password or token into a serialized payload, guess what, we probably did that on purpose
+        - G117
+        # this triggers on net/http.Request.ParseForm() and its callers, e.g. net/http.Request.FormValue(), complaining about potential memory exhaustion from unbounded form parsing;
+        # but that is incorrect, ParseForm() by default never parses more than 10 MiB for this specific reason
+        - G120
+        # created file permissions are restricted by umask if necessary
+        - G306
+        # the following lints cause false-positives in many repositories, should be fixed with the next release. (see https://github.com/securego/gosec/issues/1500)
+        - G701
+        - G702
+        - G703
+        - G704
+        - G705
+        - G706
     revive:
       # enable-all-rules: true
       rules:
@@ -713,6 +757,10 @@ linters:
       - path-except: _test\.go
         linters:
           - forbidigo
+      # It is idiomatic Go to reuse the name 'err' with ':=' for subsequent errors.
+      # Ref: https://go.dev/doc/effective_go#redeclaration
+      - path: (.+)\.go$
+        text: declaration of "err" shadows declaration at
 formatters:
   enable:
     - gci
@@ -722,6 +770,10 @@ formatters:
   settings:
     gofumpt:
       module-path: github.com/cloudoperators/rootstock
+    goimports:
+      # Put local imports after 3rd-party packages
+      local-prefixes:
+        - github.com/cloudoperators/rootstock
     gci:
       sections:
         - standard
