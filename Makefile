@@ -38,7 +38,7 @@ MOCKUP_CONTAINER := redfish-mockup
 				generate generate-changelog generate-version \
 				get-version test-changelog \
 				automerge-check \
-				greenhouse-up greenhouse-verify greenhouse-delete \
+				greenhouse-create greenhouse-verify greenhouse-delete \
 				help
 
 # Build
