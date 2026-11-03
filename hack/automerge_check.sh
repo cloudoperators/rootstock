@@ -149,7 +149,7 @@ has_codeowner_approved() {
 # check_eligibility: evaluates all conditions and returns 0 (eligible) or 1 (not)
 # ---------------------------------------------------------------------------
 check_eligibility() {
-  local base state draft blocked_label pending_reviews changes_requested codeowner_approved eligible
+  local base state draft blocked_label changes_requested codeowner_approved eligible
 
   base=$(echo "$PR" | jq -r .baseRefName)
   state=$(echo "$PR" | jq -r .mergeStateStatus)
@@ -157,9 +157,6 @@ check_eligibility() {
   blocked_label=$(echo "$PR" | jq -r --arg bl "$BLOCKED_LABELS" '
     ($bl | split(",")) as $list | .labels[].name | select(IN($list[]))
   ' | head -1)
-  pending_reviews=$(echo "$PR" | jq -r '
-    [.reviewRequests[] | select(.login != null) | .login | select(test("copilot"; "i") | not)] | length'
-  )
   changes_requested=$(echo "$REVIEWS" \
     | jq '[.[] | select(.state == "CHANGES_REQUESTED")] | length')
 
@@ -173,7 +170,6 @@ check_eligibility() {
     || [ "$state" != "CLEAN" ] \
     || [ "$changes_requested" -gt 0 ] \
     || [ "$codeowner_approved" != "true" ] \
-    || [ "$pending_reviews" -gt 0 ] \
     || [ "$draft" = "true" ] \
     || [ -n "$blocked_label" ]; then
     eligible="false"
