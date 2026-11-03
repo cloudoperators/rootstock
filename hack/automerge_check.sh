@@ -176,7 +176,7 @@ check_eligibility() {
   fi
 
   debug_eligibility "$eligible" "$base" "$state" "$changes_requested" \
-    "$codeowner_approved" "$pending_reviews" "$draft" "$blocked_label"
+    "$codeowner_approved" "$draft" "$blocked_label"
 
   if [[ "$eligible" == "true" ]]; then
     return 0
@@ -187,12 +187,12 @@ check_eligibility() {
 
 # ---------------------------------------------------------------------------
 # debug_eligibility <eligible> <base> <state> <changes_requested>
-#                   <codeowner_approved> <pending_reviews> <draft> <blocked_label>
+#                   <codeowner_approved> <draft> <blocked_label>
 # Prints all eligibility conditions; no-ops when DEBUG != true
 # ---------------------------------------------------------------------------
 debug_eligibility() {
   local eligible="$1" base="$2" state="$3" changes_requested="$4" \
-        codeowner_approved="$5" pending_reviews="$6" draft="$7" blocked_label="$8"
+        codeowner_approved="$5" draft="$6" blocked_label="$7"
 
   log_debug "eligible=$eligible"
   log_debug "pr_number=$(echo "$PR" | jq -r .number)"
