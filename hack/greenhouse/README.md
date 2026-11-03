@@ -31,7 +31,7 @@ make greenhouse-verify
 
 # 3. Full end-to-end — also deploy a Plugin + Redfish mockup and probe real metrics.
 #    Build the rootstock image first.
-make docker-build
+make docker-build IMAGE="rootstock:$(yq -r '.version' VERSION.yaml)"
 hack/greenhouse/verify_plugindefinition.sh --with-plugin
 
 # 4. Tear down when done.
