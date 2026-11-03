@@ -4,29 +4,24 @@
 #
 # verify-plugindefinition.sh
 # -----------------------------------------------------------------------------
-# Self-contained verifier for the rootstock Greenhouse PluginDefinition.
+# Verifier for the rootstock Greenhouse PluginDefinition.
 #
-# It bootstraps a local Greenhouse-in-kind from scratch (no pre-existing
-# Greenhouse checkout required), publishes the rootstock Helm chart to the
-# Greenhouse-provided local OCI registry, applies the PluginDefinition, and
-# asserts that it reconciles to READY=True.
+# Requires a running local Greenhouse-in-kind environment.
+# Run hack/greenhouse/setup_greenhouse.sh first to provision it.
 #
 # Default run (fast path):
 #   1. preflight tool checks
-#   2. git clone cloudoperators/greenhouse at a pinned ref
-#   3. `make setup-manager setup-demo` (brings up admin+remote kind clusters,
-#      registry, demo org; the flaky dashboard UI step is skipped by default)
-#   4. helm package + push the rootstock chart to the local registry
-#   5. apply the PluginDefinition (temp copy, repository rewritten) and
+#   2. helm package + push the rootstock chart to the local registry
+#   3. apply the PluginDefinition (temp copy, repository rewritten) and
 #      assert READY=True   <-- primary pass/fail signal
 #
 # Opt-in full end-to-end (--with-plugin):
-#   6. load the rootstock image into the remote cluster, create the redfish
+#   4. load the rootstock image into the remote cluster, create the redfish
 #      Secret, apply a Plugin and assert it is Ready, deploy the bundled DMTF
 #      Redfish mockup (unless TARGET is overridden), then port-forward and
 #      assert /healthz + /probe emit real metrics.
 #
-# Teardown runs by default; pass --keep to retain clusters + clone for debugging.
+# Teardown runs by default; pass --no-teardown to retain clusters for debugging.
 #
 # Everything is overridable via environment variables (see below). The committed
 # plugindefinition.yaml is NEVER mutated -- all rewrites happen on temp copies.
@@ -34,20 +29,17 @@
 set -euo pipefail
 
 # --- Configuration (all overridable) -----------------------------------------
-GREENHOUSE_REPO="${GREENHOUSE_REPO:-https://github.com/cloudoperators/greenhouse}"
-GREENHOUSE_REF="${GREENHOUSE_REF:-v0.17.2}"
-
-# Cluster / org / context names (match the pinned Greenhouse Makefile defaults).
-ADMIN_CLUSTER="${ADMIN_CLUSTER:-greenhouse-admin}"
-REMOTE_CLUSTER="${REMOTE_CLUSTER:-greenhouse-remote}"
-ADMIN_CONTEXT="kind-${ADMIN_CLUSTER}"
-REMOTE_CONTEXT="kind-${REMOTE_CLUSTER}"
+# Cluster / org / context names (must match what setup_greenhouse.sh created).
+admin_cluster="greenhouse-admin"
+remote_cluster="greenhouse-remote"
+admin_context="kind-${admin_cluster}"
 # Name under which the remote cluster is *onboarded* into Greenhouse (the
 # greenhouse.sap/Cluster object + its kubeconfig Secret). Greenhouse's
 # setup-demo registers it from the kube-context name, i.e. "kind-<cluster>",
 # which differs from the bare kind cluster name used for `kind load`/contexts.
 # This is what a Plugin's spec.clusterName must reference.
-REMOTE_ONBOARDED_NAME="${REMOTE_ONBOARDED_NAME:-${REMOTE_CONTEXT}}"
+remote_context="kind-${remote_cluster}"
+
 DEMO_ORG="${DEMO_ORG:-demo}"
 
 # Local registry provided by Greenhouse's hack/registry/setup.sh (zot).
@@ -97,21 +89,39 @@ CHART_VERSION="${CHART_VERSION:-}"
 APP_VERSION="${APP_VERSION:-}"
 
 # Polling.
-READY_TIMEOUT="${READY_TIMEOUT:-300}"   # seconds to wait for PluginDefinition/Plugin READY
+READY_TIMEOUT="${READY_TIMEOUT:-60}"   # seconds to wait for PluginDefinition/Plugin READY
 POLL_INTERVAL="${POLL_INTERVAL:-5}"
 
 # Flags (set by argument parsing).
 WITH_PLUGIN=false
-KEEP=false
 
 # --- Paths --------------------------------------------------------------------
-ROOTSTOCK_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-WORKDIR="${WORKDIR:-${ROOTSTOCK_ROOT}/.greenhouse-verify}"
-GREENHOUSE_DIR="${WORKDIR}/greenhouse"
-CHART_DIR="${ROOTSTOCK_ROOT}/k8s_configuration/chart"
-PLUGINDEF_SRC="${ROOTSTOCK_ROOT}/k8s_configuration/plugindefinition.yaml"
-GH_TEST_DIR="${ROOTSTOCK_ROOT}/k8s_configuration/greenhouse-test"
-TMPDIR_RUN=""
+rootstock_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+chart_dir="${rootstock_root}/k8s_configuration/chart"
+plugin_def="${rootstock_root}/k8s_configuration/plugindefinition.yaml"
+greenhouse_test_dir="${rootstock_root}/k8s_configuration/greenhouse-test"
+workdir="${rootstock_root}/tmp/greenhouse/verify"
+
+# =============================================================================
+# main
+# =============================================================================
+main() {
+    parse_args "$@"
+    workdir="$(mktemp -d "${TMPDIR:-/tmp}/rootstock-ghverify.XXXXXX")"
+    trap teardown EXIT
+
+    preflight
+    resolve_versions
+    publish_chart
+    apply_plugindefinition
+    if $WITH_PLUGIN; then
+        run_plugin_e2e
+    else
+        log "skipping Plugin E2E (pass --with-plugin to enable)"
+    fi
+
+    log "VERIFICATION PASSED"
+}
 
 # --- Logging helpers ----------------------------------------------------------
 log()  { printf '\033[1;34m==>\033[0m %s\n' "$*"; }
@@ -121,18 +131,16 @@ die()  { printf '\033[1;31mERROR:\033[0m %s\n' "$*" >&2; exit 1; }
 
 usage() {
     cat <<EOF
-Usage: $(basename "$0") [--with-plugin] [--keep] [-h|--help]
+Usage: $(basename "$0") [--with-plugin] [-h|--help]
 
   --with-plugin   Also run the full E2E: load image into the remote cluster,
                   create the Redfish Secret, apply a Plugin and assert it is
                   Ready, deploy the bundled DMTF Redfish mockup (unless TARGET
                   is set), then verify /healthz + /probe emit real metrics.
-  --keep          Do not tear down kind clusters / clone on exit (for debugging).
   -h, --help      Show this help.
 
 Key environment overrides:
-  GREENHOUSE_REF  (default: ${GREENHOUSE_REF})   Greenhouse git tag/commit to pin.
-  WORKDIR         (default: <repo>/.greenhouse-verify)
+  DEMO_ORG        (default: demo)              Greenhouse demo Organization namespace.
   READY_TIMEOUT   (default: ${READY_TIMEOUT}s)
   CHART_VERSION   (default: k8s_configuration/chart/Chart.yaml .version)
                   Chart version to package/push/test. Override to test another
@@ -150,7 +158,6 @@ parse_args() {
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --with-plugin) WITH_PLUGIN=true ;;
-            --keep)        KEEP=true ;;
             -h|--help)     usage; exit 0 ;;
             *)             usage; die "unknown argument: $1" ;;
         esac
@@ -172,118 +179,29 @@ preflight() {
         die "missing required tools: ${missing[*]}"
     fi
     docker info >/dev/null 2>&1 || die "docker daemon is not reachable (is Docker running?)"
-    [[ -d "$CHART_DIR" ]] || die "rootstock chart not found at ${CHART_DIR}"
-    [[ -f "$PLUGINDEF_SRC" ]] || die "plugindefinition.yaml not found at ${PLUGINDEF_SRC}"
-
-    # Greenhouse's hack/registry/setup.sh hard-codes the local registry on host
-    # port 5000 (not overridable). Detect a conflict NOW -- before spending minutes
-    # creating kind clusters only to fail inside `make setup`.
-    check_registry_port
+    [[ -d "$chart_dir" ]] || die "rootstock chart not found at ${chart_dir}"
+    [[ -f "$plugin_def" ]] || die "plugindefinition.yaml not found at ${plugin_def}"
+    docker inspect registry >/dev/null 2>&1 \
+        || die "local registry container not running; run setup_greenhouse.sh first"
     ok "all tools present and docker daemon reachable"
 }
 
-# Ensure host port 5000 is free for Greenhouse's local registry (zot). A stale
-# `registry` container from a previous run is cleaned up automatically; any other
-# listener (notably macOS AirPlay Receiver / ControlCenter) must be freed by the
-# user, because the Greenhouse setup script hard-codes port 5000.
-check_registry_port() {
-    local port=5000
-
-    # A leftover `registry` container is ours to remove.
-    if docker inspect registry >/dev/null 2>&1; then
-        warn "removing stale 'registry' container from a previous run"
-        docker rm -f registry >/dev/null 2>&1 || true
-    fi
-
-    local holder=""
-    if command -v lsof >/dev/null 2>&1; then
-        # `|| true`: lsof exits non-zero when nothing is listening, which would
-        # otherwise abort the script under `set -e`/`pipefail`.
-        holder="$(lsof -nP -iTCP:${port} -sTCP:LISTEN 2>/dev/null | awk 'NR>1 {print $1; exit}' || true)"
-    fi
-    if [[ -n "$holder" ]]; then
-        local hint="free the process using host port ${port} and re-run"
-        if [[ "$holder" == ControlCe* ]]; then
-            hint="macOS AirPlay Receiver is using port ${port}. Disable it in System Settings -> General -> AirDrop & Handoff -> AirPlay Receiver, then re-run"
-        fi
-        die "host port ${port} is in use by '${holder}' (needed by Greenhouse's local registry). ${hint}."
-    fi
-}
-
-
 # =============================================================================
-# Phase 1: fetch Greenhouse at the pinned ref
-# =============================================================================
-fetch_greenhouse() {
-    log "Phase 1: fetch Greenhouse @ ${GREENHOUSE_REF}"
-    mkdir -p "$WORKDIR"
-    if [[ -d "${GREENHOUSE_DIR}/.git" ]]; then
-        local have
-        have="$(git -C "$GREENHOUSE_DIR" describe --tags --always 2>/dev/null || echo unknown)"
-        if [[ "$have" == "$GREENHOUSE_REF" ]]; then
-            ok "existing clone already at ${GREENHOUSE_REF}, reusing"
-            return
-        fi
-        warn "existing clone is at '${have}', re-cloning at ${GREENHOUSE_REF}"
-        rm -rf "$GREENHOUSE_DIR"
-    fi
-    git clone --depth 1 --branch "$GREENHOUSE_REF" "$GREENHOUSE_REPO" "$GREENHOUSE_DIR" \
-        || die "git clone of ${GREENHOUSE_REPO}@${GREENHOUSE_REF} failed"
-    ok "cloned Greenhouse into ${GREENHOUSE_DIR}"
-}
-
-# =============================================================================
-# Phase 2: bring up Greenhouse (milestone stop)
-# =============================================================================
-bring_up_greenhouse() {
-    log "Phase 2: bootstrap local Greenhouse (make setup) -- this is slow and can be flaky on first run"
-    # Greenhouse's aggregate `make setup` = setup-manager + setup-dashboard +
-    # setup-demo, run in that order. The dashboard (UI) step is irrelevant to
-    # PluginDefinition verification and is flaky to bring up locally; when it
-    # fails, make aborts *before* setup-demo and the demo Organization/registry
-    # are never created. So by default we run only the targets we need --
-    # setup-manager (clusters, cert-manager, CRDs, controller, webhook) and
-    # setup-demo (zot registry, demo Organization) -- skipping the dashboard.
-    # Override GREENHOUSE_SETUP_TARGETS to change this (e.g. "setup" for the full
-    # upstream flow including the dashboard).
-    local setup_targets="${GREENHOUSE_SETUP_TARGETS:-setup-manager setup-demo}"
-    log "running: make ${setup_targets}"
-    (
-        cd "$GREENHOUSE_DIR"
-        # shellcheck disable=SC2086 # intentional word-splitting of target list
-        make ${setup_targets}
-    ) || die "Greenhouse 'make ${setup_targets}' failed (see output above)"
-
-    # Export admin kubeconfig context for subsequent kubectl calls. setup-demo
-    # already switched the current context, but be explicit/robust.
-    kubectl config get-contexts "$ADMIN_CONTEXT" >/dev/null 2>&1 \
-        || die "expected kube-context ${ADMIN_CONTEXT} not found after setup"
-    ok "Greenhouse is up (admin=${ADMIN_CONTEXT}, remote=${REMOTE_CONTEXT}, org ns=${DEMO_ORG})"
-
-    # Sanity: the PluginDefinition CRD must exist, else apply will fail cryptically.
-    kubectl --context "$ADMIN_CONTEXT" get crd plugindefinitions.greenhouse.sap >/dev/null 2>&1 \
-        || die "PluginDefinition CRD not present on admin cluster -- setup incomplete"
-    ok "PluginDefinition CRD present"
-}
-
-# =============================================================================
-# Phase 3: publish the rootstock chart to the local registry
+# Phase 1: publish the rootstock chart to the local registry
 # =============================================================================
 publish_chart() {
-    log "Phase 3: package + push rootstock chart to oci://${REGISTRY_HOST}/${REGISTRY_CHART_REPO}"
+    log "Phase 1: package + push rootstock chart to oci://${REGISTRY_HOST}/${REGISTRY_CHART_REPO}"
 
-    # Confirm the registry container exists (started by Greenhouse's make zot).
-    if ! docker inspect registry >/dev/null 2>&1; then
-        warn "docker container 'registry' not found; attempting Greenhouse 'make zot'"
-        ( cd "$GREENHOUSE_DIR" && make zot ) || die "could not start local registry"
-    fi
+    # Confirm the registry container exists (started by setup_greenhouse.sh).
+    docker inspect registry >/dev/null 2>&1 \
+        || die "local registry container not running; run setup_greenhouse.sh first"
 
-    local pkgdir="${TMPDIR_RUN}/chart"
+    local pkgdir="${workdir}/chart"
     mkdir -p "$pkgdir"
     # --version overrides the chart version at package time without mutating
     # Chart.yaml, so CHART_VERSION (default: Chart.yaml .version) drives the
     # tarball name and OCI tag.
-    helm package "$CHART_DIR" --version "$CHART_VERSION" -d "$pkgdir" >/dev/null \
+    helm package "$chart_dir" --version "$CHART_VERSION" -d "$pkgdir" >/dev/null \
         || die "helm package failed"
     local tgz="${pkgdir}/rootstock-${CHART_VERSION}.tgz"
     [[ -f "$tgz" ]] || die "expected packaged chart ${tgz} not found"
@@ -296,30 +214,30 @@ publish_chart() {
 
     # Invalidate any cached Flux HelmChart artifact for this version. Flux keys
     # its OCI chart cache by VERSION, so re-pushing an edited chart under the
-    # SAME version (the common case when iterating with --keep) does NOT trigger
+    # SAME version does NOT trigger
     # a re-pull -- Greenhouse would keep rendering the stale artifact and miss
     # our edits (e.g. the parameterized test-connection image). Nudging the
     # HelmRepository to reconcile and deleting the HelmChart (Greenhouse
     # recreates it) forces a fresh pull of the digest we just pushed.
     # Best-effort: on a clean run these objects do not exist yet, which is fine.
     local hr_names
-    hr_names="$(kubectl --context "$ADMIN_CONTEXT" -n "$DEMO_ORG" get helmrepository \
+    hr_names="$(kubectl --context "$admin_context" -n "$DEMO_ORG" get helmrepository \
         -o jsonpath='{.items[*].metadata.name}' 2>/dev/null || true)"
     if [[ -n "$hr_names" ]]; then
         local hr
         for hr in $hr_names; do
-            kubectl --context "$ADMIN_CONTEXT" -n "$DEMO_ORG" annotate helmrepository "$hr" \
+            kubectl --context "$admin_context" -n "$DEMO_ORG" annotate helmrepository "$hr" \
                 "reconcile.fluxcd.io/requestedAt=$(date +%s)" --overwrite >/dev/null 2>&1 || true
         done
     fi
-    if kubectl --context "$ADMIN_CONTEXT" -n "$DEMO_ORG" get helmchart "rootstock-${CHART_VERSION}" >/dev/null 2>&1; then
-        kubectl --context "$ADMIN_CONTEXT" -n "$DEMO_ORG" delete helmchart "rootstock-${CHART_VERSION}" >/dev/null 2>&1 || true
+    if kubectl --context "$admin_context" -n "$DEMO_ORG" get helmchart "rootstock-${CHART_VERSION}" >/dev/null 2>&1; then
+        kubectl --context "$admin_context" -n "$DEMO_ORG" delete helmchart "rootstock-${CHART_VERSION}" >/dev/null 2>&1 || true
         ok "invalidated stale Flux HelmChart cache (rootstock-${CHART_VERSION})"
     fi
 }
 
 # =============================================================================
-# Phase 4: apply PluginDefinition and assert READY=True  (primary signal)
+# Phase 2: apply PluginDefinition and assert READY=True  (primary signal)
 # =============================================================================
 wait_ready() {
     # wait_ready <kind> <name> <namespace-or-empty>
@@ -329,7 +247,7 @@ wait_ready() {
     local deadline=$(( $(date +%s) + READY_TIMEOUT ))
     local status=""
     while (( $(date +%s) < deadline )); do
-        status="$(kubectl --context "$ADMIN_CONTEXT" "${nsargs[@]}" get "$kind" "$name" \
+        status="$(kubectl --context "$admin_context" "${nsargs[@]}" get "$kind" "$name" \
             -o jsonpath='{.status.statusConditions.conditions[?(@.type=="Ready")].status}' 2>/dev/null || true)"
         if [[ "$status" == "True" ]]; then
             return 0
@@ -338,13 +256,13 @@ wait_ready() {
         sleep "$POLL_INTERVAL"
     done
     warn "timed out waiting for ${kind}/${name} Ready; last status: ${status:-<none>}"
-    kubectl --context "$ADMIN_CONTEXT" "${nsargs[@]}" get "$kind" "$name" -o yaml 2>/dev/null \
+    kubectl --context "$admin_context" "${nsargs[@]}" get "$kind" "$name" -o yaml 2>/dev/null \
         | yq '.status' - || true
     return 1
 }
 
 apply_plugindefinition() {
-    log "Phase 4: apply PluginDefinition and assert READY=True"
+    log "Phase 2: apply PluginDefinition and assert READY=True"
 
     # Operate on a TEMP COPY -- never mutate the committed plugindefinition.yaml.
     # Rewrite helmChart.repository to the in-cluster registry address that Flux
@@ -358,8 +276,8 @@ apply_plugindefinition() {
     # namespace (${DEMO_ORG}); applied cluster-scoped it defaults to namespace
     # "default" and never reconciles (org "default" not found). The global,
     # cluster-scoped catalog variant is a separate kind (ClusterPluginDefinition).
-    local pd="${TMPDIR_RUN}/plugindefinition.yaml"
-    cp "$PLUGINDEF_SRC" "$pd"
+    local pd="${workdir}/plugindefinition.yaml"
+    cp "$plugin_def" "$pd"
     yq -i "
       .metadata.namespace = \"${DEMO_ORG}\" |
       .spec.version = \"${CHART_VERSION}\" |
@@ -368,7 +286,7 @@ apply_plugindefinition() {
     " "$pd"
     ok "temp PluginDefinition: namespace=${DEMO_ORG}, version=${CHART_VERSION}, repository=oci://${REGISTRY_INCLUSTER}/${REGISTRY_CHART_REPO}"
 
-    kubectl --context "$ADMIN_CONTEXT" -n "$DEMO_ORG" apply -f "$pd" \
+    kubectl --context "$admin_context" -n "$DEMO_ORG" apply -f "$pd" \
         || die "kubectl apply of PluginDefinition failed"
     ok "applied PluginDefinition 'rootstock' in ns ${DEMO_ORG}"
 
@@ -442,8 +360,8 @@ push_image_oci() {
         printf 'FROM %s\n' "$from_image" > "$dockerfile"
     else
         # Build straight from the repo Dockerfile.
-        ctx="${ROOTSTOCK_ROOT}"
-        dockerfile="${ROOTSTOCK_ROOT}/Dockerfile"
+        ctx="${rootstock_root}"
+        dockerfile="${rootstock_root}/Dockerfile"
         build_args=(--build-arg "VERSION=${APP_VERSION}")
     fi
 
@@ -461,10 +379,10 @@ push_image_oci() {
 }
 
 # =============================================================================
-# Phase 5: optional full Plugin E2E (--with-plugin)
+# Phase 3: optional full Plugin E2E (--with-plugin)
 # =============================================================================
 run_plugin_e2e() {
-    log "Phase 5: full Plugin E2E (--with-plugin)"
+    log "Phase 3: full Plugin E2E (--with-plugin)"
 
     # 1. Make the rootstock image available to the remote cluster via the local
     #    registry (zot). Greenhouse resolves the HelmRelease image from the
@@ -492,17 +410,17 @@ run_plugin_e2e() {
 
     # 2. Redfish Secret in the org namespace (Greenhouse resolves valueFrom.secret there).
     local redfish_pw="${REDFISH_PASSWORD:-redfish-test-password}"
-    kubectl --context "$ADMIN_CONTEXT" -n "$DEMO_ORG" create secret generic rootstock-redfish \
+    kubectl --context "$admin_context" -n "$DEMO_ORG" create secret generic rootstock-redfish \
         --from-literal=redfish_password="$redfish_pw" \
-        --dry-run=client -o yaml | kubectl --context "$ADMIN_CONTEXT" apply -f - \
+        --dry-run=client -o yaml | kubectl --context "$admin_context" apply -f - \
         || die "failed to create rootstock-redfish secret"
     ok "created Secret rootstock-redfish in ns ${DEMO_ORG}"
 
     # 3. Apply the Plugin (temp copy with placeholders substituted).
     #    spec.clusterName must match the *onboarded* Greenhouse Cluster name
-    #    (REMOTE_ONBOARDED_NAME, "kind-<remote>"), not the bare kind cluster name.
-    local plugin="${TMPDIR_RUN}/plugin.yaml"
-    cp "${GH_TEST_DIR}/plugin.yaml" "$plugin"
+    #    (remote_context, "kind-<remote>"), not the bare kind cluster name.
+    local plugin="${workdir}/plugin.yaml"
+    cp "${greenhouse_test_dir}/plugin.yaml" "$plugin"
     # Normalize the Plugin into the schema served by the pinned Greenhouse
     # (GREENHOUSE_REF, default v0.17.2): that CRD requires spec.pluginDefinitionRef
     # ({kind,name}) and rejects the legacy spec.pluginDefinition / spec.disabled
@@ -514,7 +432,7 @@ run_plugin_e2e() {
     # registry we pushed to in step 1.
     yq -i "
       .metadata.namespace = \"${DEMO_ORG}\" |
-      .spec.clusterName = \"${REMOTE_ONBOARDED_NAME}\" |
+      .spec.clusterName = \"${remote_context}\" |
       .spec.pluginDefinitionRef = {\"kind\": \"PluginDefinition\", \"name\": \"rootstock\"} |
       del(.spec.pluginDefinition) |
       del(.spec.disabled) |
@@ -526,9 +444,9 @@ run_plugin_e2e() {
         {\"name\": \"testConnection.image.tag\", \"value\": \"${TESTCONN_REGISTRY_IMAGE##*:}\"}
       ]
     " "$plugin"
-    kubectl --context "$ADMIN_CONTEXT" apply -f "$plugin" \
+    kubectl --context "$admin_context" apply -f "$plugin" \
         || die "kubectl apply of Plugin failed"
-    ok "applied Plugin 'rootstock' (cluster=${REMOTE_ONBOARDED_NAME}, ns=${DEMO_ORG})"
+    ok "applied Plugin 'rootstock' (cluster=${remote_context}, ns=${DEMO_ORG})"
 
     if wait_ready plugin rootstock "$DEMO_ORG"; then
         ok "Plugin rootstock is READY=True"
@@ -557,36 +475,36 @@ deploy_mockup() {
     local ns="rootstock"
     log "building and loading DMTF redfish mockup image"
     docker build -t rootstock-mockup:latest \
-        -f "${ROOTSTOCK_ROOT}/hack/kind/Dockerfile.mockup" "$ROOTSTOCK_ROOT" >/dev/null \
+        -f "${rootstock_root}/hack/kind/Dockerfile.mockup" "$rootstock_root" >/dev/null \
         || die "failed to build rootstock-mockup image"
-    kind load docker-image rootstock-mockup:latest --name "$REMOTE_CLUSTER" \
-        || die "kind load of rootstock-mockup into ${REMOTE_CLUSTER} failed"
+    kind load docker-image rootstock-mockup:latest --name "$remote_cluster" \
+        || die "kind load of rootstock-mockup into ${remote_cluster} failed"
 
-    log "deploying redfish mockup into ns ${ns} on ${REMOTE_CONTEXT}"
-    kubectl --context "$REMOTE_CONTEXT" create namespace "$ns" \
-        --dry-run=client -o yaml | kubectl --context "$REMOTE_CONTEXT" apply -f - \
+    log "deploying redfish mockup into ns ${ns} on ${remote_context}"
+    kubectl --context "$remote_context" create namespace "$ns" \
+        --dry-run=client -o yaml | kubectl --context "$remote_context" apply -f - \
         || die "failed to ensure namespace ${ns}"
-    kubectl --context "$REMOTE_CONTEXT" -n "$ns" apply -f "${ROOTSTOCK_ROOT}/hack/kind/redfish-mockup.yaml" \
+    kubectl --context "$remote_context" -n "$ns" apply -f "${rootstock_root}/hack/kind/redfish-mockup.yaml" \
         || die "failed to apply redfish-mockup manifest"
-    kubectl --context "$REMOTE_CONTEXT" -n "$ns" rollout status deploy/redfish-mockup --timeout=120s \
-        || die "redfish-mockup never became ready on ${REMOTE_CONTEXT}"
+    kubectl --context "$remote_context" -n "$ns" rollout status deploy/redfish-mockup --timeout=120s \
+        || die "redfish-mockup never became ready on ${remote_context}"
     ok "redfish mockup deployed (redfish-mockup.${ns}.svc:8000)"
 }
 
 probe_check() {
     log "verifying /healthz and /probe on the deployed workload (remote cluster)"
     local ns="rootstock" release="rootstock" local_port="${LOCAL_PORT:-9220}"
-    kubectl --context "$REMOTE_CONTEXT" -n "$ns" rollout status "deploy/${release}" --timeout=120s \
-        || die "rootstock deployment never became ready on ${REMOTE_CONTEXT}"
+    kubectl --context "$remote_context" -n "$ns" rollout status "deploy/${release}" --timeout=120s \
+        || die "rootstock deployment never became ready on ${remote_context}"
 
     local pf_pid=""
-    cleanup_pf() { 
-      # shellcheck disable=SC2015  
+    cleanup_pf() {
+      # shellcheck disable=SC2015
       [[ -n "${pf_pid:-}" ]] && kill "$pf_pid" 2>/dev/null || true
     }
     trap cleanup_pf RETURN
 
-    kubectl --context "$REMOTE_CONTEXT" -n "$ns" port-forward "svc/${release}" "${local_port}:9220" \
+    kubectl --context "$remote_context" -n "$ns" port-forward "svc/${release}" "${local_port}:9220" \
         >/dev/null 2>&1 &
     pf_pid=$!
 
@@ -614,24 +532,14 @@ probe_check() {
 }
 
 # =============================================================================
-# Phase 6: teardown
+# Phase 4: teardown
 # =============================================================================
 teardown() {
     local rc=$?
-    [[ -n "$TMPDIR_RUN" && -d "$TMPDIR_RUN" ]] && rm -rf "$TMPDIR_RUN"
+    [[ -n "$workdir" && -d "$workdir" ]] && rm -rf "$workdir"
     # Always remove the shared OCI buildx builder (a host-side resource, not part
     # of the kept cluster state).
     docker buildx rm "$OCI_BUILDER" >/dev/null 2>&1 || true
-    if $KEEP; then
-        warn "--keep set: leaving kind clusters and ${GREENHOUSE_DIR} in place"
-        return $rc
-    fi
-    log "Phase 6: teardown"
-    kind delete cluster --name "$REMOTE_CLUSTER" >/dev/null 2>&1 || true
-    kind delete cluster --name "$ADMIN_CLUSTER" >/dev/null 2>&1 || true
-    docker rm -f registry >/dev/null 2>&1 || true
-    rm -rf "$WORKDIR" || true
-    ok "removed clusters, registry and workdir"
     return $rc
 }
 
@@ -645,17 +553,17 @@ resolve_versions() {
     log "resolving versions"
 
     if [[ -z "$CHART_VERSION" ]]; then
-        CHART_VERSION="$(yq -r '.version' "${CHART_DIR}/Chart.yaml" 2>/dev/null)" \
-            || die "failed to read .version from ${CHART_DIR}/Chart.yaml"
+        CHART_VERSION="$(yq -r '.version' "${chart_dir}/Chart.yaml" 2>/dev/null)" \
+            || die "failed to read .version from ${chart_dir}/Chart.yaml"
         [[ -n "$CHART_VERSION" && "$CHART_VERSION" != "null" ]] \
-            || die "chart version is empty/null in ${CHART_DIR}/Chart.yaml"
+            || die "chart version is empty/null in ${chart_dir}/Chart.yaml"
         ok "chart version ${CHART_VERSION} (from Chart.yaml)"
     else
         ok "chart version ${CHART_VERSION} (CHART_VERSION override)"
     fi
 
     if [[ -z "$APP_VERSION" ]]; then
-        APP_VERSION="$(yq -r '.version' "${ROOTSTOCK_ROOT}/VERSION.yaml" 2>/dev/null)" \
+        APP_VERSION="$(yq -r '.version' "${rootstock_root}/VERSION.yaml" 2>/dev/null)" \
             || die "failed to read .version from VERSION.yaml"
         [[ -n "$APP_VERSION" && "$APP_VERSION" != "null" ]] \
             || die "app version is empty/null in VERSION.yaml"
@@ -703,28 +611,7 @@ resolve_versions() {
     fi
 }
 
-# =============================================================================
-# main
-# =============================================================================
-main() {
-    parse_args "$@"
-    TMPDIR_RUN="$(mktemp -d "${TMPDIR:-/tmp}/rootstock-ghverify.XXXXXX")"
-    trap teardown EXIT
 
-    preflight
-    resolve_versions
-    fetch_greenhouse
-    bring_up_greenhouse
-    publish_chart
-    apply_plugindefinition
-    if $WITH_PLUGIN; then
-        run_plugin_e2e
-    else
-        log "skipping Plugin E2E (pass --with-plugin to enable)"
-    fi
-
-    log "VERIFICATION PASSED"
-}
 
 main "$@"
 
