@@ -149,7 +149,7 @@ has_codeowner_approved() {
 # check_eligibility: evaluates all conditions and returns 0 (eligible) or 1 (not)
 # ---------------------------------------------------------------------------
 check_eligibility() {
-  local base state draft blocked_label pending_reviews changes_requested codeowner_approved eligible
+  local base state draft blocked_label changes_requested codeowner_approved eligible
 
   base=$(echo "$PR" | jq -r .baseRefName)
   state=$(echo "$PR" | jq -r .mergeStateStatus)
@@ -157,9 +157,6 @@ check_eligibility() {
   blocked_label=$(echo "$PR" | jq -r --arg bl "$BLOCKED_LABELS" '
     ($bl | split(",")) as $list | .labels[].name | select(IN($list[]))
   ' | head -1)
-  pending_reviews=$(echo "$PR" | jq -r '
-    [.reviewRequests[] | select(.login != null) | .login | select(test("copilot"; "i") | not)] | length'
-  )
   changes_requested=$(echo "$REVIEWS" \
     | jq '[.[] | select(.state == "CHANGES_REQUESTED")] | length')
 
@@ -173,14 +170,13 @@ check_eligibility() {
     || [ "$state" != "CLEAN" ] \
     || [ "$changes_requested" -gt 0 ] \
     || [ "$codeowner_approved" != "true" ] \
-    || [ "$pending_reviews" -gt 0 ] \
     || [ "$draft" = "true" ] \
     || [ -n "$blocked_label" ]; then
     eligible="false"
   fi
 
   debug_eligibility "$eligible" "$base" "$state" "$changes_requested" \
-    "$codeowner_approved" "$pending_reviews" "$draft" "$blocked_label"
+    "$codeowner_approved" "$draft" "$blocked_label"
 
   if [[ "$eligible" == "true" ]]; then
     return 0
@@ -191,12 +187,12 @@ check_eligibility() {
 
 # ---------------------------------------------------------------------------
 # debug_eligibility <eligible> <base> <state> <changes_requested>
-#                   <codeowner_approved> <pending_reviews> <draft> <blocked_label>
+#                   <codeowner_approved> <draft> <blocked_label>
 # Prints all eligibility conditions; no-ops when DEBUG != true
 # ---------------------------------------------------------------------------
 debug_eligibility() {
   local eligible="$1" base="$2" state="$3" changes_requested="$4" \
-        codeowner_approved="$5" pending_reviews="$6" draft="$7" blocked_label="$8"
+        codeowner_approved="$5" draft="$6" blocked_label="$7"
 
   log_debug "eligible=$eligible"
   log_debug "pr_number=$(echo "$PR" | jq -r .number)"
@@ -210,7 +206,6 @@ debug_eligibility() {
   log_debug "merge_state_status=$state ?= NOT CLEAN"
   log_debug "changes_requested=$changes_requested ?= 0"
   log_debug "codeowner_approved=$codeowner_approved ?= true"
-  log_debug "pending_reviews=$pending_reviews ?= 0"
   log_debug "is_draft=$draft ?= true"
   log_debug "blocked_label=${blocked_label:-<none>}"
   log_debug "pr_body=$PR_BODY"

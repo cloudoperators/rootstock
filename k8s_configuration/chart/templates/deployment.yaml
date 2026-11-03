@@ -18,11 +18,6 @@ spec:
   template:
     metadata:
       annotations:
-        # Roll the pods when the rendered Secret changes (only relevant for the
-        # chart-managed Secret; pre-existing Secrets hot-reload via fsnotify).
-        {{- if not .Values.redfish.existingSecret }}
-        checksum/redfish-secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
-        {{- end }}
         {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
