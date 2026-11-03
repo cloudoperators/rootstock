@@ -20,7 +20,7 @@ admin_context="kind-${admin_cluster}"
 # which is what Plugin spec.clusterName must reference.
 remote_context="kind-${remote_cluster}"
 
-DEMO_ORG="${DEMO_ORG:-demo}"
+DEMO_ORG="demo"
 
 # Local registry provided by Greenhouse's hack/registry/setup.sh (zot).
 # REGISTRY_HOST: host-visible address (helm push); REGISTRY_INCLUSTER: in-cluster address (Flux).
@@ -100,7 +100,6 @@ Usage: $(basename "$0") [--with-plugin] [-h|--help]
   -h, --help      Show this help.
 
 Key environment overrides:
-  DEMO_ORG        (default: demo)              Greenhouse demo Organization namespace.
   READY_TIMEOUT   (default: ${READY_TIMEOUT}s)
   CHART_VERSION   (default: k8s_configuration/chart/Chart.yaml .version)
                   Chart version to package/push/test. Override to test another

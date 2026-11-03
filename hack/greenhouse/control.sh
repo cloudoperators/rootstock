@@ -16,7 +16,7 @@ set -euo pipefail
 
 # --- Configuration (all overridable) -----------------------------------------
 GREENHOUSE_REF="${GREENHOUSE_REF:-v0.18.0}"
-DEMO_ORG="${DEMO_ORG:-demo}"
+DEMO_ORG="demo"
 
 greenhouse_repo="https://github.com/cloudoperators/greenhouse"
 
@@ -64,8 +64,6 @@ Commands:
 create options:
   --ref REF           Greenhouse git tag/commit to pin
                       (env: GREENHOUSE_REF, default: ${GREENHOUSE_REF})
-  --org NAME          Greenhouse demo Organization namespace
-                      (env: DEMO_ORG, default: ${DEMO_ORG})
   -h, --help          Show this help.
 
 delete options:
@@ -75,19 +73,16 @@ EOF
 
 cmd_create() {
     local ref="${GREENHOUSE_REF}"
-    local org="${DEMO_ORG}"
 
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --ref)     ref="$2"; shift 2 ;;
-            --org)     org="$2"; shift 2 ;;
             -h|--help) usage; exit 0 ;;
             *)         usage; die "unknown argument: $1" ;;
         esac
     done
 
     GREENHOUSE_REF="$ref"
-    DEMO_ORG="$org"
 
     preflight_tools
     check_registry_port

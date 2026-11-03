@@ -73,8 +73,6 @@ Runs these steps in order:
 # Override the pinned Greenhouse version:
 GREENHOUSE_REF=v0.18.0 hack/greenhouse/control.sh create
 
-# Override the demo org namespace:
-DEMO_ORG=myorg hack/greenhouse/control.sh create
 ```
 
 ### delete
@@ -137,13 +135,11 @@ port is treated as a plain registry and passes through un-rewritten.
 | Variable         | Default   | Purpose                             |
 | ---------------- | --------- | ----------------------------------- |
 | `GREENHOUSE_REF` | `v0.18.0` | Greenhouse git tag/commit to clone. |
-| `DEMO_ORG`       | `demo`    | Greenhouse Organization namespace.  |
 
 ### verify_plugindefinition.sh overrides
 
 | Variable                   | Default                               | Purpose                                                                              |
 | -------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------ |
-| `DEMO_ORG`                 | `demo`                                | Greenhouse Organization namespace.                                                   |
 | `REGISTRY_HOST`            | `localhost:5000`                      | Registry address reachable from the host (`helm push`).                              |
 | `REGISTRY_INCLUSTER`       | `registry:5000`                       | Registry address reachable from kind nodes / Flux.                                   |
 | `REGISTRY_CHART_REPO`      | `charts`                              | OCI path the chart is pushed under.                                                  |
