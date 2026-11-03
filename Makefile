@@ -38,6 +38,7 @@ MOCKUP_CONTAINER := redfish-mockup
 				generate generate-changelog generate-version \
 				get-version test-changelog \
 				automerge-check \
+				greenhouse-up greenhouse-verify greenhouse-delete \
 				help
 
 # Build
@@ -176,6 +177,24 @@ kind-up: kind-create kind-prepare kind-deploy ## Create kind cluster and deploy 
 kind-%: ## Execute command $* for the kind cluster - commands: [create, delete, prepare, deploy, validate, cleanup]
 	@echo "$(green) executing command: $(KIND_CONTROL) $*$(reset)"
 	@$(KIND_CONTROL) $*
+
+# ---------------------------------------------------------------------------
+# Local Greenhouse-in-kind environment
+# Requires: docker, kind, kubectl, helm, yq, go, git, jq
+#
+# greenhouse-up:     bootstrap admin+remote clusters, zot registry, demo org
+# greenhouse-verify: package+push chart, apply PluginDefinition, assert READY
+# greenhouse-delete: delete clusters, registry, and workdir
+# ---------------------------------------------------------------------------
+
+greenhouse-create: ## Bootstrap a local Greenhouse-in-kind environment
+	@hack/greenhouse/control.sh create
+
+greenhouse-verify: ## Verify the rootstock PluginDefinition against a running Greenhouse dev env
+	@hack/greenhouse/verify_plugindefinition.sh
+
+greenhouse-delete: ## Tear down the local Greenhouse-in-kind environment
+	@hack/greenhouse/control.sh delete
 
 # Build everything that is necessary for testing prometheus locally
 prometheus-local-setup: build mockup-start prometheus-collector-start

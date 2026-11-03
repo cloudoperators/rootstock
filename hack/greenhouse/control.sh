@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Greenhouse contributors
 # SPDX-License-Identifier: Apache-2.0
 #
-# setup_greenhouse.sh
+# control.sh
 # Bootstrap a local Greenhouse-in-kind environment.
 #
 # Clones cloudoperators/greenhouse at a pinned ref and runs the Greenhouse make
@@ -15,7 +15,7 @@
 set -euo pipefail
 
 # --- Configuration (all overridable) -----------------------------------------
-GREENHOUSE_REF="${GREENHOUSE_REF:-v0.17.2}"
+GREENHOUSE_REF="${GREENHOUSE_REF:-v0.18.0}"
 DEMO_ORG="${DEMO_ORG:-demo}"
 
 greenhouse_repo="https://github.com/cloudoperators/greenhouse"
@@ -43,11 +43,11 @@ die()  { printf '\033[1;31mERROR:\033[0m %s\n' "$*" >&2; exit 1; }
 # =============================================================================
 main() {
     local cmd="${1:-}"
-    [[ -z "$cmd" ]] && { usage; die "command required: setup or teardown"; }
+    [[ -z "$cmd" ]] && { usage; die "command required: create or delete"; }
     shift
     case "$cmd" in
-        setup)     cmd_setup "$@" ;;
-        teardown)  cmd_teardown "$@" ;;
+        create)    cmd_create "$@" ;;
+        delete)    cmd_delete "$@" ;;
         -h|--help) usage; exit 0 ;;
         *)         usage; die "unknown command: ${cmd}" ;;
     esac
@@ -58,22 +58,22 @@ usage() {
 Usage: $(basename "$0") <command> [OPTIONS]
 
 Commands:
-  setup     Bootstrap a local Greenhouse-in-kind environment (clone + make setup).
-  teardown  Delete the kind clusters, registry container, and workdir.
+  create    Bootstrap a local Greenhouse-in-kind environment (clone + make setup).
+  delete    Delete the kind clusters, registry container, and workdir.
 
-setup options:
+create options:
   --ref REF           Greenhouse git tag/commit to pin
                       (env: GREENHOUSE_REF, default: ${GREENHOUSE_REF})
   --org NAME          Greenhouse demo Organization namespace
                       (env: DEMO_ORG, default: ${DEMO_ORG})
   -h, --help          Show this help.
 
-teardown options:
+delete options:
   -h, --help          Show this help.
 EOF
 }
 
-cmd_setup() {
+cmd_create() {
     local ref="${GREENHOUSE_REF}"
     local org="${DEMO_ORG}"
 
@@ -95,7 +95,7 @@ cmd_setup() {
     bring_up_greenhouse
 }
 
-cmd_teardown() {
+cmd_delete() {
     while [[ $# -gt 0 ]]; do
         case "$1" in
             -h|--help)        usage; exit 0 ;;
@@ -123,10 +123,9 @@ preflight_tools() {
     ok "all tools present and docker daemon reachable"
 }
 
-# Ensure host port 5000 is free for Greenhouse's local registry (zot). A stale
-# `registry` container from a previous run is cleaned up automatically; any other
-# listener (notably macOS AirPlay Receiver / ControlCenter) must be freed by the
-# user, because the Greenhouse setup script hard-codes port 5000.
+# Ensure host port 5000 is free for Greenhouse's local registry. Stale `registry`
+# containers from a previous run are removed automatically; any other listener
+# (e.g. macOS AirPlay Receiver) must be freed manually — Greenhouse hard-codes port 5000.
 check_registry_port() {
     local port=5000
 
@@ -138,8 +137,7 @@ check_registry_port() {
 
     local holder=""
     if command -v lsof >/dev/null 2>&1; then
-        # `|| true`: lsof exits non-zero when nothing is listening, which would
-        # otherwise abort the script under `set -e`/`pipefail`.
+        # lsof exits non-zero when nothing is listening; `|| true` prevents set -e from aborting.
         holder="$(lsof -nP -iTCP:${port} -sTCP:LISTEN 2>/dev/null | awk 'NR>1 {print $1; exit}' || true)"
     fi
     if [[ -n "$holder" ]]; then
@@ -177,15 +175,9 @@ fetch_greenhouse() {
 # =============================================================================
 bring_up_greenhouse() {
     log "Phase 2: bootstrap local Greenhouse (make setup) -- this is slow and can be flaky on first run"
-    # Greenhouse's aggregate `make setup` = setup-manager + setup-dashboard +
-    # setup-demo, run in that order. The dashboard (UI) step is irrelevant to
-    # PluginDefinition verification and is flaky to bring up locally; when it
-    # fails, make aborts *before* setup-demo and the demo Organization/registry
-    # are never created. So by default we run only the targets we need --
-    # setup-manager (clusters, cert-manager, CRDs, controller, webhook) and
-    # setup-demo (zot registry, demo Organization) -- skipping the dashboard.
-    # Override greenhouse_setup_targets to change this (e.g. "setup" for the full
-    # upstream flow including the dashboard).
+    # Run only setup-manager + setup-demo by default, skipping setup-dashboard:
+    # the dashboard step is flaky locally and not needed for PluginDefinition verification.
+    # Override greenhouse_setup_targets for the full upstream flow.
     local setup_targets="${greenhouse_setup_targets:-setup-manager setup-demo}"
     log "running: make ${setup_targets}"
     (
@@ -194,13 +186,12 @@ bring_up_greenhouse() {
         make ${setup_targets}
     ) || die "Greenhouse 'make ${setup_targets}' failed (see output above)"
 
-    # Export admin kubeconfig context for subsequent kubectl calls. setup-demo
-    # already switched the current context, but be explicit/robust.
+    # setup-demo switches the current context, but be explicit.
     kubectl config get-contexts "$admin_context" >/dev/null 2>&1 \
         || die "expected kube-context ${admin_context} not found after setup"
     ok "Greenhouse is up (admin=${admin_context}, remote=${remote_context}, org ns=${DEMO_ORG})"
 
-    # Sanity: the PluginDefinition CRD must exist, else apply will fail cryptically.
+    # Sanity: PluginDefinition CRD must exist or apply will fail cryptically.
     kubectl --context "$admin_context" get crd plugindefinitions.greenhouse.sap >/dev/null 2>&1 \
         || die "PluginDefinition CRD not present on admin cluster -- setup incomplete"
     ok "PluginDefinition CRD present"
