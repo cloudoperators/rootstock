@@ -1,14 +1,14 @@
 <mxfile host="65bd71144e">
     <diagram id="t7yrIpj81MeIwbG0Oq53" name="Page-1">
-        <mxGraphModel dx="1709" dy="2005" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+        <mxGraphModel dx="1769" dy="1724" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
-                <mxCell id="0.2" connectable="0" parent="1" style="text;html=1;shape=tamPluginMissing;" value="Best viewed with the &lt;a href=&quot;https://github.com/ariel-bentu/tam-drawio&quot;&gt;TAM plugin&lt;/a&gt;" vertex="1">
-                    <mxGeometry height="25" width="200" x="1091" y="875.15" as="geometry"/>
-                </mxCell>
                 <mxCell id="159" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="" vertex="1">
-                    <mxGeometry height="802" width="1142" x="1175" y="-290" as="geometry"/>
+                    <mxGeometry height="877" width="763.75" x="27.25" y="17" as="geometry"/>
+                </mxCell>
+                <mxCell id="0.2" connectable="0" parent="1" style="text;html=1;shape=tamPluginMissing;" value="Best viewed with the &lt;a href=&quot;https://github.com/ariel-bentu/tam-drawio&quot;&gt;TAM plugin&lt;/a&gt;" vertex="1">
+                    <mxGeometry height="25" width="200" x="499.625" y="924" as="geometry"/>
                 </mxCell>
                 <mxCell id="157" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=3;fillColor=none;strokeColor=#FF0000;" value="" vertex="1">
                     <mxGeometry height="595" width="609" x="65" y="134" as="geometry"/>
@@ -59,7 +59,7 @@
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="115" connectable="0" parent="1" style="group" value="" vertex="1">
-                    <mxGeometry height="137" width="539" x="125" y="512" as="geometry"/>
+                    <mxGeometry height="321" width="1047" x="125" y="512" as="geometry"/>
                 </mxCell>
                 <mxCell id="109" parent="115" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFCCE6;" value="" vertex="1">
                     <mxGeometry height="118" width="539" as="geometry"/>
@@ -71,7 +71,7 @@
                     <mxGeometry height="60" width="120" x="212" y="34" as="geometry"/>
                 </mxCell>
                 <mxCell id="108" connectable="0" parent="115" style="group" value="" vertex="1">
-                    <mxGeometry height="68" width="128" x="30" y="27" as="geometry"/>
+                    <mxGeometry height="294" width="1017" x="30" y="27" as="geometry"/>
                 </mxCell>
                 <mxCell id="106" parent="108" style="rounded=0;whiteSpace=wrap;html=1;" value="redfish scraper" vertex="1">
                     <mxGeometry height="60" width="120" x="8" as="geometry"/>
