@@ -206,7 +206,6 @@ debug_eligibility() {
   log_debug "merge_state_status=$state ?= NOT CLEAN"
   log_debug "changes_requested=$changes_requested ?= 0"
   log_debug "codeowner_approved=$codeowner_approved ?= true"
-  log_debug "pending_reviews=$pending_reviews ?= 0"
   log_debug "is_draft=$draft ?= true"
   log_debug "blocked_label=${blocked_label:-<none>}"
   log_debug "pr_body=$PR_BODY"
