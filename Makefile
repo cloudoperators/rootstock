@@ -94,6 +94,7 @@ test-contract: ## Run contract tests (TODO: not yet implemented)
 
 # Performance benchmark tunables (override via environment, e.g. PERFTEST_TIME=5s).
 PERFTEST_TIME    ?= 2s
+PERFTEST_COUNT   ?= 1
 PERFTEST_CPU     ?= 1
 PERFTEST_TIMEOUT ?= 10m
 
@@ -104,7 +105,7 @@ test-performance: ## Run end-to-end performance benchmarks (virtual Redfish devi
 		-bench=. \
 		-benchmem \
 		-benchtime=$(PERFTEST_TIME) \
-		-count=1 \
+		-count=$(PERFTEST_COUNT) \
 		-cpu=$(PERFTEST_CPU) \
 		-timeout=$(PERFTEST_TIMEOUT) \
 		./test/performance/... | tee bench.txt

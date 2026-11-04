@@ -25,23 +25,25 @@ make test-performance
 
 This runs benchmarks only (unit tests are excluded via `-run=^$`) and writes the
 benchstat-compatible output to `bench.txt`. The invocation is defined in the
-`test-performance` Makefile target. Three flags are exposed as environment
+`test-performance` Makefile target. Four flags are exposed as environment
 variables you can override:
 
-- `BENCH_TIME` (`-benchtime`, default `2s`) — wall-time budget per benchmark.
-- `BENCH_CPU` (`-cpu`, default `1`) — pins `GOMAXPROCS` for reproducibility.
-- `BENCH_TIMEOUT` (`-timeout`, default `10m`) — a hard ceiling so a run can never
-  hang the pipeline.
+- `PERFTEST_TIME` (`-benchtime`, default `2s`) — wall-time budget per benchmark.
+- `PERFTEST_COUNT` (`-count`, default `1`) — number of runs per benchmark; raise
+  (e.g. `6`) when feeding `benchstat`.
+- `PERFTEST_CPU` (`-cpu`, default `1`) — pins `GOMAXPROCS` for reproducibility.
+- `PERFTEST_TIMEOUT` (`-timeout`, default `10m`) — a hard ceiling so a run can
+  never hang the pipeline.
 
 For example:
 
 ```sh
-make test-performance BENCH_TIME=5s BENCH_CPU=4 BENCH_TIMEOUT=3m
+make test-performance PERFTEST_TIME=5s PERFTEST_COUNT=6 PERFTEST_CPU=4 PERFTEST_TIMEOUT=3m
 ```
 
-The target package (`./test/performance/...`), output file (`bench.txt`), and
-`-count=1` are fixed in the target. A CI quality gate and a stored baseline for
-regression comparison are deferred until the benchmark runtimes are known.
+The target package (`./test/performance/...`) and output file (`bench.txt`) are
+fixed in the target. A CI quality gate and a stored baseline for regression
+comparison are deferred until the benchmark runtimes are known.
 
 ## Interpreting the results
 
@@ -93,6 +95,7 @@ The order of operations to run the tests, from user invocation to interpreted
 results:
 
 ```mermaid
+%%{init: {'sequence': {'mirrorActors': false}}}%%
 sequenceDiagram
     actor User
     participant Make as make test-performance
