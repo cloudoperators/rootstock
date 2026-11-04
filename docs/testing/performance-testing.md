@@ -36,9 +36,13 @@ cache. See
 
 ### Do we performance test against a deployment of rootstock?
 
-Testing against the deployed container in a kind cluster is currently off the
-table, as we deem it not necessary to benchmark relevant components and measure
-relative deviations.
+No. We do not benchmark rootstock running as a deployed container in a
+Kubernetes (kind) cluster. Our goal is to measure the relative performance of
+the relevant components and to detect regressions in them, which the in-code
+benchmarks already achieve without the added variance and overhead of a full
+deployment. Benchmarking a deployed container may be reconsidered if we later
+need to measure end-to-end behaviour that the component-level benchmarks cannot
+capture.
 
 ## Open questions
 
