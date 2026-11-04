@@ -1,8 +1,8 @@
 # Performance testing
 
 This document describes how rootstock's performance is benchmarked. The suite
-measures the end-to-end pipeline for a PDU — a virtual Redfish device → scraper
-→ processing layer → result cache — to track relative component performance and
+measures the end-to-end pipeline for a PDU (virtual Redfish device -> scraper ->
+processing layer -> result cache) to track relative component performance and
 detect regressions.
 
 The Redfish scenario is currently not completely implemented: the data
@@ -28,11 +28,11 @@ benchstat-compatible output to `bench.txt`. The invocation is defined in the
 `test-performance` Makefile target. Four flags are exposed as environment
 variables you can override:
 
-- `PERFTEST_TIME` (`-benchtime`, default `2s`) — wall-time budget per benchmark.
-- `PERFTEST_COUNT` (`-count`, default `1`) — number of runs per benchmark; raise
+- `PERFTEST_TIME` (`-benchtime`, default `2s`): wall-time budget per benchmark.
+- `PERFTEST_COUNT` (`-count`, default `1`): number of runs per benchmark; raise
   (e.g. `6`) when feeding `benchstat`.
-- `PERFTEST_CPU` (`-cpu`, default `1`) — pins `GOMAXPROCS` for reproducibility.
-- `PERFTEST_TIMEOUT` (`-timeout`, default `10m`) — a hard ceiling so a run can
+- `PERFTEST_CPU` (`-cpu`, default `1`): pins `GOMAXPROCS` for reproducibility.
+- `PERFTEST_TIMEOUT` (`-timeout`, default `10m`): a hard ceiling so a run can
   never hang the pipeline.
 
 For example:
@@ -62,33 +62,34 @@ count.
 The suite benchmarks the path from a mocked PDU through processing into the
 result cache:
 
-- `BenchmarkPipeline` — a single representative device.
-- `BenchmarkPipelineScale` — how cost grows with the number of devices (mass
+- `BenchmarkPipeline`: a single representative device.
+- `BenchmarkPipelineScale`: how cost grows with the number of devices (mass
   scanning / horizontal scaling).
-- `BenchmarkPipelineParallel` — concurrent processing.
-- `TestRedfishPipeline` — the end-to-end Redfish test case: set up and connect
-  mock PDUs to the scraper, execute, and validate by reading out the result
-  cache.
+- `BenchmarkPipelineParallel`: concurrent processing.
+- `TestRedfishPipeline`: the end-to-end Redfish test case. It sets up and
+  connects mock PDUs to the scraper, executes, and validates by reading out the
+  result cache.
 
-Because the data processors are not available, the full
-`scrape → queue → processor → cache` pass does not run to completion; the
-benchmarks and `TestRedfishPipeline` scrape the mocked PDUs and then report the
-missing processing layer.
+Because the data processors are not available, the full pipeline pass (scrape ->
+queue -> processor -> cache) does not run to completion; the benchmarks and
+`TestRedfishPipeline` scrape the mocked PDUs and then report the missing
+processing layer.
 
 ## How it works
 
 ### Harness and mock PDU
 
-- `test/performance/mockpdu` — an implementation of `redfish.Client` backed by
+- `test/performance/mockpdu`: an implementation of `redfish.Client` backed by
   fixtures. Fixtures are read once at construction from the DMTF Redfish PDU
   mockup under `testdata/pdu-mockup` (the same data the integration tests use,
   so there is a single source of truth), decoded before the benchmark timer
   starts so per-iteration cost reflects processing, not JSON parsing or network
   I/O.
-- `test/performance/harness.go` — the ends of the pipeline: `performance.Scrape`
-  (the scraping edge, over the `redfish.Client`) and `performance.ReadResult`
-  (the result-cache read-out). The processing layer that connects them is
-  described in [architecture.md](../design/architecture.md).
+- `test/performance/harness.go`: the ends of the pipeline, namely
+  `performance.Scrape` (the scraping edge, over the `redfish.Client`) and
+  `performance.ReadResult` (the result-cache read-out). The processing layer
+  that connects them is described in
+  [architecture.md](../design/architecture.md).
 
 ### Invocation flow
 
@@ -110,7 +111,7 @@ sequenceDiagram
     Make-->>User: results
 ```
 
-### Redfish test case — component chain
+### Redfish test case component chain
 
 The component chain for the Redfish test case, from the mocked fixture through
 to validation by reading out the result cache, mirroring `TestRedfishPipeline`
@@ -132,13 +133,13 @@ sequenceDiagram
         Test->>Mock: mockpdu.New()
         Mock->>Data: os.ReadFile (Redfish fixture)
         Data-->>Mock: raw JSON
-        Mock->>Mock: json.Unmarshal → RackPDU / PDUMetrics
+        Mock->>Mock: json.Unmarshal -> RackPDU / PDUMetrics
         Mock-->>Test: *Client + IDs()
         Test->>Cache: cache.New[Result]()
     end
 
     rect rgba(128, 128, 128, 0.22)
-        note right of Test: execute — scraping edge
+        note right of Test: execute (scraping edge)
         loop per PDU id
             Test->>Scrape: Scrape(ctx, source, id)
             Scrape->>Mock: GetPERackPDUMetrics(id)
@@ -150,14 +151,14 @@ sequenceDiagram
     end
 
     rect rgba(220, 120, 120, 0.18)
-        note right of Queue: processing layer — data processors not available
+        note right of Queue: processing layer (data processors not available)
         Test-->>Queue: push (pdu, metrics)
         Queue-->>Proc: pull raw documents
-        Proc-->>Cache: transform → Result, Cache.Set(id, result)
+        Proc-->>Cache: transform -> Result, Cache.Set(id, result)
     end
 
     rect rgba(128, 128, 128, 0.12)
-        note right of Test: validate — read out result cache
+        note right of Test: validate (read out result cache)
         Test->>Cache: performance.ReadResult(cache, id)
         Cache-->>Test: result (or cache miss when the cache is empty)
     end
@@ -205,5 +206,5 @@ Test the Prometheus collector with the result cache (buffer) set static:
 
 - Measures peak requests per second and response time.
 - Requires a feature flag to set the cache static.
-- Security risk if the flag is enabled in production — risk/reward potentially
-  low.
+- Security risk if the flag is enabled in production, so the risk/reward is
+  potentially low.
