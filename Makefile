@@ -189,9 +189,12 @@ kind-%: ## Execute command $* for the kind cluster - commands: [create, delete, 
 
 greenhouse-create: ## Bootstrap a local Greenhouse-in-kind environment
 	@hack/greenhouse/control.sh create
-
+ 
 greenhouse-verify: ## Verify the rootstock PluginDefinition against a running Greenhouse dev env
 	@hack/greenhouse/verify_plugindefinition.sh
+
+greenhouse-verify-with-plugin: ## Verify the rootstock PluginDefinition against a running Greenhouse dev env
+	@hack/greenhouse/verify_plugindefinition.sh --with-plugin
 
 greenhouse-delete: ## Tear down the local Greenhouse-in-kind environment
 	@hack/greenhouse/control.sh delete

@@ -278,25 +278,27 @@ ensure_oci_builder() {
 push_image_oci() {
     local dest_host="$1"
     local from_image="${2:-}"
-    local ctx dockerfile build_args=()
+    local ctx dockerfile
+    local build_extra_args
 
     log "pushing OCI image ${dest_host} into local registry"
     ensure_oci_builder
-
+    
     if [[ -n "$from_image" ]]; then
         # Re-publish an upstream image as OCI via a one-line FROM Dockerfile.
         ctx="$(mktemp -d "${TMPDIR:-/tmp}/ghverify-oci.XXXXXX")"
         dockerfile="${ctx}/Dockerfile"
         printf 'FROM %s\n' "$from_image" > "$dockerfile"
+        build_extra_args=""
     else
         # Build straight from the repo Dockerfile.
         ctx="${rootstock_root}"
         dockerfile="${rootstock_root}/Dockerfile"
-        build_args=(--build-arg "VERSION=${APP_VERSION}")
+        build_extra_args="--build-arg VERSION=${APP_VERSION}"
     fi
 
     docker buildx --builder "$OCI_BUILDER" build \
-        "${build_args[@]}" \
+        $build_extra_args \
         --platform "${BUILD_PLATFORM:-linux/arm64}" \
         --provenance=false \
         --output "type=registry,registry.insecure=true,name=${dest_host}" \
@@ -333,7 +335,55 @@ run_plugin_e2e() {
         "$TESTCONN_SOURCE_IMAGE"
     ok "test-connection image available in registry as ${TESTCONN_REGISTRY_IMAGE}"
 
-    # 2. Redfish Secret in the org namespace (Greenhouse resolves valueFrom.secret there).
+    # 2. Wait for Greenhouse to see the remote cluster nodes as ready.
+    #    When clusters are freshly created, there's a race where nodes become Ready
+    #    but Greenhouse hasn't updated its cluster status yet, causing Plugin deployment to fail.
+    log "waiting for Greenhouse to recognize cluster nodes as ready"
+    local cluster_wait_timeout=300
+    local cluster_wait_elapsed=0
+    local cluster_refresh_attempts=0
+    
+    while [[ $cluster_wait_elapsed -lt $cluster_wait_timeout ]]; do
+        local all_nodes_ready=$(kubectl --context "$admin_context" get cluster "$remote_context" -n "$DEMO_ORG" \
+            -o jsonpath='{.status.statusConditions.conditions[?(@.type=="AllNodesReady")].status}' 2>/dev/null || echo "False")
+        local payload_schedulable=$(kubectl --context "$admin_context" get cluster "$remote_context" -n "$DEMO_ORG" \
+            -o jsonpath='{.status.statusConditions.conditions[?(@.type=="PayloadSchedulable")].status}' 2>/dev/null || echo "False")
+        
+        if [[ "$all_nodes_ready" == "True" && "$payload_schedulable" == "True" ]]; then
+            ok "cluster nodes are ready and schedulable in Greenhouse"
+            break
+        fi
+        
+        # If nodes are still not ready after 60s, try to force a refresh by annotating the cluster
+        if [[ $cluster_wait_elapsed -eq 60 && $cluster_refresh_attempts -eq 0 ]]; then
+            echo
+            log "forcing cluster status refresh..."
+            kubectl --context "$admin_context" annotate cluster "$remote_context" -n "$DEMO_ORG" \
+                greenhouse.sap/force-refresh="$(date +%s)" --overwrite >/dev/null 2>&1 || true
+            cluster_refresh_attempts=1
+            echo -n "    continuing to wait"
+        elif [[ $cluster_wait_elapsed -eq 0 ]]; then
+            echo -n "    waiting for cluster readiness (current: AllNodesReady=$all_nodes_ready, PayloadSchedulable=$payload_schedulable)"
+        else
+            echo -n "."
+        fi
+        
+        sleep 5
+        cluster_wait_elapsed=$((cluster_wait_elapsed + 5))
+    done
+    echo  # newline after dots
+    
+    # Final check - if still not ready, fail fast instead of proceeding
+    local final_all_nodes_ready=$(kubectl --context "$admin_context" get cluster "$remote_context" -n "$DEMO_ORG" \
+        -o jsonpath='{.status.statusConditions.conditions[?(@.type=="AllNodesReady")].status}' 2>/dev/null || echo "False")
+    local final_payload_schedulable=$(kubectl --context "$admin_context" get cluster "$remote_context" -n "$DEMO_ORG" \
+        -o jsonpath='{.status.statusConditions.conditions[?(@.type=="PayloadSchedulable")].status}' 2>/dev/null || echo "False")
+    
+    if [[ "$final_all_nodes_ready" != "True" || "$final_payload_schedulable" != "True" ]]; then
+        die "cluster ${remote_context} is not ready after ${cluster_wait_timeout}s (AllNodesReady=${final_all_nodes_ready}, PayloadSchedulable=${final_payload_schedulable})"
+    fi
+
+    # 3. Redfish Secret in the org namespace (Greenhouse resolves valueFrom.secret there).
     local redfish_pw="${REDFISH_PASSWORD:-redfish-test-password}"
     kubectl --context "$admin_context" -n "$DEMO_ORG" create secret generic rootstock-redfish \
         --from-literal=redfish_password="$redfish_pw" \
@@ -341,7 +391,7 @@ run_plugin_e2e() {
         || die "failed to create rootstock-redfish secret"
     ok "created Secret rootstock-redfish in ns ${DEMO_ORG}"
 
-    # Apply the Plugin on a temp copy. Normalize to the pinned Greenhouse CRD schema
+    # 4. Apply the Plugin on a temp copy. Normalize to the pinned Greenhouse CRD schema
     # (spec.pluginDefinitionRef, drop legacy spec.pluginDefinition/disabled), repoint
     # image.repository/tag at the local registry, and flip pullPolicy to IfNotPresent.
     local plugin="${workdir}/plugin.yaml"
