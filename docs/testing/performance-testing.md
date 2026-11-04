@@ -24,8 +24,8 @@ make test-performance
 ```
 
 This runs benchmarks only (unit tests are excluded via `-run=^$`) and writes the
-benchstat-compatible output to `performance.txt`. The invocation is defined in the
-`test-performance` Makefile target. Four flags are exposed as environment
+benchstat-compatible output to `performance.txt`. The invocation is defined in
+the `test-performance` Makefile target. Four flags are exposed as environment
 variables you can override:
 
 - `PERFTEST_TIME` (`-benchtime`, default `2s`): wall-time budget per benchmark.
@@ -41,8 +41,8 @@ For example:
 make test-performance PERFTEST_TIME=5s PERFTEST_COUNT=6 PERFTEST_CPU=4 PERFTEST_TIMEOUT=3m
 ```
 
-The target package (`./test/performance/...`) and output file (`performance.txt`) are
-fixed in the target.
+The target package (`./test/performance/...`) and output file
+(`performance.txt`) are fixed in the target.
 
 ## Interpreting the results
 
