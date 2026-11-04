@@ -5,6 +5,7 @@ package performance_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/cloudoperators/rootstock/internal/collectors/cache"
@@ -32,7 +33,7 @@ import (
 func TestRedfishPipeline(t *testing.T) {
 	ctx := context.Background()
 
-	// Setup: initialise the mock PDU source and connect it to the scraper.
+	// Setup: initialize the mock PDU source and connect it to the scraper.
 	source, err := mockpdu.New()
 	if err != nil {
 		t.Fatalf("build mock PDU source: %v", err)
@@ -76,7 +77,7 @@ func TestRedfishPipeline(t *testing.T) {
 	//	... (ApparentVA, ReactiveVAR, PowerFactor, EnergykWh)
 	//
 	// The result cache is empty, so the read-out returns a cache miss.
-	if _, err := performance.ReadResult(resultCache, ids[0]); err != cache.ErrCacheNotFound {
+	if _, err := performance.ReadResult(resultCache, ids[0]); !errors.Is(err, cache.ErrCacheNotFound) {
 		t.Fatalf("expected empty result cache (cache miss), got err=%v", err)
 	}
 

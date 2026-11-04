@@ -74,4 +74,3 @@ func ReadResult(c cache.Cache[Result], pduID string) (Result, error) {
 //
 // The data processors are not available, so this layer is not wired up and the
 // Redfish scenario does not run end to end.
-

@@ -1,8 +1,8 @@
 # Performance testing
 
 This document describes how rootstock's performance is benchmarked. The suite
-measures the end-to-end pipeline for a PDU — a virtual Redfish device → scraper →
-processing layer → result cache — to track relative component performance and
+measures the end-to-end pipeline for a PDU — a virtual Redfish device → scraper
+→ processing layer → result cache — to track relative component performance and
 detect regressions.
 
 The Redfish scenario is currently not completely implemented: the data
@@ -30,8 +30,8 @@ variables you can override:
 
 - `BENCH_TIME` (`-benchtime`, default `2s`) — wall-time budget per benchmark.
 - `BENCH_CPU` (`-cpu`, default `1`) — pins `GOMAXPROCS` for reproducibility.
-- `BENCH_TIMEOUT` (`-timeout`, default `10m`) — a hard ceiling so a run can never
-  hang the pipeline.
+- `BENCH_TIMEOUT` (`-timeout`, default `10m`) — a hard ceiling so a run can
+  never hang the pipeline.
 
 For example:
 
@@ -79,9 +79,10 @@ missing processing layer.
 
 - `test/performance/mockpdu` — an implementation of `redfish.Client` backed by
   fixtures. Fixtures are read once at construction from the DMTF Redfish PDU
-  mockup under `testdata/pdu-mockup` (the same data the integration tests use, so
-  there is a single source of truth), decoded before the benchmark timer starts
-  so per-iteration cost reflects processing, not JSON parsing or network I/O.
+  mockup under `testdata/pdu-mockup` (the same data the integration tests use,
+  so there is a single source of truth), decoded before the benchmark timer
+  starts so per-iteration cost reflects processing, not JSON parsing or network
+  I/O.
 - `test/performance/harness.go` — the ends of the pipeline: `performance.Scrape`
   (the scraping edge, over the `redfish.Client`) and `performance.ReadResult`
   (the result-cache read-out). The processing layer that connects them is
@@ -106,13 +107,12 @@ sequenceDiagram
     Make-->>User: results
 ```
 
-
 ### Redfish test case — component chain
 
-The component chain for the Redfish test case, from the mocked fixture through to
-validation by reading out the result cache, mirroring `TestRedfishPipeline` in
-`test/performance/harness_test.go`. The processing-layer stage (dashed) depends
-on the data processors, which are not available.
+The component chain for the Redfish test case, from the mocked fixture through
+to validation by reading out the result cache, mirroring `TestRedfishPipeline`
+in `test/performance/harness_test.go`. The processing-layer stage (dashed)
+depends on the data processors, which are not available.
 
 ```mermaid
 sequenceDiagram
@@ -204,4 +204,3 @@ Test the Prometheus collector with the result cache (buffer) set static:
 - Requires a feature flag to set the cache static.
 - Security risk if the flag is enabled in production — risk/reward potentially
   low.
-
