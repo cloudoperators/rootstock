@@ -47,8 +47,8 @@ For example:
 make test-performance PERFTEST_TIME=5s PERFTEST_COUNT=6 PERFTEST_CPU=4 PERFTEST_TIMEOUT=3m
 ```
 
-The target package (`./test/performance/...`) and output file (`performance.txt`) are
-fixed in the target.
+The target package (`./test/performance/...`) and output file
+(`performance.txt`) are fixed in the target.
 
 ## Interpreting the results
 
