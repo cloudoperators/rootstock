@@ -92,9 +92,22 @@ test-integration: mockup-start ## Start mockup server, run integration tests, st
 test-contract: ## Run contract tests (TODO: not yet implemented)
 	@echo "TODO: contract tests not yet implemented"
 
-test-performance: ## Run in-code Go performance benchmarks (processing pipeline + result cache)
+# Performance benchmark tunables (override via environment, e.g. PERFTEST_TIME=5s).
+PERFTEST_TIME    ?= 2s
+PERFTEST_CPU     ?= 1
+PERFTEST_TIMEOUT ?= 10m
+
+test-performance: ## Run end-to-end performance benchmarks (virtual Redfish device -> processing -> result cache)
 	@echo "$(green) performance testing$(reset)"
-	@hack/performance-test.sh
+	go test \
+		-run='^$$' \
+		-bench=. \
+		-benchmem \
+		-benchtime=$(PERFTEST_TIME) \
+		-count=1 \
+		-cpu=$(PERFTEST_CPU) \
+		-timeout=$(PERFTEST_TIMEOUT) \
+		./test/performance/... | tee bench.txt
 
 test-changelog: ## Run the local changelog generation test suite
 	@echo "$(green) testing changelog generation$(reset)"

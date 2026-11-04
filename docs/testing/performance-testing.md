@@ -1,164 +1,207 @@
 # Performance testing
 
-This document describes the performance-testing approach for rootstock and the
-metrics we intend to measure.
+This document describes how rootstock's performance is benchmarked. The suite
+measures the end-to-end pipeline for a PDU — a virtual Redfish device → scraper →
+processing layer → result cache — to track relative component performance and
+detect regressions.
 
-## Notes
+The Redfish scenario is currently not completely implemented: the data
+processors (the raw data queue and data-processor of the processing layer) are
+not available, so the end-to-end pass does not yet run to completion.
 
-### Should we run the tests on a public GitHub runner?
+## Overview
 
-Yes, for now. Running tests on a public virtualized environment will probably
-cause erratic absolute response measurements. Depending on how erratic it is, we
-can consider self-hosting our own runner later on.
+All performance tests and benchmarks live in a single consolidated suite under
+`test/performance` (package `performance`), rather than scattered across the
+packages they measure. The suite runs entirely in-code: no network, deployed
+container, or Prometheus scrape is involved, so the measurement isolates
+processing cost.
 
-### How often and when do we test?
-
-Test frequency -> fail early. Which stage the tests run depends on how expensive
-(runtime) they are; if cheaper, higher up.
-
-- on-commit
-- on-automerge
-- on-release
-
-### Test Cases
-
-We will test two initial cases for rootstock.
-
-We run two test cases directly at the code level. At the result cache, we verify
-the performance of the processing pipeline using a static set of mocked:
-
-1. SNMP PDUs
-2. Redfish PDUs
-
-Later, we can test at the Prometheus collector using a statically filled result
-cache. See
-[Open Questions](#do-we-want-to-performance-test-the-prometheus-collector)
-
-### Do we performance test against a deployment of rootstock?
-
-No. We do not benchmark rootstock running as a deployed container in a
-Kubernetes (kind) cluster. Our goal is to measure the relative performance of
-the relevant components and to detect regressions in them, which the in-code
-benchmarks already achieve without the added variance and overhead of a full
-deployment. Benchmarking a deployed container may be reconsidered if we later
-need to measure end-to-end behaviour that the component-level benchmarks cannot
-capture.
-
-## Open questions
-
-### Do we want to performance test the Prometheus collector
-
-(and set the result cache (buffer) static)?
-
-- Measures peak request per second and response time.
-- Requires a feature flag to set the cache static.
-- Security risk if you enable the flag in production -> risk / reward
-  potentially low.
-
-## In-code benchmark harness
-
-The native Go benchmarks live beside the code they measure and are driven by a
-reusable harness under `internal/perf`:
-
-- `internal/perf/mockpdu` — an implementation of `redfish.Client` using
-  fixtures. Fixtures are read once at construction from the DMTF Redfish PDU
-  mockup under `testdata/pdu-mockup` (the same data the integration tests use,
-  so there is a single source of truth), decoded before the benchmark timer
-  starts so per-iteration cost reflects processing, not JSON parsing or network
-  I/O.
-- `internal/perf/harness.go` — the `Pipeline` that wires the three measured
-  stages together: mock PDU source → `Processor` → result cache. The benchmark
-  observes results landing in the abstract result cache, which is the
-  measurement point described above.
-
-### Coverage
-
-`internal/perf` benchmarks the full path from a mocked PDU through processing
-into the result cache:
-
-- `BenchmarkPipeline` measures a single representative device.
-- `BenchmarkPipelineScale` measures how cost grows with the number of devices
-  (mass scanning / horizontal scaling).
-- `BenchmarkPipelineParallel` measures concurrent processing.
-
-`internal/collectors/cache` benchmarks the result cache in isolation:
-
-- `BenchmarkCacheSet` and `BenchmarkCacheGet` measure the cache under sequential
-  load.
-- Their `Parallel` variants measure the cache under contention.
-
-### Chain of operations
-
-From user invocation to interpreted results. The one-time setup (reading the
-mockup fixtures and assembling the pipeline) happens before the benchmark timer
-starts; only the loop between `b.ResetTimer()` and the end of `b.N` is measured.
-
-```mermaid
-sequenceDiagram
-    actor User
-    participant Make as make test-performance
-    participant Script as hack/performance-test.sh
-    participant GoTest as go test -bench
-    participant Bench as Benchmark* (internal/perf)
-    participant Mock as mockpdu.Client
-    participant Data as testdata/pdu-mockup
-    participant Pipe as perf.Pipeline
-    participant Cache as cache.Cache
-    participant Out as bench.txt
-
-    User->>Make: make test-performance<br/>[ROOTSTOCK_BENCH_* overrides]
-    Make->>Script: exec (thin entrypoint)
-    Script->>GoTest: go test -run='^$' -bench=. -benchmem ...
-    GoTest->>Bench: invoke Benchmark funcs
-
-    rect rgba(128, 128, 128, 0.12)
-        note right of Bench: setup (untimed)
-        Bench->>Mock: New() / NewScaled(n)
-        Mock->>Data: os.ReadFile(index.json, Metrics/index.json)
-        Data-->>Mock: raw JSON
-        Mock->>Mock: json.Unmarshal → RackPDU / PDUMetrics
-        Mock-->>Bench: *Client (redfish.Client)
-        Bench->>Pipe: NewPipeline(source, ids, nil, nil)
-        Bench->>Bench: b.ResetTimer()
-    end
-
-    rect rgba(128, 128, 128, 0.22)
-        note right of Bench: measured loop (b.N iterations)
-        loop per PDU id
-            Bench->>Pipe: Run / RunOne(ctx, id)
-            Pipe->>Mock: GetPERackPDUMetrics(id)
-            Mock-->>Pipe: *PDUMetrics
-            Pipe->>Mock: GetPERackPDU(id)
-            Mock-->>Pipe: *RackPDU
-            Pipe->>Pipe: Processor.Process(pdu, metrics) → Result
-            Pipe->>Cache: Set(id, result)
-        end
-    end
-
-    Bench-->>GoTest: ns/op, B/op, allocs/op
-    GoTest-->>Script: benchmark results (stdout)
-    Script->>Out: tee
-    Script-->>User: results + interpretation guide
-```
-
-### Running the benchmarks
+## Running the benchmarks
 
 ```sh
 make test-performance
 ```
 
-This runs benchmarks only (unit tests are excluded via `-run=^$`), writes the
-benchstat-compatible output to `bench.txt`, and never touches the network or a
-mockup container. Tunables (with defaults) can be overridden on the command
-line, e.g.:
+This runs benchmarks only (unit tests are excluded via `-run=^$`) and writes the
+benchstat-compatible output to `bench.txt`. The invocation is defined in the
+`test-performance` Makefile target. Three flags are exposed as environment
+variables you can override:
+
+- `BENCH_TIME` (`-benchtime`, default `2s`) — wall-time budget per benchmark.
+- `BENCH_CPU` (`-cpu`, default `1`) — pins `GOMAXPROCS` for reproducibility.
+- `BENCH_TIMEOUT` (`-timeout`, default `10m`) — a hard ceiling so a run can never
+  hang the pipeline.
+
+For example:
 
 ```sh
-make test-performance ROOTSTOCK_BENCH_TIME=5s ROOTSTOCK_BENCH_COUNT=6 ROOTSTOCK_BENCH_CPU=1
+make test-performance BENCH_TIME=5s BENCH_CPU=4 BENCH_TIMEOUT=3m
 ```
 
-`ROOTSTOCK_BENCH_CPU=1` pins `GOMAXPROCS` for reproducibility;
-`ROOTSTOCK_BENCH_TIMEOUT` is a hard ceiling so a run can never hang the
-pipeline. All `ROOTSTOCK_BENCH_*` knobs are defined in
-`hack/performance-test.sh`. A CI quality gate and a stored baseline for
-regression comparison are deliberately deferred until the benchmark runtimes are
-known.
+The target package (`./test/performance/...`), output file (`bench.txt`), and
+`-count=1` are fixed in the target. A CI quality gate and a stored baseline for
+regression comparison are deferred until the benchmark runtimes are known.
+
+## Interpreting the results
+
+```text
+ns/op      average time per operation   (lower is faster)
+B/op       heap memory per operation    (lower is leaner)
+allocs/op  heap allocations per op      (watch this first for regressions)
+```
+
+Absolute values are machine-specific (see `goos`/`goarch`/`cpu`); compare runs
+on identical hardware. Scaled benchmarks should grow ~linearly with the item
+count.
+
+## What is covered
+
+The suite benchmarks the path from a mocked PDU through processing into the
+result cache:
+
+- `BenchmarkPipeline` — a single representative device.
+- `BenchmarkPipelineScale` — how cost grows with the number of devices (mass
+  scanning / horizontal scaling).
+- `BenchmarkPipelineParallel` — concurrent processing.
+- `TestRedfishPipeline` — the end-to-end Redfish test case: set up and connect
+  mock PDUs to the scraper, execute, and validate by reading out the result
+  cache.
+
+Because the data processors are not available, the full
+`scrape → queue → processor → cache` pass does not run to completion; the
+benchmarks and `TestRedfishPipeline` scrape the mocked PDUs and then report the
+missing processing layer.
+
+## How it works
+
+### Harness and mock PDU
+
+- `test/performance/mockpdu` — an implementation of `redfish.Client` backed by
+  fixtures. Fixtures are read once at construction from the DMTF Redfish PDU
+  mockup under `testdata/pdu-mockup` (the same data the integration tests use, so
+  there is a single source of truth), decoded before the benchmark timer starts
+  so per-iteration cost reflects processing, not JSON parsing or network I/O.
+- `test/performance/harness.go` — the ends of the pipeline: `performance.Scrape`
+  (the scraping edge, over the `redfish.Client`) and `performance.ReadResult`
+  (the result-cache read-out). The processing layer that connects them is
+  described in [architecture.md](../design/architecture.md).
+
+### Invocation flow
+
+The order of operations to run the tests, from user invocation to interpreted
+results:
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant Make as make test-performance
+    participant GoTest as go test -bench
+    participant Out as bench.txt
+
+    User->>Make: make test-performance
+    Make->>GoTest: go test -run='^$' -bench=. -benchmem ...
+    GoTest-->>Make: benchmark results (stdout)
+    Make->>Out: tee
+    Make-->>User: results
+```
+
+
+### Redfish test case — component chain
+
+The component chain for the Redfish test case, from the mocked fixture through to
+validation by reading out the result cache, mirroring `TestRedfishPipeline` in
+`test/performance/harness_test.go`. The processing-layer stage (dashed) depends
+on the data processors, which are not available.
+
+```mermaid
+sequenceDiagram
+    participant Test as TestRedfishPipeline
+    participant Data as testdata/pdu-mockup<br/>.../RackPDUs/1/{index.json, Metrics/index.json}
+    participant Mock as mockpdu.Client<br/>(redfish.Client)
+    participant Scrape as performance.Scrape<br/>(scraping edge)
+    participant Queue as raw data queue
+    participant Proc as data-processor
+    participant Cache as cache.Cache[Result]<br/>(result cache)
+
+    rect rgba(128, 128, 128, 0.12)
+        note right of Test: setup
+        Test->>Mock: mockpdu.New()
+        Mock->>Data: os.ReadFile (Redfish fixture)
+        Data-->>Mock: raw JSON
+        Mock->>Mock: json.Unmarshal → RackPDU / PDUMetrics
+        Mock-->>Test: *Client + IDs()
+        Test->>Cache: cache.New[Result]()
+    end
+
+    rect rgba(128, 128, 128, 0.22)
+        note right of Test: execute — scraping edge
+        loop per PDU id
+            Test->>Scrape: Scrape(ctx, source, id)
+            Scrape->>Mock: GetPERackPDUMetrics(id)
+            Mock-->>Scrape: *PDUMetrics
+            Scrape->>Mock: GetPERackPDU(id)
+            Mock-->>Scrape: *RackPDU
+            Scrape-->>Test: (pdu, metrics)
+        end
+    end
+
+    rect rgba(220, 120, 120, 0.18)
+        note right of Queue: processing layer — data processors not available
+        Test-->>Queue: push (pdu, metrics)
+        Queue-->>Proc: pull raw documents
+        Proc-->>Cache: transform → Result, Cache.Set(id, result)
+    end
+
+    rect rgba(128, 128, 128, 0.12)
+        note right of Test: validate — read out result cache
+        Test->>Cache: performance.ReadResult(cache, id)
+        Cache-->>Test: result (or cache miss when the cache is empty)
+    end
+```
+
+## Testing strategy & decisions
+
+### Test cases
+
+Two cases are run directly at the code level, verifying the processing pipeline
+at the result cache using a static set of mocked PDUs:
+
+1. SNMP PDUs
+2. Redfish PDUs
+
+A later option is to test at the Prometheus collector using a statically filled
+result cache (see [Open questions](#open-questions)).
+
+### Where and how often we run
+
+Fail early: cheaper tests run at earlier stages. Benchmarks run:
+
+- on-commit
+- on-automerge
+- on-release
+
+For now, tests run on a public GitHub runner. A public virtualized environment
+will probably cause erratic absolute measurements; depending on how erratic it
+is, we can consider self-hosting a runner later.
+
+### Why not against a deployment
+
+We do not benchmark rootstock running as a deployed container in a Kubernetes
+(kind) cluster. The goal is to measure the relative performance of the relevant
+components and detect regressions, which the in-code benchmarks achieve without
+the variance and overhead of a full deployment. Benchmarking a deployed
+container may be reconsidered if we later need to measure end-to-end behaviour
+that the component-level benchmarks cannot capture.
+
+## Open questions
+
+### Performance-testing the Prometheus collector
+
+Test the Prometheus collector with the result cache (buffer) set static:
+
+- Measures peak requests per second and response time.
+- Requires a feature flag to set the cache static.
+- Security risk if the flag is enabled in production — risk/reward potentially
+  low.
+
