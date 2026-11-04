@@ -17,13 +17,19 @@ packages they measure. The suite runs entirely in-code: no network, deployed
 container, or Prometheus scrape is involved, so the measurement isolates
 processing cost.
 
+The suite is gated behind the `performance` build tag (`//go:build performance`
+on the test files), so a plain `go test ./...` skips it; it runs only when the
+tag is requested, which `make test-performance` does. This mirrors how the
+integration tests are gated behind the `integration` build tag.
+
 ## Running the benchmarks
 
 ```sh
 make test-performance
 ```
 
-This runs benchmarks only (unit tests are excluded via `-run=^$`) and writes the
+This runs benchmarks only (unit tests are excluded via `-run=^$`), builds with
+`-tags=performance` to include the gated suite, and writes the
 benchstat-compatible output to `performance.txt`. The invocation is defined in the
 `test-performance` Makefile target. Four flags are exposed as environment
 variables you can override:

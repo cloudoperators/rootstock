@@ -101,6 +101,7 @@ PERFTEST_TIMEOUT ?= 10m
 test-performance: ## Run end-to-end performance benchmarks (virtual Redfish device -> processing -> result cache)
 	@echo "$(green) performance testing$(reset)"
 	go test \
+		-tags=performance \
 		-run='^$$' \
 		-bench=. \
 		-benchmem \
