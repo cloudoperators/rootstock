@@ -1,0 +1,8 @@
+--- FAIL: BenchmarkPipeline
+    harness_bench_test.go:60: processing layer not implemented: scrape -> queue -> processor -> cache cannot be measured yet (see TODO(processing-layer) in harness.go)
+--- FAIL: BenchmarkPipelineScale/pdus=1
+    harness_bench_test.go:96: processing layer not implemented: scale pass cannot be measured yet (see TODO(processing-layer) in harness.go)
+--- FAIL: BenchmarkPipelineScale/pdus=10
+    harness_bench_test.go:96: processing layer not implemented: scale pass cannot be measured yet (see TODO(processing-layer) in harness.go)
+--- FAIL: BenchmarkPipelineScale/pdus=100
+    harness_bench_test.go:96: processing layer not implemented: scale pass cannot be measured yet (see TODO(processing-layer) in harness.go)

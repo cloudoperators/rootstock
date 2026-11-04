@@ -24,7 +24,7 @@ make test-performance
 ```
 
 This runs benchmarks only (unit tests are excluded via `-run=^$`) and writes the
-benchstat-compatible output to `bench.txt`. The invocation is defined in the
+benchstat-compatible output to `performance.txt`. The invocation is defined in the
 `test-performance` Makefile target. Four flags are exposed as environment
 variables you can override:
 
@@ -41,9 +41,8 @@ For example:
 make test-performance PERFTEST_TIME=5s PERFTEST_COUNT=6 PERFTEST_CPU=4 PERFTEST_TIMEOUT=3m
 ```
 
-The target package (`./test/performance/...`) and output file (`bench.txt`) are
-fixed in the target. A CI quality gate and a stored baseline for regression
-comparison are deferred until the benchmark runtimes are known.
+The target package (`./test/performance/...`) and output file (`performance.txt`) are
+fixed in the target.
 
 ## Interpreting the results
 
@@ -102,7 +101,7 @@ sequenceDiagram
     actor User
     participant Make as make test-performance
     participant GoTest as go test -bench
-    participant Out as bench.txt
+    participant Out as performance.txt
 
     User->>Make: make test-performance
     Make->>GoTest: go test -run='^$' -bench=. -benchmem ...

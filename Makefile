@@ -108,7 +108,7 @@ test-performance: ## Run end-to-end performance benchmarks (virtual Redfish devi
 		-count=$(PERFTEST_COUNT) \
 		-cpu=$(PERFTEST_CPU) \
 		-timeout=$(PERFTEST_TIMEOUT) \
-		./test/performance/... | tee bench.txt
+		./test/performance/... | tee performance.txt
 
 test-changelog: ## Run the local changelog generation test suite
 	@echo "$(green) testing changelog generation$(reset)"
