@@ -17,6 +17,10 @@ packages they measure. The suite runs entirely in-code: no network, deployed
 container, or Prometheus scrape is involved, so the measurement isolates
 processing cost.
 
+The suite's result cache (`cache.Cache[Result]`) is an in-test stand-in for the
+architecture's in-service result cache component; it is the measurement endpoint
+where processed results land.
+
 The suite is gated behind the `performance` build tag (`//go:build performance`
 on the test files), so a plain `go test ./...` skips it; it runs only when the
 tag is requested, which `make test-performance` does. This mirrors how the
@@ -82,18 +86,27 @@ processing layer.
 
 ## How it works
 
-### Harness and mock PDU
+### PDU source and mock PDU
 
-- `test/performance/mockpdu`: an implementation of `redfish.Client` backed by
-  fixtures. Fixtures are read once at construction from the DMTF Redfish PDU
-  mockup under `testdata/pdu-mockup` (the same data the integration tests use,
-  so there is a single source of truth), decoded before the benchmark timer
-  starts so per-iteration cost reflects processing, not JSON parsing or network
-  I/O.
-- `test/performance/harness.go`: the ends of the pipeline, namely
-  `performance.Scrape` (the scraping edge, over the `redfish.Client`) and
-  `performance.ReadResult` (the result-cache read-out). The processing layer
-  that connects them is described in
+- `test/performance/mockpdu`: fixture-backed PDU sources that implement the
+  `performance.Source` abstraction (and, for Redfish, the `redfish.Client`
+  interface). Each protocol has its own constructor returning a
+  `performance.Source`: `NewRedfish` (in `redfish_pdu.go`) loads the Redfish
+  fixture, and `NewSNMP` (in `snmp_pdu.go`) is the symmetric SNMP entry point
+  used by a future `snmp_processing_test.go`. Both route through the shared
+  fixture-loading helpers in `fixtures.go`. SNMP is not implemented yet, so
+  `NewSNMP` returns an error until SNMP fixtures exist.
+  Fixtures are read once at construction from the DMTF Redfish PDU mockup under
+  `testdata/pdu-mockup` (the same data the integration tests use, so there is a
+  single source of truth), decoded before the benchmark timer starts so
+  per-iteration cost reflects processing, not JSON parsing or network I/O.
+- `test/performance/types.go`: the protocol-neutral abstraction and the
+  ends of the pipeline, namely the `Source` interface and `Reading` type,
+  `performance.Scrape` (the scraping edge, which reads a `Reading` from a
+  `Source`) and `performance.ReadResult` (the result-cache read-out). It does not
+  depend on any PDU protocol, so adding SNMP means providing a `Source`
+  implementation, with no changes to this file. The processing layer that
+  connects them is described in
   [architecture.md](../design/architecture.md).
 
 ### Invocation flow
@@ -120,14 +133,14 @@ sequenceDiagram
 
 The component chain for the Redfish test case, from the mocked fixture through
 to validation by reading out the result cache, mirroring `TestRedfishPipeline`
-in `test/performance/harness_test.go`. The processing-layer stage (dashed)
+in `test/performance/redfish_processing_test.go`. The processing-layer stage (dashed)
 depends on the data processors, which are not available.
 
 ```mermaid
 sequenceDiagram
     participant Test as TestRedfishPipeline
     participant Data as testdata/pdu-mockup<br/>.../RackPDUs/1/{index.json, Metrics/index.json}
-    participant Mock as mockpdu.Client<br/>(redfish.Client)
+    participant Mock as mockpdu.Client<br/>(performance.Source)
     participant Scrape as performance.Scrape<br/>(scraping edge)
     participant Queue as raw data queue
     participant Proc as data-processor
@@ -135,7 +148,7 @@ sequenceDiagram
 
     rect rgba(128, 128, 128, 0.12)
         note right of Test: setup
-        Test->>Mock: mockpdu.New()
+        Test->>Mock: mockpdu.NewRedfish()
         Mock->>Data: os.ReadFile (Redfish fixture)
         Data-->>Mock: raw JSON
         Mock->>Mock: json.Unmarshal -> RackPDU / PDUMetrics
@@ -147,18 +160,16 @@ sequenceDiagram
         note right of Test: execute (scraping edge)
         loop per PDU id
             Test->>Scrape: Scrape(ctx, source, id)
-            Scrape->>Mock: GetPERackPDUMetrics(id)
-            Mock-->>Scrape: *PDUMetrics
-            Scrape->>Mock: GetPERackPDU(id)
-            Mock-->>Scrape: *RackPDU
-            Scrape-->>Test: (pdu, metrics)
+            Scrape->>Mock: Read(ctx, id)
+            Mock-->>Scrape: Reading
+            Scrape-->>Test: Reading
         end
     end
 
     rect rgba(220, 120, 120, 0.18)
         note right of Queue: processing layer (data processors not available)
-        Test-->>Queue: push (pdu, metrics)
-        Queue-->>Proc: pull raw documents
+        Test-->>Queue: push Reading
+        Queue-->>Proc: pull Reading
         Proc-->>Cache: transform -> Result, Cache.Set(id, result)
     end
 

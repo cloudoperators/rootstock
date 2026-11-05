@@ -1,39 +1,17 @@
 // SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Greenhouse contributors
 // SPDX-License-Identifier: Apache-2.0
 
-// Package mockpdu provides a fixture-based, in-memory implementation of the
-// redfish.Client interface for use in performance benchmarks.
-//
-// It represents the "mock PDU" edge of the processing pipeline: benchmarks feed
-// mocked PDU data in through this client without touching the network, so the
-// measurement captures processing cost rather than I/O latency. The fixtures
-// are read once at startup from the DMTF Redfish PDU mockup under
-// testdata/pdu-mockup — the same data the integration tests use — so there is a
-// single source of truth for the mocked device data.
 package mockpdu
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"os"
 	"path/filepath"
-	"runtime"
 	"strconv"
 
 	"github.com/cloudoperators/rootstock/internal/redfish"
+	"github.com/cloudoperators/rootstock/test/performance"
 )
-
-// mockupRoot resolves the testdata/pdu-mockup directory relative to this source
-// file, so fixtures load correctly regardless of the process working directory
-// (Go runs benchmarks from their package directory, not the repo root).
-func mockupRoot() string {
-	_, thisFile, _, _ := runtime.Caller(0) //nolint:dogsled // only the file path is needed
-	// see comment above on why we need this ugly triple parent hop.
-	repoRoot := filepath.Join(filepath.Dir(thisFile), "..", "..", "..")
-
-	return filepath.Join(repoRoot, "testdata", "pdu-mockup")
-}
 
 // Fixture holds the pre-decoded Redfish documents for a single mocked PDU.
 // Decoding happens once when the mock is constructed so that per-iteration
@@ -43,34 +21,27 @@ type Fixture struct {
 	Metrics redfish.PDUMetrics
 }
 
-// Client is a fixture-backed redfish.Client. It is safe for concurrent use:
-// all state is populated at construction time and only read afterwards.
+// Client is a fixture-backed redfish.Client and a performance.Source for the
+// Redfish protocol. It is safe for concurrent use: all state is populated at
+// construction time and only read afterwards.
 type Client struct {
 	pdus map[string]Fixture
 }
 
-// compile-time assertion that the mock satisfies the production interface.
-var _ redfish.Client = (*Client)(nil)
-
-// Protocol identifies which device protocol a fixture represents. It maps to a
-// subtree of the testdata/pdu-mockup directory and doubles as the default PDU
-// key exposed by the mock client. Naming by protocol keeps the source data
-// self-documenting and makes the extension path for future protocols (e.g.
-// SNMP) explicit.
-type Protocol string
-
-const (
-	// Redfish is a representative, fully-populated Redfish RackPDU.
-	Redfish Protocol = "redfish"
+// compile-time assertions that the mock satisfies the production client
+// interface and the performance Source abstraction.
+var (
+	_ redfish.Client     = (*Client)(nil)
+	_ performance.Source = (*Client)(nil)
 )
 
-// New returns a mock redfish.Client backed by the Redfish PDU fixture read from
-// testdata/pdu-mockup, exposed under the "redfish" key.
+// NewRedfish returns a Redfish mock source backed by the Redfish PDU fixture
+// read from testdata/pdu-mockup, exposed under the "redfish" key.
 //
 // It represents a single representative PDU, which is sufficient to characterize
-// per-PDU processing cost. Use NewScaled to replicate it into many PDUs for
-// horizontal-scaling benchmarks.
-func New() (*Client, error) {
+// per-PDU processing cost. Use NewRedfishScaled to replicate it into many PDUs
+// for horizontal-scaling benchmarks.
+func NewRedfish() (performance.Source, error) {
 	f, err := loadFixture(Redfish)
 	if err != nil {
 		return nil, err
@@ -79,11 +50,11 @@ func New() (*Client, error) {
 	return &Client{pdus: map[string]Fixture{string(Redfish): f}}, nil
 }
 
-// NewScaled returns a mock client exposing n PDUs, all cloned from the Redfish
-// fixture and keyed "redfish-1".."redfish-n". It is used to benchmark how the
-// processing pipeline scales with the number of PDUs ("mass PDU scanning /
-// horizontal scaling").
-func NewScaled(n int) (*Client, error) {
+// NewRedfishScaled returns a Redfish mock source exposing n PDUs, all cloned from
+// the Redfish fixture and keyed "redfish-1".."redfish-n". It is used to benchmark
+// how the processing pipeline scales with the number of PDUs ("mass PDU
+// scanning / horizontal scaling").
+func NewRedfishScaled(n int) (performance.Source, error) {
 	if n < 1 {
 		return nil, fmt.Errorf("mockpdu: n must be >= 1, got %d", n)
 	}
@@ -106,7 +77,7 @@ func NewScaled(n int) (*Client, error) {
 	return &Client{pdus: pdus}, nil
 }
 
-// IDs returns the PDU IDs the mock client can serve.
+// IDs returns the PDU IDs the mock source can serve.
 func (c *Client) IDs() []string {
 	ids := make([]string, 0, len(c.pdus))
 	for id := range c.pdus {
@@ -114,6 +85,25 @@ func (c *Client) IDs() []string {
 	}
 
 	return ids
+}
+
+// Read returns the neutral performance.Reading for a single mocked PDU, mapping
+// the Redfish documents into the protocol-agnostic form.
+func (c *Client) Read(_ context.Context, pduID string) (performance.Reading, error) {
+	f, ok := c.pdus[pduID]
+	if !ok {
+		return performance.Reading{}, fmt.Errorf("mockpdu: unknown PDU %q", pduID)
+	}
+
+	return performance.Reading{
+		PDUID:           f.Metrics.ID,
+		PowerWatts:      f.Metrics.PowerWatts.Reading,
+		ApparentVA:      f.Metrics.PowerWatts.ApparentVA,
+		ReactiveVAR:     f.Metrics.PowerWatts.ReactiveVAR,
+		PowerFactor:     f.Metrics.PowerWatts.PowerFactor,
+		EnergykWh:       f.Metrics.EnergykWh.Reading,
+		PowerCapacityVA: f.PDU.PowerCapacityVA,
+	}, nil
 }
 
 // Login is a no-op for the mock; no session is required to read fixtures.
@@ -175,9 +165,9 @@ func (c *Client) GetPERackPDUMetrics(_ context.Context, pduID string) (*redfish.
 	return &metrics, nil
 }
 
-// loadFixture reads and decodes the PDU resource and metrics documents for the
-// given protocol from the testdata/pdu-mockup directory. Reading happens once at
-// construction time, before the benchmark timer starts.
+// loadFixture reads and decodes the Redfish PDU resource and metrics documents
+// from the testdata/pdu-mockup directory. Reading happens once at construction
+// time, before the benchmark timer starts.
 func loadFixture(proto Protocol) (Fixture, error) {
 	var f Fixture
 
@@ -197,9 +187,8 @@ func loadFixture(proto Protocol) (Fixture, error) {
 	return f, nil
 }
 
-// fixturePaths maps a protocol to the resource and metrics documents within the
-// testdata/pdu-mockup directory. Each supported protocol declares its own paths
-// here; adding SNMP means adding a case, not restructuring the mock.
+// fixturePaths maps the Redfish protocol to its resource and metrics documents
+// within the testdata/pdu-mockup directory.
 func fixturePaths(proto Protocol) (pduPath, metricsPath string, err error) {
 	root := mockupRoot()
 
@@ -213,17 +202,4 @@ func fixturePaths(proto Protocol) (pduPath, metricsPath string, err error) {
 	default:
 		return "", "", fmt.Errorf("mockpdu: unsupported protocol %q", proto)
 	}
-}
-
-func decode(path string, out any) error {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return fmt.Errorf("mockpdu: read fixture %s: %w", path, err)
-	}
-
-	if err := json.Unmarshal(data, out); err != nil {
-		return fmt.Errorf("mockpdu: decode fixture %s: %w", path, err)
-	}
-
-	return nil
 }
