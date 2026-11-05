@@ -25,6 +25,7 @@ package performance
 
 import (
 	"context"
+	"time"
 
 	"github.com/cloudoperators/rootstock/internal/collectors/cache"
 )
@@ -81,6 +82,68 @@ func Scrape(ctx context.Context, source Source, pduID string) (Reading, error) {
 // architecture's in-service result cache component.
 func ReadResult(c cache.Cache[Result], pduID string) (Result, error) {
 	return c.Get(pduID)
+}
+
+// resultPollInterval is how often AwaitResults re-checks the result cache. It is
+// small enough to resolve promptly once the data-processors populate the cache,
+// without busy-spinning.
+const resultPollInterval = 10 * time.Millisecond
+
+// AwaitResults returns a promise: a receive-only channel that resolves exactly
+// once, delivering the Results for every pduID, as soon as all of them are
+// present in the result cache. The caller submits readings to the raw data queue
+// (producer edge), then selects on this channel against a timeout (ctx): a value
+// is the resolved promise and carries the Results; ctx cancellation is the
+// rejection (for example a timeout), and the channel never delivers.
+//
+// A background goroutine polls the cache and exits when either all IDs resolve
+// or ctx is done, so the promise never leaks. The returned channel is buffered,
+// so resolution never blocks even if the caller has already given up on a
+// timeout.
+//
+// While the data-processors are not available, nothing populates the cache, so
+// the promise never resolves and the caller's timeout fires.
+func AwaitResults(ctx context.Context, c cache.Cache[Result], pduIDs []string) <-chan map[string]Result {
+	resolved := make(chan map[string]Result, 1)
+
+	go func() {
+		pending := make(map[string]struct{}, len(pduIDs))
+		for _, id := range pduIDs {
+			pending[id] = struct{}{}
+		}
+
+		results := make(map[string]Result, len(pduIDs))
+
+		ticker := time.NewTicker(resultPollInterval)
+		defer ticker.Stop()
+
+		for {
+			for id := range pending {
+				result, err := c.Get(id)
+				if err != nil {
+					continue
+				}
+
+				results[id] = result
+
+				delete(pending, id)
+			}
+
+			if len(pending) == 0 {
+				resolved <- results
+
+				return
+			}
+
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+			}
+		}
+	}()
+
+	return resolved
 }
 
 // --- Processing layer ---------------------------------------------------------

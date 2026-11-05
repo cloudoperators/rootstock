@@ -60,6 +60,7 @@ The target package (`./test/performance/...`) and output file
 
 ```text
 ns/op      average time per operation   (lower is faster)
+ns/pdu     per-PDU time (BenchmarkPipelineScale, comparable across N)
 B/op       heap memory per operation    (lower is leaner)
 allocs/op  heap allocations per op      (watch this first for regressions)
 ```
@@ -68,25 +69,35 @@ Absolute values are machine-specific (see `goos`/`goarch`/`cpu`); compare runs
 on identical hardware. Scaled benchmarks should grow ~linearly with the item
 count.
 
+While the data-processors are not available, the test and all benchmarks fail by
+timeout (each unit waits `resultTimeout`, 5s, for results that never arrive), so
+no ns/op is reported yet. This is expected, not a flake.
+
 ## What is covered
 
-The suite benchmarks the suite-owned edges of the pipeline: scraping a mocked PDU
-and enqueuing the reading onto the raw data queue (producer), then reading the
-result cache back (consumer):
+The unit of work the suite measures is one PDU making a full pass through the
+pipeline: scraped, submitted for processing (enqueued onto the raw data queue),
+processed by the data-processors, and its result received from the result cache.
+Every benchmark and the test exercise this same unit:
 
-- `BenchmarkPipeline`: a single representative device.
-- `BenchmarkPipelineScale`: how cost grows with the number of devices (mass
-  scanning / horizontal scaling).
-- `BenchmarkPipelineParallel`: concurrent scraping and enqueuing.
-- `TestRedfishPipeline`: the Redfish test case. It sets up and connects mock PDUs
-  to the scraper, scrapes and enqueues, and validates by reading out the result
-  cache.
+- `BenchmarkPipeline`: the per-PDU unit for a single representative device.
+- `BenchmarkPipelineScale`: the same per-PDU unit while N devices are in flight
+  (mass scanning / horizontal scaling). Each iteration runs the full cycle over
+  all N PDUs and reports the result normalized per PDU (a `ns/pdu` metric), so
+  `pdus=1..1000` compare on one per-PDU axis.
+- `BenchmarkPipelineParallel`: the per-PDU unit under concurrency.
+- `TestRedfishPipeline`: the Redfish test case. It scrapes and enqueues
+  (remembering the submitted IDs), then awaits a promise (`performance.AwaitResults`)
+  that resolves once every submitted ID has a Result in the result cache. It
+  passes on resolution and fails if the promise does not resolve within a fixed
+  timeout (`resultTimeout`, 5s).
 
 The data-processors (raw data queue -> data-processors -> result cache) are an
 autonomous entity, not driven by the suite. Because they are not available,
-nothing drains the raw data queue into the result cache; the benchmarks and
-`TestRedfishPipeline` scrape the mocked PDUs and then report the missing
-data-processors.
+nothing drains the raw data queue into the result cache, so no cycle ever
+collects its results: both the test and the benchmarks run the full submit-to-
+collect cycle and fail by timeout, reporting that the data-processors are not
+implemented. No ns/op (or ns/pdu) is produced until the data-processors exist.
 
 ## How it works
 
@@ -136,11 +147,12 @@ sequenceDiagram
 ### Redfish test case component chain
 
 The component chain for the Redfish test case, from the mocked fixture through
-to validation by reading out the result cache, mirroring `TestRedfishPipeline`
-in `test/performance/redfish_processing_test.go`. The suite scrapes and enqueues
-onto the raw data queue, then reads the result cache. The data-processors stage
-(dashed) is autonomous and not driven by the test; it depends on the
-data-processors, which are not available.
+to validation by awaiting the results from the result cache, mirroring
+`TestRedfishPipeline` in `test/performance/redfish_processing_test.go`. The suite
+scrapes and enqueues onto the raw data queue, then awaits a promise that resolves
+once all submitted results are in the cache. The data-processors stage (dashed)
+is autonomous and not driven by the test; it depends on the data-processors,
+which are not available, so the promise never resolves and the test times out.
 
 ```mermaid
 sequenceDiagram
@@ -181,9 +193,9 @@ sequenceDiagram
     end
 
     rect rgba(128, 128, 128, 0.12)
-        note right of Test: consumer edge (read out result cache)
-        Test->>Cache: performance.ReadResult(cache, id)
-        Cache-->>Test: result (or cache miss when the cache is empty)
+        note right of Test: consumer edge (await results promise)
+        Test->>Cache: performance.AwaitResults(ctx, cache, submitted)
+        Cache-->>Test: resolve with all Results, or time out when the cache stays empty
     end
 ```
 
