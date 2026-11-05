@@ -115,7 +115,7 @@ implemented. No ns/op (or ns/pdu) is produced until the data-processors exist.
   `testdata/pdu-mockup` (the same data the integration tests use, so there is a
   single source of truth), decoded before the benchmark timer starts so
   per-iteration cost reflects processing, not JSON parsing or network I/O.
-- `test/performance/types.go`: the protocol-neutral abstraction and the
+- `test/performance/common.go`: the protocol-neutral abstraction and the
   ends of the pipeline, namely the `Source` interface and `Reading` type,
   `performance.Scrape` (the scraping edge, which reads a `Reading` from a
   `Source`) and `performance.ReadResult` (the result-cache read-out). It does not
