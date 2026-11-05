@@ -47,6 +47,8 @@ jobs:
       - name: Merge main into the current branch
         run: |
           git fetch origin main
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
           git pull --no-rebase origin main
 
       - name: Generate changelog entry from PR
