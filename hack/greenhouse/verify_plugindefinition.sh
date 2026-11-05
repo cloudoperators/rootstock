@@ -283,7 +283,7 @@ push_image_oci() {
 
     log "pushing OCI image ${dest_host} into local registry"
     ensure_oci_builder
-    
+
     if [[ -n "$from_image" ]]; then
         # Re-publish an upstream image as OCI via a one-line FROM Dockerfile.
         ctx="$(mktemp -d "${TMPDIR:-/tmp}/ghverify-oci.XXXXXX")"
@@ -298,7 +298,7 @@ push_image_oci() {
     fi
 
     docker buildx --builder "$OCI_BUILDER" build \
-        $build_extra_args \
+        "${build_extra_args}" \
         --platform "${BUILD_PLATFORM:-linux/arm64}" \
         --provenance=false \
         --output "type=registry,registry.insecure=true,name=${dest_host}" \
@@ -342,18 +342,26 @@ run_plugin_e2e() {
     local cluster_wait_timeout=300
     local cluster_wait_elapsed=0
     local cluster_refresh_attempts=0
-    
+
     while [[ $cluster_wait_elapsed -lt $cluster_wait_timeout ]]; do
-        local all_nodes_ready=$(kubectl --context "$admin_context" get cluster "$remote_context" -n "$DEMO_ORG" \
-            -o jsonpath='{.status.statusConditions.conditions[?(@.type=="AllNodesReady")].status}' 2>/dev/null || echo "False")
-        local payload_schedulable=$(kubectl --context "$admin_context" get cluster "$remote_context" -n "$DEMO_ORG" \
-            -o jsonpath='{.status.statusConditions.conditions[?(@.type=="PayloadSchedulable")].status}' 2>/dev/null || echo "False")
-        
+        local all_nodes_ready payload_schedulable
+
+        all_nodes_ready=$(
+          kubectl --context "$admin_context" get cluster "$remote_context" -n "$DEMO_ORG" \
+            -o jsonpath='{.status.statusConditions.conditions[?(@.type=="AllNodesReady")].status}' 2>/dev/null \
+          || echo "False"
+        )
+        payload_schedulable=$(
+          kubectl --context "$admin_context" get cluster "$remote_context" -n "$DEMO_ORG" \
+            -o jsonpath='{.status.statusConditions.conditions[?(@.type=="PayloadSchedulable")].status}' 2>/dev/null \
+          || echo "False"
+        )
+
         if [[ "$all_nodes_ready" == "True" && "$payload_schedulable" == "True" ]]; then
             ok "cluster nodes are ready and schedulable in Greenhouse"
             break
         fi
-        
+
         # If nodes are still not ready after 60s, try to force a refresh by annotating the cluster
         if [[ $cluster_wait_elapsed -eq 60 && $cluster_refresh_attempts -eq 0 ]]; then
             echo
@@ -367,18 +375,26 @@ run_plugin_e2e() {
         else
             echo -n "."
         fi
-        
+
         sleep 5
         cluster_wait_elapsed=$((cluster_wait_elapsed + 5))
     done
     echo  # newline after dots
-    
+
     # Final check - if still not ready, fail fast instead of proceeding
-    local final_all_nodes_ready=$(kubectl --context "$admin_context" get cluster "$remote_context" -n "$DEMO_ORG" \
-        -o jsonpath='{.status.statusConditions.conditions[?(@.type=="AllNodesReady")].status}' 2>/dev/null || echo "False")
-    local final_payload_schedulable=$(kubectl --context "$admin_context" get cluster "$remote_context" -n "$DEMO_ORG" \
-        -o jsonpath='{.status.statusConditions.conditions[?(@.type=="PayloadSchedulable")].status}' 2>/dev/null || echo "False")
-    
+    local final_all_nodes_ready final_payload_schedulable
+
+    final_all_nodes_ready=$(
+      kubectl --context "$admin_context" get cluster "$remote_context" -n "$DEMO_ORG" \
+        -o jsonpath='{.status.statusConditions.conditions[?(@.type=="AllNodesReady")].status}' 2>/dev/null \
+      || echo "False"
+      )
+    final_payload_schedulable=$(
+      kubectl --context "$admin_context" get cluster "$remote_context" -n "$DEMO_ORG" \
+        -o jsonpath='{.status.statusConditions.conditions[?(@.type=="PayloadSchedulable")].status}' 2>/dev/null \
+      || echo "False"
+    )
+
     if [[ "$final_all_nodes_ready" != "True" || "$final_payload_schedulable" != "True" ]]; then
         die "cluster ${remote_context} is not ready after ${cluster_wait_timeout}s (AllNodesReady=${final_all_nodes_ready}, PayloadSchedulable=${final_payload_schedulable})"
     fi
