@@ -47,7 +47,7 @@ jobs:
       - name: Merge main into the current branch
         run: |
           git fetch origin main
-          git pull origin main
+          git pull --no-rebase origin main
 
       - name: Generate changelog entry from PR
         env:
