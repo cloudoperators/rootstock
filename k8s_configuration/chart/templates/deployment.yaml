@@ -68,6 +68,38 @@ spec:
               mountPath: {{ .Values.rootstock.config.folder }}/redfish_pdus.yaml
               subPath: redfish_pdus.yaml
               readOnly: true
+        {{- if .Values.snmpExporter.enabled }}
+        - name: snmp-exporter
+          securityContext:
+            {{- toYaml .Values.snmpExporter.securityContext | nindent 12 }}
+          image: "{{ .Values.snmpExporter.image.repository }}:{{ .Values.snmpExporter.image.tag }}"
+          imagePullPolicy: {{ .Values.snmpExporter.image.pullPolicy }}
+          args:
+            - --config.file=/etc/snmp_exporter/snmp.yml
+          ports:
+            - name: snmp-metrics
+              containerPort: {{ .Values.snmpExporter.service.port }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: snmp-metrics
+            initialDelaySeconds: 5
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /
+              port: snmp-metrics
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.snmpExporter.resources | nindent 12 }}
+          volumeMounts:
+            - name: snmp-config
+              mountPath: /etc/snmp_exporter
+              readOnly: true
+        {{- end }}
+
       volumes:
         - name: dynamic-config
           configMap:
@@ -83,6 +115,13 @@ spec:
             items:
               - key: redfish_pdus.yaml
                 path: redfish_pdus.yaml
+        {{- if .Values.snmpExporter.enabled }}
+        - name: snmp-config
+          configMap:
+            name: {{ include "rootstock.fullname" . }}-snmp-config
+            defaultMode: 0400
+        {{- end }}
+
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

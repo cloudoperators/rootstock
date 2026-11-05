@@ -21,5 +21,12 @@ spec:
       targetPort: http
       protocol: TCP
       name: http
+    {{- if .Values.snmpExporter.enabled }}
+    - port: {{ .Values.snmpExporter.service.port }}
+      targetPort: snmp-metrics
+      protocol: TCP
+      name: snmp-metrics
+    {{- end }}
+
   selector:
     {{- include "rootstock.selectorLabels" . | nindent 4 }}

@@ -50,3 +50,6 @@ spec:
           key: redfish_password
     - name: serviceMonitor.enabled
       value: false
+    # Uncomment to enable SNMP exporter sidecar for network device monitoring
+    # - name: snmpExporter.enabled
+    #   value: true

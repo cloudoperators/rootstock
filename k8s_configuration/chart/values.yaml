@@ -178,3 +178,61 @@ affinity: {}
 # Declared here so chart rendering does not fail when it is absent.
 global:
   greenhouse: {}
+
+# SNMP Exporter configuration (sidecar container)
+# This is an optional component. When enabled, it deploys the Prometheus SNMP
+# exporter as a sidecar container alongside rootstock for monitoring network devices via SNMP.
+snmpExporter:
+  # Enable/disable the SNMP exporter sidecar container
+  enabled: false
+  
+  # Service configuration
+  service:
+    port: 9116
+  
+  # Image configuration
+  image:
+    repository: quay.io/prometheus/snmp-exporter
+    tag: v0.26.0
+    pullPolicy: IfNotPresent
+  
+  # Resources for the sidecar container
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+  
+  # Security context for the sidecar container
+  securityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    runAsNonRoot: true
+    runAsUser: 65534
+    capabilities:
+      drop:
+        - ALL
+  
+  # SNMP exporter configuration
+  # The default config includes common MIBs (if_mib, etc.)
+  # Override this with your custom snmp.yml configuration
+  # See: https://github.com/prometheus/snmp_exporter/tree/main/generator
+  config:
+    # Example minimal config - customize as needed
+    # Note: This must follow snmp.yml format with 'modules' at top level
+    modules:
+      if_mib:
+        walk:
+          - 1.3.6.1.2.1.2
+          - 1.3.6.1.2.1.31.1.1
+        metrics:
+          - name: sysUpTime
+            oid: 1.3.6.1.2.1.1.3
+            type: gauge
+            help: The time since the network management portion of the system was last re-initialized.
+          - name: ifNumber
+            oid: 1.3.6.1.2.1.2.1
+            type: gauge
+            help: The number of network interfaces present on this system.

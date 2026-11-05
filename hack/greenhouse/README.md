@@ -11,6 +11,8 @@ Two scripts manage a local Greenhouse-in-kind environment for rootstock:
 | ---------------------------- | -------------------------------------------------------------------------------- |
 | `control.sh`                 | Lifecycle: create or delete the Greenhouse dev environment                       |
 | `verify_plugindefinition.sh` | Verification: publish the chart, apply the PluginDefinition, assert `READY=True` |
+| `start_prometheus.sh`        | Deploy Prometheus monitoring stack via Greenhouse Plugin for rootstock metrics   |
+| `stop_prometheus.sh`         | Remove Prometheus monitoring stack deployment                                    |
 
 Makefile targets wrap both scripts:
 
@@ -34,7 +36,15 @@ make greenhouse-verify
 make docker-build IMAGE="rootstock:$(yq -r '.version' VERSION.yaml)"
 hack/greenhouse/verify_plugindefinition.sh --with-plugin
 
-# 4. Tear down when done.
+# 4. Deploy Prometheus to monitor rootstock metrics.
+hack/greenhouse/start_prometheus.sh
+
+# 5. Access Prometheus UI at http://localhost:9090 and verify rootstock metrics are being scraped.
+
+# 6. Stop Prometheus when done.
+hack/greenhouse/stop_prometheus.sh
+
+# 7. Tear down when done.
 make greenhouse-delete
 ```
 
@@ -89,6 +99,55 @@ hack/greenhouse/control.sh delete
 Verifies the rootstock
 [`PluginDefinition`](../../k8s_configuration/plugindefinition.yaml) against a
 running Greenhouse dev environment. Run `control.sh create` first.
+
+## start_prometheus.sh / stop_prometheus.sh
+
+Deploy and manage a Prometheus monitoring stack via Greenhouse to monitor
+rootstock metrics. Uses the
+[`prometheus-plugindefinition.yaml`](../../k8s_configuration/prometheus-plugindefinition.yaml)
+which wraps the kube-prometheus-stack Helm chart.
+
+### start_prometheus.sh
+
+Deploys a complete Prometheus monitoring stack including Prometheus Operator,
+Grafana, Alertmanager, and exporters. The deployment is configured with custom
+scrape configs for rootstock's multi-target probe pattern.
+
+```bash
+hack/greenhouse/start_prometheus.sh
+```
+
+**What it does:**
+
+1. Verifies rootstock is deployed and ready
+2. Applies the Prometheus PluginDefinition to the admin cluster
+3. Applies the Prometheus Plugin CR to deploy the stack
+4. Waits for all Prometheus components to be ready
+5. Starts a port-forward to expose the Prometheus UI at `http://localhost:9090`
+
+The script configures Prometheus with two scrape jobs:
+
+- **rootstock-probe**: Probes Redfish targets via rootstock's `/probe` endpoint
+- **rootstock-metrics**: Scrapes rootstock's internal metrics from `/metrics`
+
+**Environment variables:**
+
+| Variable                | Default                    | Purpose                                  |
+| ----------------------- | -------------------------- | ---------------------------------------- |
+| `ADMIN_CONTEXT`         | `kind-greenhouse-admin`    | Kubectl context for admin cluster        |
+| `REMOTE_CONTEXT`        | `kind-greenhouse-remote`   | Kubectl context for remote cluster       |
+| `PROMETHEUS_NAMESPACE`  | `monitoring`               | Namespace for Prometheus deployment      |
+| `PROMETHEUS_PORT`       | `9090`                     | Local port for Prometheus UI forwarding  |
+| `READY_TIMEOUT`         | `300`                      | Seconds to wait for resources to be ready|
+
+### stop_prometheus.sh
+
+Removes the Prometheus monitoring stack by deleting the Plugin CR from the admin
+cluster. Greenhouse will clean up all resources on the remote cluster.
+
+```bash
+hack/greenhouse/stop_prometheus.sh
+```
 
 ```text
 Usage: verify_plugindefinition.sh [--with-plugin]

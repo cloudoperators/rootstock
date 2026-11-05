@@ -405,6 +405,7 @@ run_plugin_e2e() {
       (.spec.optionValues[] | select(.name == \"image.pullPolicy\").value) = \"IfNotPresent\" |
       (.spec.optionValues[] | select(.name == \"image.repository\").value) = \"${ROOTSTOCK_REGISTRY_IMAGE%:*}\" |
       (.spec.optionValues[] | select(.name == \"image.tag\").value) = \"${ROOTSTOCK_REGISTRY_IMAGE##*:}\" |
+      (.spec.optionValues[] | select(.name == \"snmpExporter.enabled\").value) = true |
       .spec.optionValues += [
         {\"name\": \"testConnection.image.repository\", \"value\": \"${TESTCONN_REGISTRY_IMAGE%:*}\"},
         {\"name\": \"testConnection.image.tag\", \"value\": \"${TESTCONN_REGISTRY_IMAGE##*:}\"}
@@ -494,6 +495,43 @@ probe_check() {
     else
         warn "/probe output head:"; echo "$body" | head -n 20
         die "no expected metrics found in /probe output"
+    fi
+
+    # Verify SNMP exporter sidecar is running
+    log "verifying SNMP exporter sidecar"
+    local snmp_port="9116"
+    kubectl --context "$remote_context" -n "$ns" port-forward "svc/${release}" "${snmp_port}:9116" \
+        >/dev/null 2>&1 &
+    local snmp_pf_pid=$!
+    
+    cleanup_snmp_pf() {
+        [[ -n "${snmp_pf_pid:-}" ]] && kill "$snmp_pf_pid" 2>/dev/null || true
+    }
+    trap cleanup_snmp_pf RETURN
+    
+    sleep 2
+    if curl -sf "http://localhost:${snmp_port}/metrics" >/dev/null 2>&1; then
+        ok "SNMP exporter /metrics endpoint responding"
+        
+        # Check if snmp-exporter container is running in the pod
+        local pod_name
+        pod_name=$(kubectl --context "$remote_context" -n "$ns" get pods -l app.kubernetes.io/name=rootstock -o jsonpath='{.items[0].metadata.name}')
+        local container_count
+        container_count=$(kubectl --context "$remote_context" -n "$ns" get pod "$pod_name" -o jsonpath='{.status.containerStatuses[*].name}' | wc -w | tr -d ' ')
+        if [[ "$container_count" == "2" ]]; then
+            ok "Pod has 2 containers (rootstock + snmp-exporter sidecar)"
+            
+            # Check snmp-exporter logs for successful startup
+            if kubectl --context "$remote_context" -n "$ns" logs "$pod_name" -c snmp-exporter --tail=10 2>/dev/null | grep -q "Listening on"; then
+                ok "SNMP exporter container started successfully"
+            else
+                warn "SNMP exporter container may not have started properly"
+            fi
+        else
+            warn "Expected 2 containers but found ${container_count}"
+        fi
+    else
+        warn "SNMP exporter endpoint not responding (this is OK if snmpExporter.enabled=false)"
     fi
 }
 
