@@ -16,26 +16,28 @@ import (
 	"github.com/cloudoperators/rootstock/test/performance/mockpdu"
 )
 
-// TestRedfishPipeline runs the end-to-end Redfish test case: it scrapes the
-// mocked PDUs, runs them through the processing layer, and validates the results
-// by reading them back from the result cache.
+// TestRedfishPipeline runs the Redfish test case. The suite owns the two ends of
+// the pipeline: it scrapes the mocked PDUs and enqueues the readings onto the raw
+// data queue (producer), then reads the result cache back to validate (consumer).
+// The data-processors in between are an autonomous entity, not driven by the test.
 //
 // Component chain:
 //
 //	testdata/pdu-mockup Redfish fixture
 //	  -> mockpdu.NewRedfish() -> performance.Source      [mock PDUs]
-//	  -> performance.Scrape (reads a Reading)            [scraping edge]
-//	  -> raw data queue                                  [processing layer]
-//	  -> data-processor                                  [processing layer]
-//	  -> cache.Cache[Result] (result cache)              [read-out]
+//	  -> performance.Scrape (reads a Reading)            [scraping edge, test]
+//	  -> enqueue onto raw data queue                     [producer edge, test]
+//	        --- boundary: the test stops here ---
+//	  -> raw data queue -> data-processors -> result cache   [autonomous, not the test]
+//	  -> performance.ReadResult(result cache)            [consumer edge, test]
 //
 // The result cache is an in-test stand-in for the architecture's in-service
 // result cache component.
 //
-// The Redfish scenario is currently not completely implemented: the data
-// processors are not available, so the test scrapes the mocked PDUs, confirms
-// the result cache is empty, and reports the missing processing layer via
-// t.Fatal.
+// The Redfish scenario is currently not completely implemented: the
+// data-processors entity is not available, so nothing drains the raw data queue
+// into the result cache. The test scrapes the mocked PDUs, confirms the result
+// cache is empty, and reports the missing data-processors via t.Fatal.
 func TestRedfishPipeline(t *testing.T) {
 	ctx := context.Background()
 
@@ -60,15 +62,17 @@ func TestRedfishPipeline(t *testing.T) {
 			t.Fatalf("scrape %q: %v", id, err)
 		}
 
-		// Processing layer: push the reading onto the raw data queue, have the
-		// data-processor transform it into a performance.Result and store it
-		// with resultCache.Set(id, result). The data processors are not
+		// Producer edge: enqueue the reading onto the raw data queue. From here
+		// the autonomous data-processors entity would drain the queue, transform
+		// each Reading into a performance.Result, and store it in the result
+		// cache; the test does not do that work. The data-processors are not
 		// available.
 		_ = reading
 	}
 
-	// Validate by reading out the result cache. Each Result is read back and
-	// checked against the reading values, e.g.
+	// Consumer edge: read the result cache back to validate what the
+	// data-processors produced. Each Result is read back and checked against the
+	// reading values, e.g.
 	//
 	//	got, err := performance.ReadResult(resultCache, id)
 	//	require.NoError(t, err)
@@ -77,7 +81,7 @@ func TestRedfishPipeline(t *testing.T) {
 	//	require.Equal(t, reading.PowerCapacityVA, got.PowerCapacityVA)
 	//	... (ApparentVA, ReactiveVAR, PowerFactor, EnergykWh)
 	//
-	// The result cache is empty, so the read-out returns a cache miss.
+	// The result cache is empty, because no data-processors drained the queue.
 	if _, err := performance.ReadResult(resultCache, ids[0]); !errors.Is(err, cache.ErrCacheNotFound) {
 		t.Fatalf("expected empty result cache (cache miss), got err=%v", err)
 	}
@@ -85,14 +89,15 @@ func TestRedfishPipeline(t *testing.T) {
 	t.Fatal("data processors not available: the Redfish scenario does not run end to end")
 }
 
-// BenchmarkPipeline measures a full processing pass over the representative
-// Redfish PDU fixture: scrape (from the mock PDU) -> raw data queue ->
-// data-processor -> store in the result cache.
+// BenchmarkPipeline measures the suite's producer edge over the representative
+// Redfish PDU fixture: scrape (from the mock PDU) and enqueue the reading onto
+// the raw data queue. The data-processors entity (raw data queue ->
+// data-processors -> result cache) is autonomous and not driven by the benchmark.
 //
-// The Redfish scenario is currently not completely implemented: the data
-// processors are not available, so the full scrape -> queue -> processor ->
-// cache pass cannot run. The benchmark scrapes the mocked PDUs, then reports the
-// missing processing layer via b.Fatal.
+// The Redfish scenario is currently not completely implemented: the
+// data-processors entity is not available, so nothing drains the raw data queue
+// into the result cache. The benchmark scrapes the mocked PDUs, then reports the
+// missing data-processors via b.Fatal.
 func BenchmarkPipeline(b *testing.B) {
 	ctx := context.Background()
 
@@ -113,19 +118,18 @@ func BenchmarkPipeline(b *testing.B) {
 				b.Fatalf("scrape: %v", err)
 			}
 
-			// Processing layer: push the scraped docs onto the raw data queue,
-			// let the data-processor transform them and store a
-			// performance.Result in the result cache, then read it back with
-			// performance.ReadResult. The data processors are not available.
+			// Producer edge: enqueue the scraped reading onto the raw data
+			// queue. The autonomous data-processors entity (queue ->
+			// data-processors -> result cache) is not available.
 		}
 	}
 
 	b.Fatal("data processors not available: the Redfish scenario does not run end to end")
 }
 
-// BenchmarkPipelineScale measures how a full processing pass scales with the
+// BenchmarkPipelineScale measures how the suite's producer edge scales with the
 // number of PDUs (mass PDU scanning / horizontal scaling). Each sub-benchmark
-// drives N synthesized PDUs through the pipeline into the result cache.
+// scrapes N synthesized PDUs and enqueues their readings onto the raw data queue.
 func BenchmarkPipelineScale(b *testing.B) {
 	ctx := context.Background()
 
@@ -148,8 +152,9 @@ func BenchmarkPipelineScale(b *testing.B) {
 						b.Fatalf("scrape: %v", err)
 					}
 
-					// Processing layer: queue -> processor -> cache, as in
-					// BenchmarkPipeline. The data processors are not available.
+					// Producer edge: enqueue the reading onto the raw data
+					// queue, as in BenchmarkPipeline. The autonomous
+					// data-processors entity is not available.
 				}
 			}
 
@@ -158,8 +163,8 @@ func BenchmarkPipelineScale(b *testing.B) {
 	}
 }
 
-// BenchmarkPipelineParallel measures concurrent processing of distinct PDUs
-// through a shared pipeline and result cache.
+// BenchmarkPipelineParallel measures concurrent scraping and enqueuing of
+// distinct PDUs onto a shared raw data queue (the suite's producer edge).
 func BenchmarkPipelineParallel(b *testing.B) {
 	ctx := context.Background()
 
@@ -188,8 +193,9 @@ func BenchmarkPipelineParallel(b *testing.B) {
 				return
 			}
 
-			// Processing layer: queue -> processor -> cache, as in
-			// BenchmarkPipeline. The data processors are not available.
+			// Producer edge: enqueue the reading onto the raw data queue, as in
+			// BenchmarkPipeline. The autonomous data-processors entity is not
+			// available.
 
 			i++
 		}

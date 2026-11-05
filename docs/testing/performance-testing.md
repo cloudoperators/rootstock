@@ -1,13 +1,15 @@
 # Performance testing
 
 This document describes how rootstock's performance is benchmarked. The suite
-measures the end-to-end pipeline for a PDU (virtual Redfish device -> scraper ->
-processing layer -> result cache) to track relative component performance and
-detect regressions.
+owns the producer and consumer ends of the pipeline for a PDU (virtual Redfish
+device -> scraper -> enqueue onto the raw data queue, then read back from the
+result cache) to track relative component performance and detect regressions.
+The data-processors between the queue and the result cache are an autonomous
+entity and are not driven by the suite.
 
-The Redfish scenario is currently not completely implemented: the data
-processors (the raw data queue and data-processor of the processing layer) are
-not available, so the end-to-end pass does not yet run to completion.
+The Redfish scenario is currently not completely implemented: the
+data-processors are not available, so nothing drains the raw data queue into the
+result cache and the pass does not yet run to completion.
 
 ## Overview
 
@@ -68,21 +70,23 @@ count.
 
 ## What is covered
 
-The suite benchmarks the path from a mocked PDU through processing into the
-result cache:
+The suite benchmarks the suite-owned edges of the pipeline: scraping a mocked PDU
+and enqueuing the reading onto the raw data queue (producer), then reading the
+result cache back (consumer):
 
 - `BenchmarkPipeline`: a single representative device.
 - `BenchmarkPipelineScale`: how cost grows with the number of devices (mass
   scanning / horizontal scaling).
-- `BenchmarkPipelineParallel`: concurrent processing.
-- `TestRedfishPipeline`: the end-to-end Redfish test case. It sets up and
-  connects mock PDUs to the scraper, executes, and validates by reading out the
-  result cache.
+- `BenchmarkPipelineParallel`: concurrent scraping and enqueuing.
+- `TestRedfishPipeline`: the Redfish test case. It sets up and connects mock PDUs
+  to the scraper, scrapes and enqueues, and validates by reading out the result
+  cache.
 
-Because the data processors are not available, the full pipeline pass (scrape ->
-queue -> processor -> cache) does not run to completion; the benchmarks and
+The data-processors (raw data queue -> data-processors -> result cache) are an
+autonomous entity, not driven by the suite. Because they are not available,
+nothing drains the raw data queue into the result cache; the benchmarks and
 `TestRedfishPipeline` scrape the mocked PDUs and then report the missing
-processing layer.
+data-processors.
 
 ## How it works
 
@@ -133,8 +137,10 @@ sequenceDiagram
 
 The component chain for the Redfish test case, from the mocked fixture through
 to validation by reading out the result cache, mirroring `TestRedfishPipeline`
-in `test/performance/redfish_processing_test.go`. The processing-layer stage (dashed)
-depends on the data processors, which are not available.
+in `test/performance/redfish_processing_test.go`. The suite scrapes and enqueues
+onto the raw data queue, then reads the result cache. The data-processors stage
+(dashed) is autonomous and not driven by the test; it depends on the
+data-processors, which are not available.
 
 ```mermaid
 sequenceDiagram
@@ -143,7 +149,7 @@ sequenceDiagram
     participant Mock as mockpdu.Client<br/>(performance.Source)
     participant Scrape as performance.Scrape<br/>(scraping edge)
     participant Queue as raw data queue
-    participant Proc as data-processor
+    participant Proc as data-processors<br/>(autonomous)
     participant Cache as cache.Cache[Result]<br/>(result cache)
 
     rect rgba(128, 128, 128, 0.12)
@@ -157,24 +163,25 @@ sequenceDiagram
     end
 
     rect rgba(128, 128, 128, 0.22)
-        note right of Test: execute (scraping edge)
+        note right of Test: producer edge (scrape and enqueue)
         loop per PDU id
             Test->>Scrape: Scrape(ctx, source, id)
             Scrape->>Mock: Read(ctx, id)
             Mock-->>Scrape: Reading
             Scrape-->>Test: Reading
+            Test->>Queue: enqueue Reading
         end
     end
 
     rect rgba(220, 120, 120, 0.18)
-        note right of Queue: processing layer (data processors not available)
-        Test-->>Queue: push Reading
-        Queue-->>Proc: pull Reading
-        Proc-->>Cache: transform -> Result, Cache.Set(id, result)
+        note right of Queue: data-processors (autonomous, not available)
+        Proc->>Queue: pull Reading
+        Queue-->>Proc: Reading
+        Proc->>Cache: transform -> Result, Cache.Set(id, result)
     end
 
     rect rgba(128, 128, 128, 0.12)
-        note right of Test: validate (read out result cache)
+        note right of Test: consumer edge (read out result cache)
         Test->>Cache: performance.ReadResult(cache, id)
         Cache-->>Test: result (or cache miss when the cache is empty)
     end

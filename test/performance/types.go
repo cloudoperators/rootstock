@@ -7,18 +7,20 @@
 // redfish_processing_test.go) build on.
 //
 // A Source is a protocol-agnostic PDU source: it enumerates PDU IDs and yields a
-// neutral Reading per PDU at the scraping edge. Scrape reads from a Source, the
-// processing layer turns a Reading into a cache-ready Result, and ReadResult
-// reads that Result back from the result cache. No network, deployed container,
-// or Prometheus scrape is involved, so the measurement isolates processing cost.
+// neutral Reading per PDU at the scraping edge. The suite owns two ends of the
+// pipeline: Scrape reads a Reading from a Source and enqueues it onto the raw
+// data queue (producer), and ReadResult reads a Result back from the result
+// cache (consumer). The autonomous data-processors entity in between turns
+// Readings into Results; the suite does not drive it. No network, deployed
+// container, or Prometheus scrape is involved, so the measurement isolates
+// processing cost.
 //
 // Because the Source abstraction is protocol-neutral, adding a protocol (for
 // example SNMP) means providing a Source implementation; this package does not
 // need to change.
 //
-// The data processors are currently not available, so the processing layer that
-// turns a Reading into a Result is not wired up and the scenarios do not run end
-// to end.
+// The data-processors are currently not available, so nothing drains the raw
+// data queue into the result cache and the scenarios do not run end to end.
 package performance
 
 import (
@@ -40,12 +42,12 @@ type Reading struct {
 }
 
 // Result is the processed, cache-ready representation of a single PDU's
-// measurements. It is the shape the data-processor produces and stores in the
+// measurements. It is the shape the data-processors produce and store in the
 // result cache.
 //
 // Reading and Result carry the same fields today but are distinct pipeline
 // stages: a Reading is the raw scraped input, a Result is the processed output.
-// They are kept separate so the scraping edge and the data-processor stay
+// They are kept separate so the scraping edge and the data-processors stay
 // decoupled.
 type Result struct {
 	PDUID           string
@@ -73,7 +75,7 @@ func Scrape(ctx context.Context, source Source, pduID string) (Reading, error) {
 }
 
 // ReadResult reads back a single processed Result from the result cache. It is
-// the result-cache read-out used to validate what the pipeline produced.
+// the suite's consumer edge, used to validate what the data-processors produced.
 //
 // The result cache here (cache.Cache[Result]) is an in-test stand-in for the
 // architecture's in-service result cache component.
@@ -83,13 +85,17 @@ func ReadResult(c cache.Cache[Result], pduID string) (Result, error) {
 
 // --- Processing layer ---------------------------------------------------------
 //
-// The processing layer sits between the scraping edge and the result cache:
+// The suite owns only the two ends of the pipeline:
 //
-//	scrape (Scrape) -> raw data queue -> data-processor -> cache.Cache[Result]
+//	test:            Scrape -> enqueue onto the raw data queue        [producer edge]
+//	data-processors: raw data queue -> data-processors -> result cache    [autonomous]
+//	test:            ReadResult(result cache)                         [consumer edge]
 //
-// The raw data queue carries scraped Readings from the scraping edge to the
-// data-processor, which transforms them into a cache-ready Result and stores
-// them in cache.Cache[Result].
+// The data-processors are an autonomous entity: on their own they pull Readings
+// from the raw data queue, transform each into a cache-ready Result, and store
+// it in the result cache. The suite does not run them, does not transform
+// Readings, and does not write the result cache; it only enqueues (producer) and
+// reads back (consumer).
 //
-// The data processors are not available, so this layer is not wired up and the
-// scenarios do not run end to end.
+// The data-processors are not available, so nothing drains the raw data queue
+// into the result cache and the scenarios do not run end to end.
