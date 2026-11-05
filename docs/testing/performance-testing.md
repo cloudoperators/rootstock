@@ -34,8 +34,8 @@ make test-performance
 
 This runs benchmarks only (unit tests are excluded via `-run=^$`), builds with
 `-tags=performance` to include the gated suite, and writes the
-benchstat-compatible output to `performance.txt`. The invocation is defined in the
-`test-performance` Makefile target. Four flags are exposed as environment
+benchstat-compatible output to `performance.txt`. The invocation is defined in
+the `test-performance` Makefile target. Four flags are exposed as environment
 variables you can override:
 
 - `PERFTEST_TIME` (`-benchtime`, default `2s`): wall-time budget per benchmark.
