@@ -1,9 +1,10 @@
 # Service level objectives
 
 To facilitate ease of use and ease of integration of rootstock into a larger
-ecosystem of services and tools, rootstock comes with a set of service level
-objectives (SLOs) that are actively measured and monitored during its
-development and runtime.
+ecosystem of services and tools, this document proposes service level objectives
+(SLOs) for the planned asynchronous, cache-backed collection architecture.
+The performance tests, runtime SLO instrumentation, and cache-backed probe serving
+described below are design goals, not currently implemented capabilities.
 
 ## Table of contents
 
