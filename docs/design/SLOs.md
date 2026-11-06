@@ -2,8 +2,8 @@
 
 To facilitate ease of use and ease of integration of rootstock into a larger
 ecosystem of services and tools, this document proposes service level objectives
-(SLOs) for the planned asynchronous, cache-backed collection architecture.
-The performance tests, runtime SLO instrumentation, and cache-backed probe serving
+(SLOs) for the planned asynchronous, cache-backed collection architecture. The
+performance tests, runtime SLO instrumentation, and cache-backed probe serving
 described below are design goals, not currently implemented capabilities.
 
 ## Table of contents
