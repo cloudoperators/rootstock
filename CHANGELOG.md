@@ -8,7 +8,7 @@ and this project adheres to
 
 <!-- git-cliff: end of header -->
 
-## 2026-10-23
+## 2026-11-06
 
 - (0.2.0 - 🚀) tooling: Local kind deployment
   [#80](https://github.com/cloudoperators/rootstock/pull/80)
@@ -52,6 +52,46 @@ and this project adheres to
   by [@blackhat-jan](https://github.com/blackhat-jan)
 - (0.2.0 - ⚙️) tooling: Add claude.md file
   [#102](https://github.com/cloudoperators/rootstock/pull/102)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.1.0...v0.2.0))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.2.0 - 🐛) tooling: Coverage report on main
+  [#109](https://github.com/cloudoperators/rootstock/pull/109)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.1.0...v0.2.0))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.2.0 - 🚀) manager: Add redfish scrape manager logic
+  [#83](https://github.com/cloudoperators/rootstock/pull/83)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.1.0...v0.2.0))
+  by [@Frazia04](https://github.com/Frazia04)
+- (0.2.0 - 🐛) tooling: Coverage report creation on main
+  [#116](https://github.com/cloudoperators/rootstock/pull/116)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.1.0...v0.2.0))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.2.0 - 🚀) automerge: Harden automerge
+  [#112](https://github.com/cloudoperators/rootstock/pull/112)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.1.0...v0.2.0))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.2.0 - 🐛) tooling: Code coverage reference to main run
+  [#118](https://github.com/cloudoperators/rootstock/pull/118)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.1.0...v0.2.0))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.2.0 - ⚙️) chart: Cleanup structures
+  [#105](https://github.com/cloudoperators/rootstock/pull/105)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.1.0...v0.2.0))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.2.0 - ⚙️) automerge: Remove restriction on pending reviewers
+  [#121](https://github.com/cloudoperators/rootstock/pull/121)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.1.0...v0.2.0))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.2.0 - ⚙️) docs: Update architecture diagram
+  [#119](https://github.com/cloudoperators/rootstock/pull/119)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.1.0...v0.2.0))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.2.0 - ⚙️) tooling: Add pr summary bot
+  [#123](https://github.com/cloudoperators/rootstock/pull/123)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.1.0...v0.2.0))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.2.0 - 🐛) automerge: Add merge strategy for updating changelog and version…
+  [#124](https://github.com/cloudoperators/rootstock/pull/124)
   ([diff](https://github.com/cloudoperators/rootstock/compare/v0.1.0...v0.2.0))
   by [@blackhat-jan](https://github.com/blackhat-jan)
 

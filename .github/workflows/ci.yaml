@@ -108,6 +108,7 @@ jobs:
           coverage-artifact-name: code-coverage
           coverage-file-name: coverage.out
           root-package: github.com/cloudoperators/rootstock
+          github-baseline-workflow-ref: main.yaml
     permissions:
       actions: read
       contents: read
