@@ -216,6 +216,11 @@ snmpExporter:
         - ALL
   
   # SNMP exporter configuration
+  # Option 1: Use a local file (recommended for complex configs)
+  # Uncomment to use files/snmp.yml instead of inline config
+  # configFile: "files/snmp.yml"
+  
+  # Option 2: Inline configuration (default)
   # The default config includes common MIBs (if_mib, etc.)
   # Override this with your custom snmp.yml configuration
   # See: https://github.com/prometheus/snmp_exporter/tree/main/generator

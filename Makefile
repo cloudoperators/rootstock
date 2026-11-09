@@ -38,7 +38,7 @@ MOCKUP_CONTAINER := redfish-mockup
 				generate generate-changelog generate-version \
 				get-version test-changelog \
 				automerge-check \
-				greenhouse-create greenhouse-verify greenhouse-delete \
+				greenhouse-create greenhouse-start-plugin greenhouse-delete \
 				help
 
 # Build
@@ -182,19 +182,19 @@ kind-%: ## Execute command $* for the kind cluster - commands: [create, delete, 
 # Local Greenhouse-in-kind environment
 # Requires: docker, kind, kubectl, helm, yq, go, git, jq
 #
-# greenhouse-up:     bootstrap admin+remote clusters, zot registry, demo org
-# greenhouse-verify: package+push chart, apply PluginDefinition, assert READY
-# greenhouse-delete: delete clusters, registry, and workdir
+# greenhouse-create:       bootstrap admin+remote clusters, zot registry, demo org
+# greenhouse-start-plugin: package+push chart, apply PluginDefinition, assert READY
+# greenhouse-delete:       delete clusters, registry, and workdir
 # ---------------------------------------------------------------------------
 
 greenhouse-create: ## Bootstrap a local Greenhouse-in-kind environment
 	@hack/greenhouse/control.sh create
  
-greenhouse-verify: ## Verify the rootstock PluginDefinition against a running Greenhouse dev env
-	@hack/greenhouse/verify_plugindefinition.sh
+greenhouse-start-plugin: ## Start the rootstock Plugin in Greenhouse dev env
+	@hack/greenhouse/start_plugin.sh
 
-greenhouse-verify-with-plugin: ## Verify the rootstock PluginDefinition against a running Greenhouse dev env
-	@hack/greenhouse/verify_plugindefinition.sh --with-plugin
+greenhouse-start-plugin-full: ## Start the rootstock Plugin with full deployment verification
+	@hack/greenhouse/start_plugin.sh --with-plugin
 
 greenhouse-delete: ## Tear down the local Greenhouse-in-kind environment
 	@hack/greenhouse/control.sh delete

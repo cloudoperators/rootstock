@@ -13,5 +13,9 @@ metadata:
     {{- include "rootstock.labels" . | nindent 4 }}
 data:
   snmp.yml: |
+{{- if .Values.snmpExporter.configFile }}
+    {{- .Files.Get .Values.snmpExporter.configFile | nindent 4 }}
+{{- else }}
     {{- toYaml .Values.snmpExporter.config | nindent 4 }}
+{{- end }}
 {{- end }}

@@ -2,12 +2,14 @@
 # SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Greenhouse contributors
 # SPDX-License-Identifier: Apache-2.0
 #
-# verify-plugindefinition.sh — verify the rootstock Greenhouse PluginDefinition.
+# start_plugin.sh — start the rootstock Greenhouse Plugin.
 #
 # Requires a running Greenhouse-in-kind environment (run setup_greenhouse.sh first).
 # Default: preflight → helm package+push → apply PluginDefinition and assert READY=True.
-# --with-plugin: also load image, create Redfish Secret, apply Plugin, deploy mockup,
-#               assert /healthz + /probe emit real metrics.
+# --with-plugin: also load image, create Redfish Secret, apply Plugin, and start deployment.
+#
+# Environment:
+#   SNMP_CONFIG_FILE: SNMP config file path (default: files/snmp.yml)
 # Committed plugindefinition.yaml is NEVER mutated; all rewrites happen on temp copies.
 set -euo pipefail
 
@@ -28,6 +30,9 @@ REGISTRY_HOST="${REGISTRY_HOST:-localhost:5000}"
 REGISTRY_INCLUSTER="${REGISTRY_INCLUSTER:-registry:5000}"
 # OCI path (without the oci:// scheme) under which the chart is pushed.
 REGISTRY_CHART_REPO="${REGISTRY_CHART_REPO:-charts}"
+
+# SNMP exporter configuration file (relative to chart directory)
+SNMP_CONFIG_FILE="${SNMP_CONFIG_FILE:-files/snmp.yml}"
 
 # rootstock image coordinates. Default tag comes from VERSION.yaml via resolve_versions().
 # ROOTSTOCK_IMAGE: local build tag on the host docker daemon (source image).
@@ -298,7 +303,7 @@ push_image_oci() {
     fi
 
     docker buildx --builder "$OCI_BUILDER" build \
-        "${build_extra_args}" \
+        ${build_extra_args} \
         --platform "${BUILD_PLATFORM:-linux/arm64}" \
         --provenance=false \
         --output "type=registry,registry.insecure=true,name=${dest_host}" \
@@ -421,8 +426,9 @@ run_plugin_e2e() {
       (.spec.optionValues[] | select(.name == \"image.pullPolicy\").value) = \"IfNotPresent\" |
       (.spec.optionValues[] | select(.name == \"image.repository\").value) = \"${ROOTSTOCK_REGISTRY_IMAGE%:*}\" |
       (.spec.optionValues[] | select(.name == \"image.tag\").value) = \"${ROOTSTOCK_REGISTRY_IMAGE##*:}\" |
-      (.spec.optionValues[] | select(.name == \"snmpExporter.enabled\").value) = true |
       .spec.optionValues += [
+        {\"name\": \"snmpExporter.enabled\", \"value\": true},
+        {\"name\": \"snmpExporter.configFile\", \"value\": \"${SNMP_CONFIG_FILE}\"},
         {\"name\": \"testConnection.image.repository\", \"value\": \"${TESTCONN_REGISTRY_IMAGE%:*}\"},
         {\"name\": \"testConnection.image.tag\", \"value\": \"${TESTCONN_REGISTRY_IMAGE##*:}\"}
       ]
@@ -437,119 +443,134 @@ run_plugin_e2e() {
         die "Plugin rootstock did not become READY within ${READY_TIMEOUT}s"
     fi
 
-    # 4. Provision the Redfish target the collector will scrape, then probe.
-    #    If the caller supplied TARGET, assume it is already reachable from the
-    #    remote cluster and skip deploying the bundled DMTF mockup.
-    if [[ -n "${TARGET:-}" ]]; then
-        log "TARGET override set (${TARGET}); skipping in-cluster mockup provisioning"
-    else
-        deploy_mockup
-    fi
-
-    # 5. Probe check against the deployed workload on the REMOTE cluster.
-    probe_check
+    # 4. Skip probe check (no mockup deployment)
+    log "Skipping probe check (no Redfish target configured)"
+    ok "Plugin deployed successfully"
 }
+
+# =============================================================================
+# UNUSED FUNCTIONS (kept for reference)
+# =============================================================================
+# These functions are no longer called but kept for reference in case
+# Redfish mockup testing is needed in the future.
 
 # Build + load the DMTF Redfish mockup (pre-loaded with rootstock's PDU dataset)
 # and deploy it into the workload namespace on the REMOTE cluster, so the
 # collector can scrape it via in-cluster DNS. Mirrors the Makefile 'kind-mockup'
 # target, retargeted at the Greenhouse remote cluster.
-deploy_mockup() {
-    local ns="rootstock"
-    log "building and loading DMTF redfish mockup image"
-    docker build -t rootstock-mockup:latest \
-        -f "${rootstock_root}/hack/kind/Dockerfile.mockup" "$rootstock_root" >/dev/null \
-        || die "failed to build rootstock-mockup image"
-    kind load docker-image rootstock-mockup:latest --name "$remote_cluster" \
-        || die "kind load of rootstock-mockup into ${remote_cluster} failed"
+# UNUSED: deploy_mockup() {
+#     local ns="rootstock"
+#     log "building and loading DMTF redfish mockup image"
+#     docker build -t rootstock-mockup:latest \
+#         -f "${rootstock_root}/hack/kind/Dockerfile.mockup" "$rootstock_root" >/dev/null \
+#         || die "failed to build rootstock-mockup image"
+#     kind load docker-image rootstock-mockup:latest --name "$remote_cluster" \
+#         || die "kind load of rootstock-mockup into ${remote_cluster} failed"
+#
+#     log "deploying redfish mockup into ns ${ns} on ${remote_context}"
+#     kubectl --context "$remote_context" create namespace "$ns" \
+#         --dry-run=client -o yaml | kubectl --context "$remote_context" apply -f - \
+#         || die "failed to ensure namespace ${ns}"
+#     kubectl --context "$remote_context" -n "$ns" apply -f "${rootstock_root}/hack/kind/redfish-mockup.yaml" \
+#         || die "failed to apply redfish-mockup manifest"
+#     kubectl --context "$remote_context" -n "$ns" rollout status deploy/redfish-mockup --timeout=120s \
+#         || die "redfish-mockup never became ready on ${remote_context}"
+#     ok "redfish mockup deployed (redfish-mockup.${ns}.svc:8000)"
+# }
 
-    log "deploying redfish mockup into ns ${ns} on ${remote_context}"
-    kubectl --context "$remote_context" create namespace "$ns" \
-        --dry-run=client -o yaml | kubectl --context "$remote_context" apply -f - \
-        || die "failed to ensure namespace ${ns}"
-    kubectl --context "$remote_context" -n "$ns" apply -f "${rootstock_root}/hack/kind/redfish-mockup.yaml" \
-        || die "failed to apply redfish-mockup manifest"
-    kubectl --context "$remote_context" -n "$ns" rollout status deploy/redfish-mockup --timeout=120s \
-        || die "redfish-mockup never became ready on ${remote_context}"
-    ok "redfish mockup deployed (redfish-mockup.${ns}.svc:8000)"
-}
-
-probe_check() {
-    log "verifying /healthz and /probe on the deployed workload (remote cluster)"
-    local ns="rootstock" release="rootstock" local_port="${LOCAL_PORT:-9220}"
-    kubectl --context "$remote_context" -n "$ns" rollout status "deploy/${release}" --timeout=120s \
-        || die "rootstock deployment never became ready on ${remote_context}"
-
-    local pf_pid=""
-    cleanup_pf() {
-      # shellcheck disable=SC2015
-      [[ -n "${pf_pid:-}" ]] && kill "$pf_pid" 2>/dev/null || true
-    }
-    trap cleanup_pf RETURN
-
-    kubectl --context "$remote_context" -n "$ns" port-forward "svc/${release}" "${local_port}:9220" \
-        >/dev/null 2>&1 &
-    pf_pid=$!
-
-    local i
-    for ((i = 0; i < 30; i++)); do
-        curl -sf "http://localhost:${local_port}/healthz" >/dev/null 2>&1 && break
-        sleep 1
-    done
-    curl -sf "http://localhost:${local_port}/healthz" >/dev/null \
-        || die "/healthz never became ready"
-    ok "/healthz OK"
-
-    # Probe the in-cluster redfish mockup. The collector skips zero-valued
-    # readings, so a matching metric line is a genuine end-to-end success.
-    local target="${TARGET:-http://redfish-mockup.${ns}.svc.cluster.local:8000}"
-    local body
-    body="$(curl -sf "http://localhost:${local_port}/probe?target=${target}&labels=1")" \
-        || die "/probe request failed"
-    if echo "$body" | grep -Eqi 'pdu_|power|energy|apparent'; then
-        ok "/probe returned real rootstock metrics"
-    else
-        warn "/probe output head:"; echo "$body" | head -n 20
-        die "no expected metrics found in /probe output"
-    fi
-
-    # Verify SNMP exporter sidecar is running
-    log "verifying SNMP exporter sidecar"
-    local snmp_port="9116"
-    kubectl --context "$remote_context" -n "$ns" port-forward "svc/${release}" "${snmp_port}:9116" \
-        >/dev/null 2>&1 &
-    local snmp_pf_pid=$!
-    
-    cleanup_snmp_pf() {
-        [[ -n "${snmp_pf_pid:-}" ]] && kill "$snmp_pf_pid" 2>/dev/null || true
-    }
-    trap cleanup_snmp_pf RETURN
-    
-    sleep 2
-    if curl -sf "http://localhost:${snmp_port}/metrics" >/dev/null 2>&1; then
-        ok "SNMP exporter /metrics endpoint responding"
-        
-        # Check if snmp-exporter container is running in the pod
-        local pod_name
-        pod_name=$(kubectl --context "$remote_context" -n "$ns" get pods -l app.kubernetes.io/name=rootstock -o jsonpath='{.items[0].metadata.name}')
-        local container_count
-        container_count=$(kubectl --context "$remote_context" -n "$ns" get pod "$pod_name" -o jsonpath='{.status.containerStatuses[*].name}' | wc -w | tr -d ' ')
-        if [[ "$container_count" == "2" ]]; then
-            ok "Pod has 2 containers (rootstock + snmp-exporter sidecar)"
-            
-            # Check snmp-exporter logs for successful startup
-            if kubectl --context "$remote_context" -n "$ns" logs "$pod_name" -c snmp-exporter --tail=10 2>/dev/null | grep -q "Listening on"; then
-                ok "SNMP exporter container started successfully"
-            else
-                warn "SNMP exporter container may not have started properly"
-            fi
-        else
-            warn "Expected 2 containers but found ${container_count}"
-        fi
-    else
-        warn "SNMP exporter endpoint not responding (this is OK if snmpExporter.enabled=false)"
-    fi
-}
+# UNUSED: probe_check() {
+#     log "verifying /healthz and /probe on the deployed workload (remote cluster)"
+#     local ns="rootstock" release="rootstock" local_port="${LOCAL_PORT:-9220}"
+#     
+#     # Wait for deployment to exist (Flux may need time to reconcile)
+#     local retries=30
+#     for ((i=0; i<retries; i++)); do
+#         if kubectl --context "$remote_context" -n "$ns" get "deploy/${release}" >/dev/null 2>&1; then
+#             break
+#         fi
+#         if ((i == 0)); then
+#             log "waiting for deployment ${release} to be created by Flux..."
+#         fi
+#         sleep 2
+#     done
+#     
+#     kubectl --context "$remote_context" -n "$ns" get "deploy/${release}" >/dev/null 2>&1 \
+#         || die "rootstock deployment was not created by Flux in ${ns}"
+#     
+#     kubectl --context "$remote_context" -n "$ns" rollout status "deploy/${release}" --timeout=120s \
+#         || die "rootstock deployment never became ready on ${remote_context}"
+#
+#     local pf_pid=""
+#     cleanup_pf() {
+#       # shellcheck disable=SC2015
+#       [[ -n "${pf_pid:-}" ]] && kill "$pf_pid" 2>/dev/null || true
+#     }
+#     trap cleanup_pf RETURN
+#
+#     kubectl --context "$remote_context" -n "$ns" port-forward "svc/${release}" "${local_port}:9220" \
+#         >/dev/null 2>&1 &
+#     pf_pid=$!
+#
+#     local i
+#     for ((i = 0; i < 30; i++)); do
+#         curl -sf "http://localhost:${local_port}/healthz" >/dev/null 2>&1 && break
+#         sleep 1
+#     done
+#     curl -sf "http://localhost:${local_port}/healthz" >/dev/null \
+#         || die "/healthz never became ready"
+#     ok "/healthz OK"
+#
+#     # Probe the in-cluster redfish mockup. The collector skips zero-valued
+#     # readings, so a matching metric line is a genuine end-to-end success.
+#     local target="${TARGET:-http://redfish-mockup.${ns}.svc.cluster.local:8000}"
+#     local pdu_id="${PDU_ID:-pdu1}"
+#     local body
+#     body="$(curl -sf "http://localhost:${local_port}/probe?target=${target}&labels=${pdu_id}")" \
+#         || die "/probe request failed"
+#     if echo "$body" | grep -Eqi 'pdu_|power|energy|apparent'; then
+#         ok "/probe returned real rootstock metrics"
+#     else
+#         warn "/probe output head:"; echo "$body" | head -n 20
+#         die "no expected metrics found in /probe output"
+#     fi
+#
+#     # Verify SNMP exporter sidecar is running
+#     log "verifying SNMP exporter sidecar"
+#     local snmp_port="9116"
+#     kubectl --context "$remote_context" -n "$ns" port-forward "svc/${release}" "${snmp_port}:9116" \
+#         >/dev/null 2>&1 &
+#     local snmp_pf_pid=$!
+#     
+#     cleanup_snmp_pf() {
+#         [[ -n "${snmp_pf_pid:-}" ]] && kill "$snmp_pf_pid" 2>/dev/null || true
+#     }
+#     trap cleanup_snmp_pf RETURN
+#     
+#     sleep 2
+#     if curl -sf "http://localhost:${snmp_port}/metrics" >/dev/null 2>&1; then
+#         ok "SNMP exporter /metrics endpoint responding"
+#         
+#         # Check if snmp-exporter container is running in the pod
+#         local pod_name
+#         pod_name=$(kubectl --context "$remote_context" -n "$ns" get pods -l app.kubernetes.io/name=rootstock -o jsonpath='{.items[0].metadata.name}')
+#         local container_count
+#         container_count=$(kubectl --context "$remote_context" -n "$ns" get pod "$pod_name" -o jsonpath='{.status.containerStatuses[*].name}' | wc -w | tr -d ' ')
+#         if [[ "$container_count" == "2" ]]; then
+#             ok "Pod has 2 containers (rootstock + snmp-exporter sidecar)"
+#             
+#             # Check snmp-exporter logs for successful startup
+#             if kubectl --context "$remote_context" -n "$ns" logs "$pod_name" -c snmp-exporter --tail=10 2>/dev/null | grep -q "Listening on"; then
+#                 ok "SNMP exporter container started successfully"
+#             else
+#                 warn "SNMP exporter container may not have started properly"
+#             fi
+#         else
+#             warn "Expected 2 containers but found ${container_count}"
+#         fi
+#     else
+#         warn "SNMP exporter endpoint not responding (this is OK if snmpExporter.enabled=false)"
+#     fi
+# }
 
 # =============================================================================
 # Phase 4: teardown

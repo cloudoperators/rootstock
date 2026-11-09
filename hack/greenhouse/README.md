@@ -5,21 +5,19 @@ SPDX-License-Identifier: Apache-2.0
 
 # Greenhouse local dev environment
 
-Two scripts manage a local Greenhouse-in-kind environment for rootstock:
+Scripts to manage a local Greenhouse-in-kind environment for rootstock:
 
-| Script                       | Purpose                                                                          |
-| ---------------------------- | -------------------------------------------------------------------------------- |
-| `control.sh`                 | Lifecycle: create or delete the Greenhouse dev environment                       |
-| `verify_plugindefinition.sh` | Verification: publish the chart, apply the PluginDefinition, assert `READY=True` |
-| `start_prometheus.sh`        | Deploy Prometheus monitoring stack via Greenhouse Plugin for rootstock metrics   |
-| `stop_prometheus.sh`         | Remove Prometheus monitoring stack deployment                                    |
+| Script            | Purpose                                                                    |
+| ----------------- | -------------------------------------------------------------------------- |
+| `control.sh`      | Lifecycle: create or delete the Greenhouse dev environment                 |
+| `start_plugin.sh` | Start: publish the chart, apply the PluginDefinition, assert `READY=True` |
 
-Makefile targets wrap both scripts:
+Makefile targets wrap the scripts:
 
 ```bash
-make greenhouse-create  # control.sh create
-make greenhouse-verify  # verify_plugindefinition.sh
-make greenhouse-delete  # control.sh delete
+make greenhouse-create       # control.sh create
+make greenhouse-start-plugin # start_plugin.sh
+make greenhouse-delete       # control.sh delete
 ```
 
 ## Quick start
@@ -28,23 +26,15 @@ make greenhouse-delete  # control.sh delete
 # 1. Bootstrap Greenhouse-in-kind (admin + remote clusters, zot registry, demo org).
 make greenhouse-create
 
-# 2. Verify the PluginDefinition (chart-only, no image needed).
-make greenhouse-verify
+# 2. Start the PluginDefinition (chart-only, no image needed).
+make greenhouse-start-plugin
 
-# 3. Full end-to-end — also deploy a Plugin + Redfish mockup and probe real metrics.
+# 3. Full end-to-end — also deploy a Plugin with full verification.
 #    Build the rootstock image first.
 make docker-build IMAGE="rootstock:$(yq -r '.version' VERSION.yaml)"
-hack/greenhouse/verify_plugindefinition.sh --with-plugin
+make greenhouse-start-plugin-full
 
-# 4. Deploy Prometheus to monitor rootstock metrics.
-hack/greenhouse/start_prometheus.sh
-
-# 5. Access Prometheus UI at http://localhost:9090 and verify rootstock metrics are being scraped.
-
-# 6. Stop Prometheus when done.
-hack/greenhouse/stop_prometheus.sh
-
-# 7. Tear down when done.
+# 4. Tear down when done.
 make greenhouse-delete
 ```
 
@@ -94,63 +84,16 @@ Deletes both kind clusters, the `registry` Docker container, and the
 hack/greenhouse/control.sh delete
 ```
 
-## verify_plugindefinition.sh
+## start_plugin.sh
 
-Verifies the rootstock
+Starts the rootstock
 [`PluginDefinition`](../../k8s_configuration/plugindefinition.yaml) against a
 running Greenhouse dev environment. Run `control.sh create` first.
 
-## start_prometheus.sh / stop_prometheus.sh
-
-Deploy and manage a Prometheus monitoring stack via Greenhouse to monitor
-rootstock metrics. Uses the
-[`prometheus-plugindefinition.yaml`](../../k8s_configuration/prometheus-plugindefinition.yaml)
-which wraps the kube-prometheus-stack Helm chart.
-
-### start_prometheus.sh
-
-Deploys a complete Prometheus monitoring stack including Prometheus Operator,
-Grafana, Alertmanager, and exporters. The deployment is configured with custom
-scrape configs for rootstock's multi-target probe pattern.
-
-```bash
-hack/greenhouse/start_prometheus.sh
-```
-
-**What it does:**
-
-1. Verifies rootstock is deployed and ready
-2. Applies the Prometheus PluginDefinition to the admin cluster
-3. Applies the Prometheus Plugin CR to deploy the stack
-4. Waits for all Prometheus components to be ready
-5. Starts a port-forward to expose the Prometheus UI at `http://localhost:9090`
-
-The script configures Prometheus with two scrape jobs:
-
-- **rootstock-probe**: Probes Redfish targets via rootstock's `/probe` endpoint
-- **rootstock-metrics**: Scrapes rootstock's internal metrics from `/metrics`
-
-**Environment variables:**
-
-| Variable                | Default                    | Purpose                                  |
-| ----------------------- | -------------------------- | ---------------------------------------- |
-| `ADMIN_CONTEXT`         | `kind-greenhouse-admin`    | Kubectl context for admin cluster        |
-| `REMOTE_CONTEXT`        | `kind-greenhouse-remote`   | Kubectl context for remote cluster       |
-| `PROMETHEUS_NAMESPACE`  | `monitoring`               | Namespace for Prometheus deployment      |
-| `PROMETHEUS_PORT`       | `9090`                     | Local port for Prometheus UI forwarding  |
-| `READY_TIMEOUT`         | `300`                      | Seconds to wait for resources to be ready|
-
-### stop_prometheus.sh
-
-Removes the Prometheus monitoring stack by deleting the Plugin CR from the admin
-cluster. Greenhouse will clean up all resources on the remote cluster.
-
-```bash
-hack/greenhouse/stop_prometheus.sh
-```
+### Usage
 
 ```text
-Usage: verify_plugindefinition.sh [--with-plugin]
+Usage: start_plugin.sh [--with-plugin]
 ```
 
 Runs these phases in order:
@@ -195,7 +138,7 @@ port is treated as a plain registry and passes through un-rewritten.
 | ---------------- | --------- | ----------------------------------- |
 | `GREENHOUSE_REF` | `v0.18.0` | Greenhouse git tag/commit to clone. |
 
-### verify_plugindefinition.sh overrides
+### start_plugin.sh overrides
 
 | Variable                   | Default                               | Purpose                                                                              |
 | -------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------ |

@@ -129,6 +129,8 @@ helm install rootstock k8s_configuration/chart \
 
 Customize the SNMP exporter sidecar configuration:
 
+**Option 1: Inline configuration (simple)**
+
 ```yaml
 snmpExporter:
   enabled: true
@@ -151,6 +153,19 @@ snmpExporter:
       cpu: 50m
       memory: 64Mi
 ```
+
+**Option 2: External file (recommended for complex configs)**
+
+1. Create `files/snmp.yml` in the chart directory
+2. Configure to use the file:
+
+```yaml
+snmpExporter:
+  enabled: true
+  configFile: "files/snmp.yml"  # Use external file instead of inline config
+```
+
+See `files/snmp.yml` and `files/README.md` for examples and generator instructions.
 
 ### Prometheus Scrape Configuration
 

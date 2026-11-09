@@ -10,7 +10,7 @@
 # kind clusters, the zot registry, and the demo Organization.
 #
 # Run standalone to provision a fresh Greenhouse dev environment.
-# Also sourced by verify-plugindefinition.sh to reuse its functions without
+# Also sourced by start_plugin.sh to reuse its functions without
 # re-running main().
 set -euo pipefail
 
