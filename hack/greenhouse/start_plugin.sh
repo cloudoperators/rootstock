@@ -34,12 +34,6 @@ registry_chart_repo="charts"
 # Name of the throwaway buildx builder used to push OCI images (see below).
 oci_builder="rootstock-ghverify-oci"
 
-# SNMP exporter config file, relative to the chart directory.
-SNMP_CONFIG_FILE="${SNMP_CONFIG_FILE:-files/snmp.yml}"
-
-# rootstock image. Defaults to the Makefile IMAGE default; override via env.
-ROOTSTOCK_IMAGE="${ROOTSTOCK_IMAGE:-}"
-
 # Helm test-hook image. zot can't mirror Docker Hub (docker2s2 disabled), so we
 # re-publish it as OCI and override testConnection.image.* in the Plugin.
 test_conn_image="curlimages/curl:8.11.1"
@@ -48,12 +42,6 @@ test_conn_image="curlimages/curl:8.11.1"
 # it as OCI and override snmpExporter.image.* in the Plugin.
 snmp_exporter_image="quay.io/prometheus/snmp-exporter:v0.26.0"
 
-# Polling (seconds).
-READY_TIMEOUT="${READY_TIMEOUT:-60}"
-POLL_INTERVAL="${POLL_INTERVAL:-5}"
-
-# Flags (set by parse_args).
-WITH_PLUGIN=false
 
 # --- Paths --------------------------------------------------------------------
 rootstock_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -61,6 +49,20 @@ chart_dir="${rootstock_root}/k8s_configuration/chart"
 plugin_def="${rootstock_root}/k8s_configuration/plugindefinition.yaml"
 greenhouse_test_dir="${rootstock_root}/k8s_configuration/greenhouse-test"
 workdir="${rootstock_root}/tmp/greenhouse/verify"
+
+
+# SNMP exporter config file, relative to the chart directory.
+SNMP_CONFIG_FILE="${SNMP_CONFIG_FILE:-files/snmp.yml}"
+
+# rootstock image. Defaults to the Makefile IMAGE default; override via env.
+ROOTSTOCK_IMAGE="${ROOTSTOCK_IMAGE:-}"
+
+# Polling (seconds).
+READY_TIMEOUT="${READY_TIMEOUT:-60}"
+POLL_INTERVAL="${POLL_INTERVAL:-5}"
+
+# Flags (set by parse_args).
+WITH_PLUGIN=false
 
 # =============================================================================
 # main
@@ -95,18 +97,13 @@ Usage: $(basename "$0") [--with-plugin] [-h|--help]
 
   --with-plugin   Also run the full E2E: load image into the remote cluster,
                   create the Redfish Secret, apply a Plugin and assert it is
-                  Ready, deploy the bundled DMTF Redfish mockup (unless TARGET
-                  is set), then verify /healthz + /probe emit real metrics.
+                  Ready, deploy the bundled DMTF Redfish mockup
   -h, --help      Show this help.
 
 Key environment overrides:
   READY_TIMEOUT   (default: ${READY_TIMEOUT}s)
   ROOTSTOCK_IMAGE (default: ghcr.io/cloudoperators/rootstock:dev-\$USER, the
                   Makefile IMAGE default) Image used by --with-plugin.
-  TARGET          (default: http://redfish-mockup.rootstock.svc.cluster.local:8000)
-                  Redfish endpoint the collector probes under --with-plugin.
-                  When set, the bundled DMTF mockup is NOT deployed and the
-                  endpoint must already be reachable from the remote cluster.
 EOF
 }
 
