@@ -7,9 +7,9 @@ SPDX-License-Identifier: Apache-2.0
 
 Scripts to manage a local Greenhouse-in-kind environment for rootstock:
 
-| Script            | Purpose                                                                    |
-| ----------------- | -------------------------------------------------------------------------- |
-| `control.sh`      | Lifecycle: create or delete the Greenhouse dev environment                 |
+| Script            | Purpose                                                                   |
+| ----------------- | ------------------------------------------------------------------------- |
+| `control.sh`      | Lifecycle: create or delete the Greenhouse dev environment                |
 | `start_plugin.sh` | Start: publish the chart, apply the PluginDefinition, assert `READY=True` |
 
 Makefile targets wrap the scripts:

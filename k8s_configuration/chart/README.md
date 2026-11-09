@@ -96,12 +96,14 @@ Key options:
 ## SNMP Exporter (Optional Sidecar)
 
 The chart includes an optional SNMP exporter sidecar container for monitoring
-network devices via SNMP alongside Redfish monitoring. This is disabled by default.
+network devices via SNMP alongside Redfish monitoring. This is disabled by
+default.
 
 ### Architecture
 
 When enabled, the SNMP exporter runs as a sidecar container in the same pod as
-rootstock. Both containers share the pod and are accessible through a single Service:
+rootstock. Both containers share the pod and are accessible through a single
+Service:
 
 - **rootstock**: Port 9220 (Redfish `/probe` endpoint)
 - **snmp-exporter**: Port 9116 (SNMP `/snmp` endpoint)
@@ -151,10 +153,11 @@ snmpExporter:
 ```yaml
 snmpExporter:
   enabled: true
-  configFile: "files/snmp.yml"  # Use external file instead of inline config
+  configFile: "files/snmp.yml" # Use external file instead of inline config
 ```
 
-See `files/snmp.yml` and `files/README.md` for examples and generator instructions.
+See `files/snmp.yml` and `files/README.md` for examples and generator
+instructions.
 
 ### Prometheus Scrape Configuration
 
@@ -164,18 +167,18 @@ in the same pod, use the same service name with different ports:
 ```yaml
 scrape_configs:
   # Rootstock Redfish monitoring
-  - job_name: 'rootstock'
+  - job_name: "rootstock"
     static_configs:
-      - targets: ['http://pdu.example.com']
+      - targets: ["http://pdu.example.com"]
     metrics_path: /probe
     relabel_configs:
       - target_label: __address__
         replacement: rootstock:9220
-  
+
   # SNMP device monitoring (sidecar)
-  - job_name: 'snmp'
+  - job_name: "snmp"
     static_configs:
-      - targets: ['192.168.1.1']  # SNMP device
+      - targets: ["192.168.1.1"] # SNMP device
     metrics_path: /snmp
     params:
       module: [if_mib]
@@ -185,8 +188,9 @@ scrape_configs:
       - source_labels: [__param_target]
         target_label: instance
       - target_label: __address__
-        replacement: rootstock:9116  # Same service, different port
+        replacement: rootstock:9116 # Same service, different port
 ```
+
 | Key                                | Default                            | Description                                    |
 | ---------------------------------- | ---------------------------------- | ---------------------------------------------- |
 | `image.repository`                 | `ghcr.io/cloudoperators/rootstock` | Image repository.                              |
@@ -206,6 +210,7 @@ scrape_configs:
 rootstock serves `/healthz`, `/ready`, `/metrics`, and the multi-target
 `/probe?target=<redfish-url>&labels=<pdu_id>` on `server.port` (default: 9220).
 
-When SNMP exporter sidecar is enabled, it exposes `/snmp?target=<snmp-device>&module=<snmp-module>`
-for SNMP device probing on port `9116` (configurable via `snmpExporter.service.port`).
+When SNMP exporter sidecar is enabled, it exposes
+`/snmp?target=<snmp-device>&module=<snmp-module>` for SNMP device probing on
+port `9116` (configurable via `snmpExporter.service.port`).
 `/probe?target=<redfish-url>&labels=<pdu_id>` on `rootstock.port`.
