@@ -183,17 +183,17 @@ kind-%: ## Execute command $* for the kind cluster - commands: [create, delete, 
 # Requires: docker, kind, kubectl, helm, yq, go, git, jq
 #
 # greenhouse-create:       bootstrap admin+remote clusters, zot registry, demo org
-# greenhouse-start-plugin: package+push chart, apply PluginDefinition, assert READY
+# greenhouse-plugin: 			 package+push chart, apply PluginDefinition, assert READY
 # greenhouse-delete:       delete clusters, registry, and workdir
 # ---------------------------------------------------------------------------
 
 greenhouse-create: ## Bootstrap a local Greenhouse-in-kind environment
 	@hack/greenhouse/control.sh create
- 
-greenhouse-start-plugin: ## Start the rootstock Plugin in Greenhouse dev env
+
+greenhouse-plugin: ## Start the rootstock Plugin in Greenhouse dev env
 	@hack/greenhouse/start_plugin.sh
 
-greenhouse-start-plugin-full: ## Start the rootstock Plugin with full deployment verification
+greenhouse-plugin-full: ## Start the rootstock Plugin with full deployment verification
 	@hack/greenhouse/start_plugin.sh --with-plugin
 
 greenhouse-delete: ## Tear down the local Greenhouse-in-kind environment

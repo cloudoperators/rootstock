@@ -13,51 +13,46 @@
 # Committed plugindefinition.yaml is NEVER mutated; all rewrites happen on temp copies.
 set -euo pipefail
 
-# --- Configuration (all overridable) -----------------------------------------
+# --- Configuration ------------------------------------------------------------
 # Cluster / org / context names (must match what setup_greenhouse.sh created).
+# Greenhouse onboards the remote cluster under its kube-context name
+# ("kind-<cluster>"), which is what Plugin spec.clusterName must reference.
 admin_cluster="greenhouse-admin"
 remote_cluster="greenhouse-remote"
 admin_context="kind-${admin_cluster}"
-# Greenhouse onboards the remote cluster under its kube-context name ("kind-<cluster>"),
-# which is what Plugin spec.clusterName must reference.
 remote_context="kind-${remote_cluster}"
 
-DEMO_ORG="demo"
+demo_org="demo"
 
-# Local registry provided by Greenhouse's hack/registry/setup.sh (zot).
-# REGISTRY_HOST: host-visible address (helm push); REGISTRY_INCLUSTER: in-cluster address (Flux).
-REGISTRY_HOST="${REGISTRY_HOST:-localhost:5000}"
-REGISTRY_INCLUSTER="${REGISTRY_INCLUSTER:-registry:5000}"
-# OCI path (without the oci:// scheme) under which the chart is pushed.
-REGISTRY_CHART_REPO="${REGISTRY_CHART_REPO:-charts}"
+# Local registry (zot) from Greenhouse's hack/registry/setup.sh.
+# registry_host: host-visible (helm push); registry_in_cluster: in-cluster (Flux).
+# registry_chart_repo: OCI path (sans oci://) the chart is pushed under.
+registry_host="localhost:5000"
+registry_in_cluster="registry:5000"
+registry_chart_repo="charts"
 
-# SNMP exporter configuration file (relative to chart directory)
+# Name of the throwaway buildx builder used to push OCI images (see below).
+oci_builder="rootstock-ghverify-oci"
+
+# SNMP exporter config file, relative to the chart directory.
 SNMP_CONFIG_FILE="${SNMP_CONFIG_FILE:-files/snmp.yml}"
 
-# rootstock image coordinates. Default tag comes from VERSION.yaml via resolve_versions().
-# ROOTSTOCK_IMAGE: local build tag on the host docker daemon (source image).
-# ROOTSTOCK_REGISTRY_IMAGE: in-cluster ref the Plugin/HelmRelease pulls from; must point at
-#   REGISTRY_INCLUSTER (not docker.io etc.) so Greenhouse's mirror rewrite doesn't break it.
+# rootstock image. Defaults to the Makefile IMAGE default; override via env.
 ROOTSTOCK_IMAGE="${ROOTSTOCK_IMAGE:-}"
-ROOTSTOCK_REGISTRY_IMAGE="${ROOTSTOCK_REGISTRY_IMAGE:-}"
 
-# Helm test hook image. The chart defaults to curlimages/curl (Docker Hub), which the
-# dev-env zot registry cannot mirror (docker2s2 disabled). We re-publish it as OCI under
-# a plain local-registry path and override testConnection.image.* in the Plugin.
-TESTCONN_SOURCE_IMAGE="${TESTCONN_SOURCE_IMAGE:-curlimages/curl:8.11.1}"
-TESTCONN_REGISTRY_IMAGE="${TESTCONN_REGISTRY_IMAGE:-}"
+# Helm test-hook image. zot can't mirror Docker Hub (docker2s2 disabled), so we
+# re-publish it as OCI and override testConnection.image.* in the Plugin.
+test_conn_image="curlimages/curl:8.11.1"
 
-# Chart version packaged and pushed. Authority: k8s_configuration/chart/Chart.yaml `version`.
-# Override via CHART_VERSION (repackages current chart source under that version number).
-CHART_VERSION="${CHART_VERSION:-}"
-# App/image version. Authority: VERSION.yaml `version`.
-APP_VERSION="${APP_VERSION:-}"
+# SNMP exporter sidecar image. zot can't mirror quay.io either, so we re-publish
+# it as OCI and override snmpExporter.image.* in the Plugin.
+snmp_exporter_image="quay.io/prometheus/snmp-exporter:v0.26.0"
 
-# Polling.
-READY_TIMEOUT="${READY_TIMEOUT:-60}"   # seconds to wait for PluginDefinition/Plugin READY
+# Polling (seconds).
+READY_TIMEOUT="${READY_TIMEOUT:-60}"
 POLL_INTERVAL="${POLL_INTERVAL:-5}"
 
-# Flags (set by argument parsing).
+# Flags (set by parse_args).
 WITH_PLUGIN=false
 
 # --- Paths --------------------------------------------------------------------
@@ -106,11 +101,8 @@ Usage: $(basename "$0") [--with-plugin] [-h|--help]
 
 Key environment overrides:
   READY_TIMEOUT   (default: ${READY_TIMEOUT}s)
-  CHART_VERSION   (default: k8s_configuration/chart/Chart.yaml .version)
-                  Chart version to package/push/test. Override to test another
-                  version (repackaged from the current chart source).
-  APP_VERSION     (default: VERSION.yaml .version)  App/image tag version.
-  ROOTSTOCK_IMAGE (default: rootstock:<APP_VERSION>) Image used by --with-plugin.
+  ROOTSTOCK_IMAGE (default: ghcr.io/cloudoperators/rootstock:dev-\$USER, the
+                  Makefile IMAGE default) Image used by --with-plugin.
   TARGET          (default: http://redfish-mockup.rootstock.svc.cluster.local:8000)
                   Redfish endpoint the collector probes under --with-plugin.
                   When set, the bundled DMTF mockup is NOT deployed and the
@@ -154,7 +146,7 @@ preflight() {
 # Phase 1: publish the rootstock chart to the local registry
 # =============================================================================
 publish_chart() {
-    log "Phase 1: package + push rootstock chart to oci://${REGISTRY_HOST}/${REGISTRY_CHART_REPO}"
+    log "Phase 1: package + push rootstock chart to oci://${registry_host}/${registry_chart_repo}"
 
     # Confirm the registry container exists (started by setup_greenhouse.sh).
     docker inspect registry >/dev/null 2>&1 \
@@ -162,34 +154,35 @@ publish_chart() {
 
     local pkgdir="${workdir}/chart"
     mkdir -p "$pkgdir"
-    # --version overrides the chart version without mutating Chart.yaml.
-    helm package "$chart_dir" --version "$CHART_VERSION" -d "$pkgdir" >/dev/null \
+    # chart_version mirrors Chart.yaml; pass it explicitly so the packaged tgz
+    # name is deterministic.
+    helm package "$chart_dir" --version "$chart_version" -d "$pkgdir" >/dev/null \
         || die "helm package failed"
-    local tgz="${pkgdir}/rootstock-${CHART_VERSION}.tgz"
+    local tgz="${pkgdir}/rootstock-${chart_version}.tgz"
     [[ -f "$tgz" ]] || die "expected packaged chart ${tgz} not found"
     ok "packaged $(basename "$tgz")"
 
     # Push over plain HTTP (zot is HTTP on localhost:5000).
-    helm push "$tgz" "oci://${REGISTRY_HOST}/${REGISTRY_CHART_REPO}" --plain-http \
-        || die "helm push to oci://${REGISTRY_HOST}/${REGISTRY_CHART_REPO} failed"
-    ok "pushed chart to oci://${REGISTRY_HOST}/${REGISTRY_CHART_REPO}/rootstock:${CHART_VERSION}"
+    helm push "$tgz" "oci://${registry_host}/${registry_chart_repo}" --plain-http \
+        || die "helm push to oci://${registry_host}/${registry_chart_repo} failed"
+    ok "pushed chart to oci://${registry_host}/${registry_chart_repo}/rootstock:${chart_version}"
 
     # Flux keys its OCI chart cache by version; re-pushing the same version without
     # invalidating the HelmChart causes Greenhouse to render the stale artifact.
     # Nudge the HelmRepository and delete the HelmChart to force a fresh pull.
     local hr_names
-    hr_names="$(kubectl --context "$admin_context" -n "$DEMO_ORG" get helmrepository \
+    hr_names="$(kubectl --context "$admin_context" -n "$demo_org" get helmrepository \
         -o jsonpath='{.items[*].metadata.name}' 2>/dev/null || true)"
     if [[ -n "$hr_names" ]]; then
         local hr
         for hr in $hr_names; do
-            kubectl --context "$admin_context" -n "$DEMO_ORG" annotate helmrepository "$hr" \
+            kubectl --context "$admin_context" -n "$demo_org" annotate helmrepository "$hr" \
                 "reconcile.fluxcd.io/requestedAt=$(date +%s)" --overwrite >/dev/null 2>&1 || true
         done
     fi
-    if kubectl --context "$admin_context" -n "$DEMO_ORG" get helmchart "rootstock-${CHART_VERSION}" >/dev/null 2>&1; then
-        kubectl --context "$admin_context" -n "$DEMO_ORG" delete helmchart "rootstock-${CHART_VERSION}" >/dev/null 2>&1 || true
-        ok "invalidated stale Flux HelmChart cache (rootstock-${CHART_VERSION})"
+    if kubectl --context "$admin_context" -n "$demo_org" get helmchart "rootstock-${chart_version}" >/dev/null 2>&1; then
+        kubectl --context "$admin_context" -n "$demo_org" delete helmchart "rootstock-${chart_version}" >/dev/null 2>&1 || true
+        ok "invalidated stale Flux HelmChart cache (rootstock-${chart_version})"
     fi
 }
 
@@ -218,28 +211,36 @@ wait_ready() {
     return 1
 }
 
+# Echo the status (True/False) of a Greenhouse cluster status condition.
+cluster_condition() {
+    local type="$1"
+    kubectl --context "$admin_context" get cluster "$remote_context" -n "$demo_org" \
+        -o jsonpath="{.status.statusConditions.conditions[?(@.type==\"${type}\")].status}" \
+        2>/dev/null || echo "False"
+}
+
 apply_plugindefinition() {
     log "Phase 2: apply PluginDefinition and assert READY=True"
 
     # Operate on a TEMP COPY — never mutate the committed plugindefinition.yaml.
-    # Rewrite helmChart.repository to the in-cluster address, pin versions to CHART_VERSION.
+    # Rewrite helmChart.repository to the in-cluster address, pin versions to chart_version.
     # NOTE: PluginDefinition is namespaced in Greenhouse; it must live in the org namespace
-    # (${DEMO_ORG}) or the reconciler won't find the org and will never become Ready.
+    # (${demo_org}) or the reconciler won't find the org and will never become Ready.
     local pd="${workdir}/plugindefinition.yaml"
     cp "$plugin_def" "$pd"
     yq -i "
-      .metadata.namespace = \"${DEMO_ORG}\" |
-      .spec.version = \"${CHART_VERSION}\" |
-      .spec.helmChart.repository = \"oci://${REGISTRY_INCLUSTER}/${REGISTRY_CHART_REPO}\" |
-      .spec.helmChart.version = \"${CHART_VERSION}\"
+      .metadata.namespace = \"${demo_org}\" |
+      .spec.version = \"${chart_version}\" |
+      .spec.helmChart.repository = \"oci://${registry_in_cluster}/${registry_chart_repo}\" |
+      .spec.helmChart.version = \"${chart_version}\"
     " "$pd"
-    ok "temp PluginDefinition: namespace=${DEMO_ORG}, version=${CHART_VERSION}, repository=oci://${REGISTRY_INCLUSTER}/${REGISTRY_CHART_REPO}"
+    ok "temp PluginDefinition: namespace=${demo_org}, version=${chart_version}, repository=oci://${registry_in_cluster}/${registry_chart_repo}"
 
-    kubectl --context "$admin_context" -n "$DEMO_ORG" apply -f "$pd" \
+    kubectl --context "$admin_context" -n "$demo_org" apply -f "$pd" \
         || die "kubectl apply of PluginDefinition failed"
-    ok "applied PluginDefinition 'rootstock' in ns ${DEMO_ORG}"
+    ok "applied PluginDefinition 'rootstock' in ns ${demo_org}"
 
-    if wait_ready plugindefinition rootstock "$DEMO_ORG"; then
+    if wait_ready plugindefinition rootstock "$demo_org"; then
         ok "PluginDefinition rootstock is READY=True"
     else
         die "PluginDefinition rootstock did not become READY within ${READY_TIMEOUT}s"
@@ -247,22 +248,13 @@ apply_plugindefinition() {
 }
 
 # =============================================================================
-# Push an image into the Greenhouse local registry (zot) as an OCI image.
+# OCI image publishing into the local registry (zot).
 #
-# Why not `kind load` + pullPolicy:Never? The HelmRelease image reference is
-# resolved from the registry, so the image must live in zot. zot only accepts
-# OCI manifests (`manifest invalid` on Docker schema2), so we use a throwaway
-# docker-container buildx builder on the host network with an insecure registry.
-#
-# Two modes:
-#   push_image_oci <dest_host>              # build from the repo Dockerfile
-#   push_image_oci <dest_host> <from_image> # re-publish an upstream image as OCI
-# dest_host is the HOST-visible registry address (REGISTRY_HOST/...).
-#
-# Builder notes: docker-container driver + network=host are both required:
-#   - the plain `docker` driver cannot push to an insecure registry;
-#   - without network=host the builder cannot reach localhost:5000.
-oci_builder="rootstock-ghverify-oci"
+# Greenhouse resolves the HelmRelease image from zot, so the image must live
+# there (a `kind load` is not enough). zot only accepts OCI manifests, so we
+# push via a docker-container buildx builder on the host network (the plain
+# `docker` driver can't push to an insecure registry, and network=host is
+# needed to reach localhost:5000).
 
 # Create the shared OCI builder once; safe to call repeatedly.
 ensure_oci_builder() {
@@ -280,39 +272,53 @@ ensure_oci_builder() {
              die "failed to bootstrap buildx builder ${oci_builder}"; }
 }
 
-push_image_oci() {
+# Re-publish a local docker-daemon image to the OCI registry without rebuilding.
+#
+# The docker-container builder has its own image store and can't read daemon
+# images, so we bridge the two with `docker save` (Docker >=25 writes an
+# OCI-layout tarball) and feed the extracted layout to the builder as a build
+# context — layers are copied, nothing is recompiled. Missing images are pulled
+# first, so upstream refs (e.g. curlimages/curl) work too.
+#
+#   push_local_image_oci <dest_host> <local_image>
+push_local_image_oci() {
     local dest_host="$1"
-    local from_image="${2:-}"
-    local ctx dockerfile
-    local build_extra_args
+    local local_image="$2"
+    local ctx layout
 
-    log "pushing OCI image ${dest_host} into local registry"
-    ensure_oci_builder
-
-    if [[ -n "$from_image" ]]; then
-        # Re-publish an upstream image as OCI via a one-line FROM Dockerfile.
-        ctx="$(mktemp -d "${TMPDIR:-/tmp}/ghverify-oci.XXXXXX")"
-        dockerfile="${ctx}/Dockerfile"
-        printf 'FROM %s\n' "$from_image" > "$dockerfile"
-        build_extra_args=""
-    else
-        # Build straight from the repo Dockerfile.
-        ctx="${rootstock_root}"
-        dockerfile="${rootstock_root}/Dockerfile"
-        build_extra_args="--build-arg VERSION=${APP_VERSION}"
+    [[ -n "$local_image" ]] || die "push_local_image_oci: local_image is required"
+    if ! docker image inspect "$local_image" >/dev/null 2>&1; then
+        log "image ${local_image} not present locally; pulling"
+        docker pull "$local_image" >/dev/null 2>&1 \
+            || die "image ${local_image} not found locally and could not be pulled; build it first (e.g. 'make docker-build')"
     fi
 
+    log "re-publishing local image ${local_image} as OCI ${dest_host} (no rebuild)"
+    ensure_oci_builder
+
+    ctx="$(mktemp -d "${TMPDIR:-/tmp}/ghverify-oci.XXXXXX")"
+    layout="${ctx}/layout"
+    mkdir -p "$layout"
+
+    # `docker save` streams an OCI-layout tarball; extract it into $layout.
+    docker save "$local_image" | tar -x -C "$layout" \
+        || { rm -rf "$ctx"; die "failed to export local image ${local_image} via docker save"; }
+    [[ -f "${layout}/index.json" ]] \
+        || { rm -rf "$ctx"; die "docker save did not produce an OCI layout; Docker >= 25 is required to reuse the local image"; }
+
+    # A throwaway `FROM base` Dockerfile whose base is the extracted OCI layout.
+    printf 'FROM base\n' > "${ctx}/Dockerfile"
+
     docker buildx --builder "${oci_builder}" build \
-        "${build_extra_args}" \
         --platform "${BUILD_PLATFORM:-linux/arm64}" \
         --provenance=false \
+        --build-context "base=oci-layout://${layout}" \
         --output "type=registry,registry.insecure=true,name=${dest_host}" \
-        -f "$dockerfile" "$ctx" \
-        || { [[ -n "$from_image" ]] && rm -rf "$ctx"; \
-             die "OCI build/push of ${dest_host} failed"; }
+        -f "${ctx}/Dockerfile" "$ctx" \
+        || { rm -rf "$ctx"; die "OCI push of ${dest_host} (from local image ${local_image}) failed"; }
 
-    [[ -n "$from_image" ]] && rm -rf "$ctx"
-    ok "pushed OCI image ${dest_host}"
+    rm -rf "$ctx"
+    ok "pushed OCI image ${dest_host} (reused local ${local_image})"
 }
 
 # =============================================================================
@@ -324,93 +330,65 @@ run_plugin_e2e() {
     # 1. Make the rootstock image available to the remote cluster via the local
     #    registry (zot). Greenhouse resolves the HelmRelease image from the
     #    registry, so a `kind load` into node containerd is not enough -- we push
-    #    an OCI image and point the Plugin at REGISTRY_INCLUSTER/rootstock.
+    #    an OCI image and point the Plugin at registry_in_cluster/rootstock.
     if ! docker image inspect "$ROOTSTOCK_IMAGE" >/dev/null 2>&1; then
         die "image ${ROOTSTOCK_IMAGE} not found locally; build it first (e.g. 'make docker-build' / 'make kind-up')"
     fi
-    # Push using the HOST-visible address; the Plugin references REGISTRY_INCLUSTER
-    # (same zot, but reachable in-cluster).
-    push_image_oci "${REGISTRY_HOST}/rootstock:${ROOTSTOCK_IMAGE##*:}"
-    ok "image available in registry as ${ROOTSTOCK_REGISTRY_IMAGE}"
+    # Reuse the image already built in the local docker daemon (make docker-build)
+    # instead of rebuilding it from the Dockerfile. Push using the HOST-visible
+    # address; the Plugin references registry_in_cluster (same zot, but reachable
+    # in-cluster).
+    push_local_image_oci "${registry_host}/rootstock:${ROOTSTOCK_IMAGE##*:}" "$ROOTSTOCK_IMAGE"
+    ok "image available in registry as ${rootstock_registry_image}"
 
     # Re-publish the test-connection curl image as OCI; dev-env zot can't mirror
     # Docker Hub (docker2s2 disabled), so override testConnection.image.* in the Plugin.
-    push_image_oci \
-        "${REGISTRY_HOST}/${TESTCONN_REGISTRY_IMAGE#*/}" \
-        "$TESTCONN_SOURCE_IMAGE"
-    ok "test-connection image available in registry as ${TESTCONN_REGISTRY_IMAGE}"
+    push_local_image_oci "${registry_host}/${test_conn_image}" "$test_conn_image"
+    ok "test-connection image available in registry as ${testconn_registry_image}"
 
-    # 2. Wait for Greenhouse to see the remote cluster nodes as ready.
-    #    When clusters are freshly created, there's a race where nodes become Ready
-    #    but Greenhouse hasn't updated its cluster status yet, causing Plugin deployment to fail.
+    # Re-publish the SNMP exporter image as OCI; dev-env zot can't mirror quay.io,
+    # so override snmpExporter.image.* in the Plugin. Strip the quay.io host so the
+    # local path matches snmp_exporter_registry_image.
+    push_local_image_oci "${registry_host}/${snmp_exporter_image#*/}" "$snmp_exporter_image"
+    ok "snmp-exporter image available in registry as ${snmp_exporter_registry_image}"
+
+    # 2. Wait for Greenhouse to register the remote cluster's nodes as ready.
+    #    Freshly created clusters race: nodes go Ready before Greenhouse updates
+    #    the cluster status, which would otherwise fail Plugin deployment.
     log "waiting for Greenhouse to recognize cluster nodes as ready"
-    local cluster_wait_timeout=300
-    local cluster_wait_elapsed=0
-    local cluster_refresh_attempts=0
-
-    while [[ $cluster_wait_elapsed -lt $cluster_wait_timeout ]]; do
-        local all_nodes_ready payload_schedulable
-
-        all_nodes_ready=$(
-          kubectl --context "$admin_context" get cluster "$remote_context" -n "$DEMO_ORG" \
-            -o jsonpath='{.status.statusConditions.conditions[?(@.type=="AllNodesReady")].status}' 2>/dev/null \
-          || echo "False"
-        )
-        payload_schedulable=$(
-          kubectl --context "$admin_context" get cluster "$remote_context" -n "$DEMO_ORG" \
-            -o jsonpath='{.status.statusConditions.conditions[?(@.type=="PayloadSchedulable")].status}' 2>/dev/null \
-          || echo "False"
-        )
-
-        if [[ "$all_nodes_ready" == "True" && "$payload_schedulable" == "True" ]]; then
+    local timeout=300 elapsed=0 refreshed=false
+    local nodes_ready payload_schedulable
+    while true; do
+        nodes_ready="$(cluster_condition AllNodesReady)"
+        payload_schedulable="$(cluster_condition PayloadSchedulable)"
+        if [[ "$nodes_ready" == "True" && "$payload_schedulable" == "True" ]]; then
+            echo
             ok "cluster nodes are ready and schedulable in Greenhouse"
             break
         fi
-
-        # If nodes are still not ready after 60s, try to force a refresh by annotating the cluster
-        if [[ $cluster_wait_elapsed -eq 60 && $cluster_refresh_attempts -eq 0 ]]; then
+        if (( elapsed >= timeout )); then
             echo
-            log "forcing cluster status refresh..."
-            kubectl --context "$admin_context" annotate cluster "$remote_context" -n "$DEMO_ORG" \
-                greenhouse.sap/force-refresh="$(date +%s)" --overwrite >/dev/null 2>&1 || true
-            cluster_refresh_attempts=1
-            echo -n "    continuing to wait"
-        elif [[ $cluster_wait_elapsed -eq 0 ]]; then
-            echo -n "    waiting for cluster readiness (current: AllNodesReady=$all_nodes_ready, PayloadSchedulable=$payload_schedulable)"
-        else
-            echo -n "."
+            die "cluster ${remote_context} not ready after ${timeout}s (AllNodesReady=${nodes_ready}, PayloadSchedulable=${payload_schedulable})"
         fi
-
+        # Nudge a status refresh once at the 60s mark.
+        if (( elapsed >= 60 )) && [[ "$refreshed" == false ]]; then
+            echo; log "forcing cluster status refresh"
+            kubectl --context "$admin_context" annotate cluster "$remote_context" -n "$demo_org" \
+                greenhouse.sap/force-refresh="$(date +%s)" --overwrite >/dev/null 2>&1 || true
+            refreshed=true
+        fi
+        printf '.'
         sleep 5
-        cluster_wait_elapsed=$((cluster_wait_elapsed + 5))
+        elapsed=$(( elapsed + 5 ))
     done
-    echo  # newline after dots
-
-    # Final check - if still not ready, fail fast instead of proceeding
-    local final_all_nodes_ready final_payload_schedulable
-
-    final_all_nodes_ready=$(
-      kubectl --context "$admin_context" get cluster "$remote_context" -n "$DEMO_ORG" \
-        -o jsonpath='{.status.statusConditions.conditions[?(@.type=="AllNodesReady")].status}' 2>/dev/null \
-      || echo "False"
-      )
-    final_payload_schedulable=$(
-      kubectl --context "$admin_context" get cluster "$remote_context" -n "$DEMO_ORG" \
-        -o jsonpath='{.status.statusConditions.conditions[?(@.type=="PayloadSchedulable")].status}' 2>/dev/null \
-      || echo "False"
-    )
-
-    if [[ "$final_all_nodes_ready" != "True" || "$final_payload_schedulable" != "True" ]]; then
-        die "cluster ${remote_context} is not ready after ${cluster_wait_timeout}s (AllNodesReady=${final_all_nodes_ready}, PayloadSchedulable=${final_payload_schedulable})"
-    fi
 
     # 3. Redfish Secret in the org namespace (Greenhouse resolves valueFrom.secret there).
     local redfish_pw="${REDFISH_PASSWORD:-redfish-test-password}"
-    kubectl --context "$admin_context" -n "$DEMO_ORG" create secret generic rootstock-redfish \
+    kubectl --context "$admin_context" -n "$demo_org" create secret generic rootstock-redfish \
         --from-literal=redfish_password="$redfish_pw" \
         --dry-run=client -o yaml | kubectl --context "$admin_context" apply -f - \
         || die "failed to create rootstock-redfish secret"
-    ok "created Secret rootstock-redfish in ns ${DEMO_ORG}"
+    ok "created Secret rootstock-redfish in ns ${demo_org}"
 
     # 4. Apply the Plugin on a temp copy. Normalize to the pinned Greenhouse CRD schema
     # (spec.pluginDefinitionRef, drop legacy spec.pluginDefinition/disabled), repoint
@@ -418,26 +396,28 @@ run_plugin_e2e() {
     local plugin="${workdir}/plugin.yaml"
     cp "${greenhouse_test_dir}/plugin.yaml" "$plugin"
     yq -i "
-      .metadata.namespace = \"${DEMO_ORG}\" |
+      .metadata.namespace = \"${demo_org}\" |
       .spec.clusterName = \"${remote_context}\" |
       .spec.pluginDefinitionRef = {\"kind\": \"PluginDefinition\", \"name\": \"rootstock\"} |
       del(.spec.pluginDefinition) |
       del(.spec.disabled) |
       (.spec.optionValues[] | select(.name == \"image.pullPolicy\").value) = \"IfNotPresent\" |
-      (.spec.optionValues[] | select(.name == \"image.repository\").value) = \"${ROOTSTOCK_REGISTRY_IMAGE%:*}\" |
-      (.spec.optionValues[] | select(.name == \"image.tag\").value) = \"${ROOTSTOCK_REGISTRY_IMAGE##*:}\" |
+      (.spec.optionValues[] | select(.name == \"image.repository\").value) = \"${rootstock_registry_image%:*}\" |
+      (.spec.optionValues[] | select(.name == \"image.tag\").value) = \"${rootstock_registry_image##*:}\" |
       .spec.optionValues += [
         {\"name\": \"snmpExporter.enabled\", \"value\": true},
         {\"name\": \"snmpExporter.configFile\", \"value\": \"${SNMP_CONFIG_FILE}\"},
-        {\"name\": \"testConnection.image.repository\", \"value\": \"${TESTCONN_REGISTRY_IMAGE%:*}\"},
-        {\"name\": \"testConnection.image.tag\", \"value\": \"${TESTCONN_REGISTRY_IMAGE##*:}\"}
+        {\"name\": \"snmpExporter.image.repository\", \"value\": \"${snmp_exporter_registry_image%:*}\"},
+        {\"name\": \"snmpExporter.image.tag\", \"value\": \"${snmp_exporter_registry_image##*:}\"},
+        {\"name\": \"testConnection.image.repository\", \"value\": \"${testconn_registry_image%:*}\"},
+        {\"name\": \"testConnection.image.tag\", \"value\": \"${testconn_registry_image##*:}\"}
       ]
     " "$plugin"
     kubectl --context "$admin_context" apply -f "$plugin" \
         || die "kubectl apply of Plugin failed"
-    ok "applied Plugin 'rootstock' (cluster=${remote_context}, ns=${DEMO_ORG})"
+    ok "applied Plugin 'rootstock' (cluster=${remote_context}, ns=${demo_org})"
 
-    if wait_ready plugin rootstock "$DEMO_ORG"; then
+    if wait_ready plugin rootstock "$demo_org"; then
         ok "Plugin rootstock is READY=True"
     else
         die "Plugin rootstock did not become READY within ${READY_TIMEOUT}s"
@@ -447,130 +427,6 @@ run_plugin_e2e() {
     log "Skipping probe check (no Redfish target configured)"
     ok "Plugin deployed successfully"
 }
-
-# =============================================================================
-# UNUSED FUNCTIONS (kept for reference)
-# =============================================================================
-# These functions are no longer called but kept for reference in case
-# Redfish mockup testing is needed in the future.
-
-# Build + load the DMTF Redfish mockup (pre-loaded with rootstock's PDU dataset)
-# and deploy it into the workload namespace on the REMOTE cluster, so the
-# collector can scrape it via in-cluster DNS. Mirrors the Makefile 'kind-mockup'
-# target, retargeted at the Greenhouse remote cluster.
-# UNUSED: deploy_mockup() {
-#     local ns="rootstock"
-#     log "building and loading DMTF redfish mockup image"
-#     docker build -t rootstock-mockup:latest \
-#         -f "${rootstock_root}/hack/kind/Dockerfile.mockup" "$rootstock_root" >/dev/null \
-#         || die "failed to build rootstock-mockup image"
-#     kind load docker-image rootstock-mockup:latest --name "$remote_cluster" \
-#         || die "kind load of rootstock-mockup into ${remote_cluster} failed"
-#
-#     log "deploying redfish mockup into ns ${ns} on ${remote_context}"
-#     kubectl --context "$remote_context" create namespace "$ns" \
-#         --dry-run=client -o yaml | kubectl --context "$remote_context" apply -f - \
-#         || die "failed to ensure namespace ${ns}"
-#     kubectl --context "$remote_context" -n "$ns" apply -f "${rootstock_root}/hack/kind/redfish-mockup.yaml" \
-#         || die "failed to apply redfish-mockup manifest"
-#     kubectl --context "$remote_context" -n "$ns" rollout status deploy/redfish-mockup --timeout=120s \
-#         || die "redfish-mockup never became ready on ${remote_context}"
-#     ok "redfish mockup deployed (redfish-mockup.${ns}.svc:8000)"
-# }
-
-# UNUSED: probe_check() {
-#     log "verifying /healthz and /probe on the deployed workload (remote cluster)"
-#     local ns="rootstock" release="rootstock" local_port="${LOCAL_PORT:-9220}"
-#
-#     # Wait for deployment to exist (Flux may need time to reconcile)
-#     local retries=30
-#     for ((i=0; i<retries; i++)); do
-#         if kubectl --context "$remote_context" -n "$ns" get "deploy/${release}" >/dev/null 2>&1; then
-#             break
-#         fi
-#         if ((i == 0)); then
-#             log "waiting for deployment ${release} to be created by Flux..."
-#         fi
-#         sleep 2
-#     done
-#
-#     kubectl --context "$remote_context" -n "$ns" get "deploy/${release}" >/dev/null 2>&1 \
-#         || die "rootstock deployment was not created by Flux in ${ns}"
-#
-#     kubectl --context "$remote_context" -n "$ns" rollout status "deploy/${release}" --timeout=120s \
-#         || die "rootstock deployment never became ready on ${remote_context}"
-#
-#     local pf_pid=""
-#     cleanup_pf() {
-#       # shellcheck disable=SC2015
-#       [[ -n "${pf_pid:-}" ]] && kill "$pf_pid" 2>/dev/null || true
-#     }
-#     trap cleanup_pf RETURN
-#
-#     kubectl --context "$remote_context" -n "$ns" port-forward "svc/${release}" "${local_port}:9220" \
-#         >/dev/null 2>&1 &
-#     pf_pid=$!
-#
-#     local i
-#     for ((i = 0; i < 30; i++)); do
-#         curl -sf "http://localhost:${local_port}/healthz" >/dev/null 2>&1 && break
-#         sleep 1
-#     done
-#     curl -sf "http://localhost:${local_port}/healthz" >/dev/null \
-#         || die "/healthz never became ready"
-#     ok "/healthz OK"
-#
-#     # Probe the in-cluster redfish mockup. The collector skips zero-valued
-#     # readings, so a matching metric line is a genuine end-to-end success.
-#     local target="${TARGET:-http://redfish-mockup.${ns}.svc.cluster.local:8000}"
-#     local pdu_id="${PDU_ID:-pdu1}"
-#     local body
-#     body="$(curl -sf "http://localhost:${local_port}/probe?target=${target}&labels=${pdu_id}")" \
-#         || die "/probe request failed"
-#     if echo "$body" | grep -Eqi 'pdu_|power|energy|apparent'; then
-#         ok "/probe returned real rootstock metrics"
-#     else
-#         warn "/probe output head:"; echo "$body" | head -n 20
-#         die "no expected metrics found in /probe output"
-#     fi
-#
-#     # Verify SNMP exporter sidecar is running
-#     log "verifying SNMP exporter sidecar"
-#     local snmp_port="9116"
-#     kubectl --context "$remote_context" -n "$ns" port-forward "svc/${release}" "${snmp_port}:9116" \
-#         >/dev/null 2>&1 &
-#     local snmp_pf_pid=$!
-#
-#     cleanup_snmp_pf() {
-#         [[ -n "${snmp_pf_pid:-}" ]] && kill "$snmp_pf_pid" 2>/dev/null || true
-#     }
-#     trap cleanup_snmp_pf RETURN
-#
-#     sleep 2
-#     if curl -sf "http://localhost:${snmp_port}/metrics" >/dev/null 2>&1; then
-#         ok "SNMP exporter /metrics endpoint responding"
-#
-#         # Check if snmp-exporter container is running in the pod
-#         local pod_name
-#         pod_name=$(kubectl --context "$remote_context" -n "$ns" get pods -l app.kubernetes.io/name=rootstock -o jsonpath='{.items[0].metadata.name}')
-#         local container_count
-#         container_count=$(kubectl --context "$remote_context" -n "$ns" get pod "$pod_name" -o jsonpath='{.status.containerStatuses[*].name}' | wc -w | tr -d ' ')
-#         if [[ "$container_count" == "2" ]]; then
-#             ok "Pod has 2 containers (rootstock + snmp-exporter sidecar)"
-#
-#             # Check snmp-exporter logs for successful startup
-#             if kubectl --context "$remote_context" -n "$ns" logs "$pod_name" -c snmp-exporter --tail=10 2>/dev/null | grep -q "Listening on"; then
-#                 ok "SNMP exporter container started successfully"
-#             else
-#                 warn "SNMP exporter container may not have started properly"
-#             fi
-#         else
-#             warn "Expected 2 containers but found ${container_count}"
-#         fi
-#     else
-#         warn "SNMP exporter endpoint not responding (this is OK if snmpExporter.enabled=false)"
-#     fi
-# }
 
 # =============================================================================
 # Phase 4: teardown
@@ -587,67 +443,39 @@ teardown() {
 # =============================================================================
 # Version resolution
 # =============================================================================
-# Resolve the chart version (authority: Chart.yaml) and app version (authority:
-# VERSION.yaml), honouring CHART_VERSION / APP_VERSION / ROOTSTOCK_IMAGE
-# overrides. Called once at the start of main() so every phase stays in lockstep.
+# Resolve the chart version (always from Chart.yaml), honouring the
+# ROOTSTOCK_IMAGE override. Called once at the start of main() so every phase
+# stays in lockstep.
 resolve_versions() {
     log "resolving versions"
 
-    if [[ -z "$CHART_VERSION" ]]; then
-        CHART_VERSION="$(yq -r '.version' "${chart_dir}/Chart.yaml" 2>/dev/null)" \
-            || die "failed to read .version from ${chart_dir}/Chart.yaml"
-        [[ -n "$CHART_VERSION" && "$CHART_VERSION" != "null" ]] \
-            || die "chart version is empty/null in ${chart_dir}/Chart.yaml"
-        ok "chart version ${CHART_VERSION} (from Chart.yaml)"
-    else
-        ok "chart version ${CHART_VERSION} (CHART_VERSION override)"
-    fi
-
-    if [[ -z "$APP_VERSION" ]]; then
-        APP_VERSION="$(yq -r '.version' "${rootstock_root}/VERSION.yaml" 2>/dev/null)" \
-            || die "failed to read .version from VERSION.yaml"
-        [[ -n "$APP_VERSION" && "$APP_VERSION" != "null" ]] \
-            || die "app version is empty/null in VERSION.yaml"
-        ok "app version ${APP_VERSION} (from VERSION.yaml)"
-    else
-        ok "app version ${APP_VERSION} (APP_VERSION override)"
-    fi
+    chart_version="$(yq -r '.version' "${chart_dir}/Chart.yaml" 2>/dev/null)" \
+        || die "failed to read .version from ${chart_dir}/Chart.yaml"
+    [[ -n "$chart_version" && "$chart_version" != "null" ]] \
+        || die "chart version is empty/null in ${chart_dir}/Chart.yaml"
+    ok "chart version ${chart_version} (from Chart.yaml)"
 
     if [[ -z "$ROOTSTOCK_IMAGE" ]]; then
-        ROOTSTOCK_IMAGE="rootstock:${APP_VERSION}"
-        ok "image ${ROOTSTOCK_IMAGE} (derived from APP_VERSION)"
+        # Mirror the Makefile default: IMAGE ?= ghcr.io/cloudoperators/rootstock:dev-$(USER)
+        ROOTSTOCK_IMAGE="ghcr.io/cloudoperators/rootstock:dev-${USER}"
+        ok "image ${ROOTSTOCK_IMAGE} (Makefile IMAGE default)"
     else
         ok "image ${ROOTSTOCK_IMAGE} (ROOTSTOCK_IMAGE override)"
     fi
 
-    # Registry image the Plugin pulls from; use REGISTRY_INCLUSTER so Greenhouse's
-    # upstream-mirror rewrite doesn't intercept it.
-    if [[ -z "$ROOTSTOCK_REGISTRY_IMAGE" ]]; then
-        ROOTSTOCK_REGISTRY_IMAGE="${REGISTRY_INCLUSTER}/rootstock:${ROOTSTOCK_IMAGE##*:}"
-        ok "registry image ${ROOTSTOCK_REGISTRY_IMAGE} (derived)"
-    else
-        ok "registry image ${ROOTSTOCK_REGISTRY_IMAGE} (ROOTSTOCK_REGISTRY_IMAGE override)"
-    fi
+    rootstock_registry_image="${registry_in_cluster}/rootstock:${ROOTSTOCK_IMAGE##*:}"
+    ok "registry image ${rootstock_registry_image} (derived)"
 
-    # Test-hook image; drop the registry host from the source ref so
-    # curlimages/curl:8.11.1 maps to ${REGISTRY_INCLUSTER}/curlimages/curl:8.11.1.
-    if [[ -z "$TESTCONN_REGISTRY_IMAGE" ]]; then
-        local tc_repo="${TESTCONN_SOURCE_IMAGE%:*}"
-        local tc_tag="${TESTCONN_SOURCE_IMAGE##*:}"
-        local first="${tc_repo%%/*}"
-        if [[ "$tc_repo" == */* && ( "$first" == *.* || "$first" == *:* || "$first" == "localhost" ) ]]; then
-            tc_repo="${tc_repo#*/}"
-        fi
-        TESTCONN_REGISTRY_IMAGE="${REGISTRY_INCLUSTER}/${tc_repo}:${tc_tag}"
-        ok "test-connection image ${TESTCONN_REGISTRY_IMAGE} (derived)"
-    else
-        ok "test-connection image ${TESTCONN_REGISTRY_IMAGE} (TESTCONN_REGISTRY_IMAGE override)"
-    fi
+    # Test-hook image re-published under the in-cluster registry
+    # (curlimages/curl:8.11.1 -> ${registry_in_cluster}/curlimages/curl:8.11.1).
+    testconn_registry_image="${registry_in_cluster}/${test_conn_image}"
+    ok "test-connection image ${testconn_registry_image} (derived)"
+
+    # SNMP exporter image re-published under the in-cluster registry (strip the
+    # quay.io host: quay.io/prometheus/snmp-exporter:v0.26.0 ->
+    # ${registry_in_cluster}/prometheus/snmp-exporter:v0.26.0).
+    snmp_exporter_registry_image="${registry_in_cluster}/${snmp_exporter_image#*/}"
+    ok "snmp-exporter image ${snmp_exporter_registry_image} (derived)"
 }
 
-
-
 main "$@"
-
-
-
