@@ -8,7 +8,7 @@ and this project adheres to
 
 <!-- git-cliff: end of header -->
 
-## 2026-11-02
+## 2026-11-09
 
 - (0.2.0 - 🚀) tooling: Local kind deployment
   [#80](https://github.com/cloudoperators/rootstock/pull/80)
@@ -72,6 +72,34 @@ and this project adheres to
   by [@blackhat-jan](https://github.com/blackhat-jan)
 - (0.2.0 - 🐛) tooling: Code coverage reference to main run
   [#118](https://github.com/cloudoperators/rootstock/pull/118)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.1.0...v0.2.0))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.2.0 - ⚙️) chart: Cleanup structures
+  [#105](https://github.com/cloudoperators/rootstock/pull/105)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.1.0...v0.2.0))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.2.0 - ⚙️) automerge: Remove restriction on pending reviewers
+  [#121](https://github.com/cloudoperators/rootstock/pull/121)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.1.0...v0.2.0))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.2.0 - ⚙️) docs: Update architecture diagram
+  [#119](https://github.com/cloudoperators/rootstock/pull/119)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.1.0...v0.2.0))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.2.0 - ⚙️) tooling: Add pr summary bot
+  [#123](https://github.com/cloudoperators/rootstock/pull/123)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.1.0...v0.2.0))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.2.0 - 🐛) automerge: Add merge strategy for updating changelog and version…
+  [#124](https://github.com/cloudoperators/rootstock/pull/124)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.1.0...v0.2.0))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.2.0 - ⚙️) Add snmp output examples
+  [#122](https://github.com/cloudoperators/rootstock/pull/122)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.1.0...v0.2.0))
+  by [@idafurjes](https://github.com/idafurjes)
+- (0.2.0 - ⚙️) doc: Add SLO definitions
+  [#126](https://github.com/cloudoperators/rootstock/pull/126)
   ([diff](https://github.com/cloudoperators/rootstock/compare/v0.1.0...v0.2.0))
   by [@blackhat-jan](https://github.com/blackhat-jan)
 

@@ -36,12 +36,12 @@ rootstock:
     # 1. existingSecret: reference a pre-created, externally-managed Kubernetes
     #    Secret (recommended when the Secret is managed outside the chart). The
     #    secret content must have the format
-    # 
+    #
     #     redfish_pdus.yaml: |
     #       pdu1:
     #         password: password_value
     #         username: user_value
-    # 
+    #
     # 2. password: provide the value inline and let the chart render a Secret.
     #    Used for self-contained / local (kind) deployments AND by Greenhouse:
     #    a Plugin's redfish.password (valueFrom.secret) feeds this value.
@@ -50,10 +50,6 @@ rootstock:
     existingSecret: ""
     access:
       pdu1: {username: redfish, password: changeThis}
-
-    # Inline password. Only used when existingSecret is empty. For an
-    # externally-managed Secret, leave this empty and set existingSecret instead.
-    password:
   config:
     folder: /config
   port: 9220
@@ -83,34 +79,6 @@ serviceAccount:
   # The name of the service account to use.
   # If not set and create is true, a name is generated using the fullname template.
   name: ""
-
-# Redfish scrape configuration.
-redfish:
-  # Username used for Redfish session authentication.
-  username: redfish
-
-  # The password is ALWAYS consumed from a mounted file, never an environment
-  # variable. There are two mutually exclusive ways to supply it:
-  #
-  # 1. existingSecret: reference a pre-created, externally-managed Kubernetes
-  #    Secret (recommended when the Secret is managed outside the chart).
-  # 2. password: provide the value inline and let the chart render a Secret.
-  #    Used for self-contained / local (kind) deployments AND by Greenhouse:
-  #    a Plugin's redfish.password (valueFrom.secret) feeds this value.
-  #
-  # In both cases the Secret is projected into the pod as a read-only file.
-  existingSecret: ""
-  # Key within the Secret that holds the password.
-  secretKey: redfish_password
-  # Inline password. Only used when existingSecret is empty. For an
-  # externally-managed Secret, leave this empty and set existingSecret instead.
-  password: ""
-
-  # Directory the credentials file is mounted into. Maps to --config-folder.
-  configFolder: /config
-  # File name holding the password. Maps to --redfish-credentials-file.
-  # The container reads <configFolder>/<credentialsFileName>.
-  credentialsFileName: redfish_password
 
 service:
   type: ClusterIP

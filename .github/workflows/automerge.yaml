@@ -9,8 +9,6 @@ on:
     types: [completed]
   pull_request_review:
     types: [submitted]
-  pull_request:
-    types: [review_requested, review_request_removed]
   schedule:
     - cron: '*/10 * * * *'
   workflow_dispatch:
@@ -32,6 +30,7 @@ env:
 permissions:
   contents: write
   pull-requests: write
+  issues: write
   actions: read
 
 jobs:
@@ -188,3 +187,36 @@ jobs:
             --repo "$GITHUB_REPOSITORY" \
             --squash \
             --delete-branch
+
+  close-referenced-issues:
+    needs: [check-eligibility, merge]
+    if: needs.check-eligibility.outputs.eligible == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/create-github-app-token@v2
+        id: app-token
+        with:
+          app-id: ${{ secrets.CLOUDOPERATOR_APP_ID }}
+          private-key: ${{ secrets.CLOUDOPERATOR_APP_PRIVATE_KEY }}
+      - name: Close issues referenced in PR body
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          PR_BODY: ${{ needs.check-eligibility.outputs.pr_body }}
+          PR_NUMBER: ${{ needs.check-eligibility.outputs.pr_number }}
+        run: |
+          issue_numbers=$(printf '%s' "$PR_BODY" \
+            | grep -oiE '(close[sd]?|fix(e[sd])?|resolve[sd]?)[[:space:]]+#[0-9]+' \
+            | grep -oE '[0-9]+' \
+            || true)
+
+          if [ -z "$issue_numbers" ]; then
+            echo "No referenced issues found in PR #${PR_NUMBER} — nothing to close"
+            exit 0
+          fi
+
+          for issue_number in $issue_numbers; do
+            echo "Closing issue #${issue_number} (referenced in PR #${PR_NUMBER})"
+            gh issue close "$issue_number" \
+              --repo "$GITHUB_REPOSITORY" \
+              --comment "Closed via PR #${PR_NUMBER}."
+          done

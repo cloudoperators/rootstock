@@ -1,0 +1,804 @@
+# HELP breaker_circuit_id The PDU Branch Circuit ID. - 1.3.6.1.4.1.3711.24.1.1.11.1.1.1.4
+# TYPE breaker_circuit_id gauge
+breaker_circuit_id{breaker_circuit_id="Red-1 C1-A",pduP2BrCktMonBrCctBreakerOutletMap="1,2,3,4",pduP2BrCktMonBrCctID="Red-1 C1-A",pduP2BrCktMonBrCctNumber="1",pduP2BrCktMonBrCctPhases="L1-L2",pduP2BrCktMonPduNumber="1"} 1
+breaker_circuit_id{breaker_circuit_id="Red-1 C1-B",pduP2BrCktMonBrCctBreakerOutletMap="5,6,7,8",pduP2BrCktMonBrCctID="Red-1 C1-B",pduP2BrCktMonBrCctNumber="2",pduP2BrCktMonBrCctPhases="L2-L3",pduP2BrCktMonPduNumber="1"} 1
+breaker_circuit_id{breaker_circuit_id="Red-1 C2-A",pduP2BrCktMonBrCctBreakerOutletMap="9,10,11,12",pduP2BrCktMonBrCctID="Red-1 C2-A",pduP2BrCktMonBrCctNumber="3",pduP2BrCktMonBrCctPhases="L3-L1",pduP2BrCktMonPduNumber="1"} 1
+breaker_circuit_id{breaker_circuit_id="Red-1 C2-B",pduP2BrCktMonBrCctBreakerOutletMap="13,14,15,16",pduP2BrCktMonBrCctID="Red-1 C2-B",pduP2BrCktMonBrCctNumber="4",pduP2BrCktMonBrCctPhases="L1-L2",pduP2BrCktMonPduNumber="1"} 1
+breaker_circuit_id{breaker_circuit_id="Red-1 C3-A",pduP2BrCktMonBrCctBreakerOutletMap="17,18,19,20",pduP2BrCktMonBrCctID="Red-1 C3-A",pduP2BrCktMonBrCctNumber="5",pduP2BrCktMonBrCctPhases="L2-L3",pduP2BrCktMonPduNumber="1"} 1
+breaker_circuit_id{breaker_circuit_id="Red-1 C3-B",pduP2BrCktMonBrCctBreakerOutletMap="21,22,23,24",pduP2BrCktMonBrCctID="Red-1 C3-B",pduP2BrCktMonBrCctNumber="6",pduP2BrCktMonBrCctPhases="L3-L1",pduP2BrCktMonPduNumber="1"} 1
+breaker_circuit_id{breaker_circuit_id="Yellow-1 C1-A",pduP2BrCktMonBrCctBreakerOutletMap="1,2,3,4",pduP2BrCktMonBrCctID="Yellow-1 C1-A",pduP2BrCktMonBrCctNumber="1",pduP2BrCktMonBrCctPhases="L1-L2",pduP2BrCktMonPduNumber="4"} 1
+breaker_circuit_id{breaker_circuit_id="Yellow-1 C1-B",pduP2BrCktMonBrCctBreakerOutletMap="5,6,7,8",pduP2BrCktMonBrCctID="Yellow-1 C1-B",pduP2BrCktMonBrCctNumber="2",pduP2BrCktMonBrCctPhases="L2-L3",pduP2BrCktMonPduNumber="4"} 1
+breaker_circuit_id{breaker_circuit_id="Yellow-1 C2-A",pduP2BrCktMonBrCctBreakerOutletMap="9,10,11,12",pduP2BrCktMonBrCctID="Yellow-1 C2-A",pduP2BrCktMonBrCctNumber="3",pduP2BrCktMonBrCctPhases="L3-L1",pduP2BrCktMonPduNumber="4"} 1
+breaker_circuit_id{breaker_circuit_id="Yellow-1 C2-B",pduP2BrCktMonBrCctBreakerOutletMap="13,14,15,16",pduP2BrCktMonBrCctID="Yellow-1 C2-B",pduP2BrCktMonBrCctNumber="4",pduP2BrCktMonBrCctPhases="L1-L2",pduP2BrCktMonPduNumber="4"} 1
+breaker_circuit_id{breaker_circuit_id="Yellow-1 C3-A",pduP2BrCktMonBrCctBreakerOutletMap="17,18,19,20",pduP2BrCktMonBrCctID="Yellow-1 C3-A",pduP2BrCktMonBrCctNumber="5",pduP2BrCktMonBrCctPhases="L2-L3",pduP2BrCktMonPduNumber="4"} 1
+breaker_circuit_id{breaker_circuit_id="Yellow-1 C3-B",pduP2BrCktMonBrCctBreakerOutletMap="21,22,23,24",pduP2BrCktMonBrCctID="Yellow-1 C3-B",pduP2BrCktMonBrCctNumber="6",pduP2BrCktMonBrCctPhases="L3-L1",pduP2BrCktMonPduNumber="4"} 1
+# HELP breaker_circuit_number The PDU Branch Circuit Number. - 1.3.6.1.4.1.3711.24.1.1.11.1.1.1.2
+# TYPE breaker_circuit_number gauge
+breaker_circuit_number{pduP2BrCktMonBrCctBreakerOutletMap="1,2,3,4",pduP2BrCktMonBrCctID="Red-1 C1-A",pduP2BrCktMonBrCctNumber="1",pduP2BrCktMonBrCctPhases="L1-L2",pduP2BrCktMonPduNumber="1"} 1
+breaker_circuit_number{pduP2BrCktMonBrCctBreakerOutletMap="1,2,3,4",pduP2BrCktMonBrCctID="Yellow-1 C1-A",pduP2BrCktMonBrCctNumber="1",pduP2BrCktMonBrCctPhases="L1-L2",pduP2BrCktMonPduNumber="4"} 1
+breaker_circuit_number{pduP2BrCktMonBrCctBreakerOutletMap="13,14,15,16",pduP2BrCktMonBrCctID="Red-1 C2-B",pduP2BrCktMonBrCctNumber="4",pduP2BrCktMonBrCctPhases="L1-L2",pduP2BrCktMonPduNumber="1"} 4
+breaker_circuit_number{pduP2BrCktMonBrCctBreakerOutletMap="13,14,15,16",pduP2BrCktMonBrCctID="Yellow-1 C2-B",pduP2BrCktMonBrCctNumber="4",pduP2BrCktMonBrCctPhases="L1-L2",pduP2BrCktMonPduNumber="4"} 4
+breaker_circuit_number{pduP2BrCktMonBrCctBreakerOutletMap="17,18,19,20",pduP2BrCktMonBrCctID="Red-1 C3-A",pduP2BrCktMonBrCctNumber="5",pduP2BrCktMonBrCctPhases="L2-L3",pduP2BrCktMonPduNumber="1"} 5
+breaker_circuit_number{pduP2BrCktMonBrCctBreakerOutletMap="17,18,19,20",pduP2BrCktMonBrCctID="Yellow-1 C3-A",pduP2BrCktMonBrCctNumber="5",pduP2BrCktMonBrCctPhases="L2-L3",pduP2BrCktMonPduNumber="4"} 5
+breaker_circuit_number{pduP2BrCktMonBrCctBreakerOutletMap="21,22,23,24",pduP2BrCktMonBrCctID="Red-1 C3-B",pduP2BrCktMonBrCctNumber="6",pduP2BrCktMonBrCctPhases="L3-L1",pduP2BrCktMonPduNumber="1"} 6
+breaker_circuit_number{pduP2BrCktMonBrCctBreakerOutletMap="21,22,23,24",pduP2BrCktMonBrCctID="Yellow-1 C3-B",pduP2BrCktMonBrCctNumber="6",pduP2BrCktMonBrCctPhases="L3-L1",pduP2BrCktMonPduNumber="4"} 6
+breaker_circuit_number{pduP2BrCktMonBrCctBreakerOutletMap="5,6,7,8",pduP2BrCktMonBrCctID="Red-1 C1-B",pduP2BrCktMonBrCctNumber="2",pduP2BrCktMonBrCctPhases="L2-L3",pduP2BrCktMonPduNumber="1"} 2
+breaker_circuit_number{pduP2BrCktMonBrCctBreakerOutletMap="5,6,7,8",pduP2BrCktMonBrCctID="Yellow-1 C1-B",pduP2BrCktMonBrCctNumber="2",pduP2BrCktMonBrCctPhases="L2-L3",pduP2BrCktMonPduNumber="4"} 2
+breaker_circuit_number{pduP2BrCktMonBrCctBreakerOutletMap="9,10,11,12",pduP2BrCktMonBrCctID="Red-1 C2-A",pduP2BrCktMonBrCctNumber="3",pduP2BrCktMonBrCctPhases="L3-L1",pduP2BrCktMonPduNumber="1"} 3
+breaker_circuit_number{pduP2BrCktMonBrCctBreakerOutletMap="9,10,11,12",pduP2BrCktMonBrCctID="Yellow-1 C2-A",pduP2BrCktMonBrCctNumber="3",pduP2BrCktMonBrCctPhases="L3-L1",pduP2BrCktMonPduNumber="4"} 3
+# HELP breaker_outlet_map A string representing the outlets of a branch circuit - 1.3.6.1.4.1.3711.24.1.1.11.1.1.1.14
+# TYPE breaker_outlet_map gauge
+breaker_outlet_map{breaker_outlet_map="1,2,3,4",pduP2BrCktMonBrCctBreakerOutletMap="1,2,3,4",pduP2BrCktMonBrCctID="Red-1 C1-A",pduP2BrCktMonBrCctNumber="1",pduP2BrCktMonBrCctPhases="L1-L2",pduP2BrCktMonPduNumber="1"} 1
+breaker_outlet_map{breaker_outlet_map="1,2,3,4",pduP2BrCktMonBrCctBreakerOutletMap="1,2,3,4",pduP2BrCktMonBrCctID="Yellow-1 C1-A",pduP2BrCktMonBrCctNumber="1",pduP2BrCktMonBrCctPhases="L1-L2",pduP2BrCktMonPduNumber="4"} 1
+breaker_outlet_map{breaker_outlet_map="13,14,15,16",pduP2BrCktMonBrCctBreakerOutletMap="13,14,15,16",pduP2BrCktMonBrCctID="Red-1 C2-B",pduP2BrCktMonBrCctNumber="4",pduP2BrCktMonBrCctPhases="L1-L2",pduP2BrCktMonPduNumber="1"} 1
+breaker_outlet_map{breaker_outlet_map="13,14,15,16",pduP2BrCktMonBrCctBreakerOutletMap="13,14,15,16",pduP2BrCktMonBrCctID="Yellow-1 C2-B",pduP2BrCktMonBrCctNumber="4",pduP2BrCktMonBrCctPhases="L1-L2",pduP2BrCktMonPduNumber="4"} 1
+breaker_outlet_map{breaker_outlet_map="17,18,19,20",pduP2BrCktMonBrCctBreakerOutletMap="17,18,19,20",pduP2BrCktMonBrCctID="Red-1 C3-A",pduP2BrCktMonBrCctNumber="5",pduP2BrCktMonBrCctPhases="L2-L3",pduP2BrCktMonPduNumber="1"} 1
+breaker_outlet_map{breaker_outlet_map="17,18,19,20",pduP2BrCktMonBrCctBreakerOutletMap="17,18,19,20",pduP2BrCktMonBrCctID="Yellow-1 C3-A",pduP2BrCktMonBrCctNumber="5",pduP2BrCktMonBrCctPhases="L2-L3",pduP2BrCktMonPduNumber="4"} 1
+breaker_outlet_map{breaker_outlet_map="21,22,23,24",pduP2BrCktMonBrCctBreakerOutletMap="21,22,23,24",pduP2BrCktMonBrCctID="Red-1 C3-B",pduP2BrCktMonBrCctNumber="6",pduP2BrCktMonBrCctPhases="L3-L1",pduP2BrCktMonPduNumber="1"} 1
+breaker_outlet_map{breaker_outlet_map="21,22,23,24",pduP2BrCktMonBrCctBreakerOutletMap="21,22,23,24",pduP2BrCktMonBrCctID="Yellow-1 C3-B",pduP2BrCktMonBrCctNumber="6",pduP2BrCktMonBrCctPhases="L3-L1",pduP2BrCktMonPduNumber="4"} 1
+breaker_outlet_map{breaker_outlet_map="5,6,7,8",pduP2BrCktMonBrCctBreakerOutletMap="5,6,7,8",pduP2BrCktMonBrCctID="Red-1 C1-B",pduP2BrCktMonBrCctNumber="2",pduP2BrCktMonBrCctPhases="L2-L3",pduP2BrCktMonPduNumber="1"} 1
+breaker_outlet_map{breaker_outlet_map="5,6,7,8",pduP2BrCktMonBrCctBreakerOutletMap="5,6,7,8",pduP2BrCktMonBrCctID="Yellow-1 C1-B",pduP2BrCktMonBrCctNumber="2",pduP2BrCktMonBrCctPhases="L2-L3",pduP2BrCktMonPduNumber="4"} 1
+breaker_outlet_map{breaker_outlet_map="9,10,11,12",pduP2BrCktMonBrCctBreakerOutletMap="9,10,11,12",pduP2BrCktMonBrCctID="Red-1 C2-A",pduP2BrCktMonBrCctNumber="3",pduP2BrCktMonBrCctPhases="L3-L1",pduP2BrCktMonPduNumber="1"} 1
+breaker_outlet_map{breaker_outlet_map="9,10,11,12",pduP2BrCktMonBrCctBreakerOutletMap="9,10,11,12",pduP2BrCktMonBrCctID="Yellow-1 C2-A",pduP2BrCktMonBrCctNumber="3",pduP2BrCktMonBrCctPhases="L3-L1",pduP2BrCktMonPduNumber="4"} 1
+# HELP breaker_parent_pdu The PDU index number. - 1.3.6.1.4.1.3711.24.1.1.11.1.1.1.1
+# TYPE breaker_parent_pdu gauge
+breaker_parent_pdu{pduP2BrCktMonBrCctBreakerOutletMap="1,2,3,4",pduP2BrCktMonBrCctID="Red-1 C1-A",pduP2BrCktMonBrCctNumber="1",pduP2BrCktMonBrCctPhases="L1-L2",pduP2BrCktMonPduNumber="1"} 1
+breaker_parent_pdu{pduP2BrCktMonBrCctBreakerOutletMap="1,2,3,4",pduP2BrCktMonBrCctID="Yellow-1 C1-A",pduP2BrCktMonBrCctNumber="1",pduP2BrCktMonBrCctPhases="L1-L2",pduP2BrCktMonPduNumber="4"} 4
+breaker_parent_pdu{pduP2BrCktMonBrCctBreakerOutletMap="13,14,15,16",pduP2BrCktMonBrCctID="Red-1 C2-B",pduP2BrCktMonBrCctNumber="4",pduP2BrCktMonBrCctPhases="L1-L2",pduP2BrCktMonPduNumber="1"} 1
+breaker_parent_pdu{pduP2BrCktMonBrCctBreakerOutletMap="13,14,15,16",pduP2BrCktMonBrCctID="Yellow-1 C2-B",pduP2BrCktMonBrCctNumber="4",pduP2BrCktMonBrCctPhases="L1-L2",pduP2BrCktMonPduNumber="4"} 4
+breaker_parent_pdu{pduP2BrCktMonBrCctBreakerOutletMap="17,18,19,20",pduP2BrCktMonBrCctID="Red-1 C3-A",pduP2BrCktMonBrCctNumber="5",pduP2BrCktMonBrCctPhases="L2-L3",pduP2BrCktMonPduNumber="1"} 1
+breaker_parent_pdu{pduP2BrCktMonBrCctBreakerOutletMap="17,18,19,20",pduP2BrCktMonBrCctID="Yellow-1 C3-A",pduP2BrCktMonBrCctNumber="5",pduP2BrCktMonBrCctPhases="L2-L3",pduP2BrCktMonPduNumber="4"} 4
+breaker_parent_pdu{pduP2BrCktMonBrCctBreakerOutletMap="21,22,23,24",pduP2BrCktMonBrCctID="Red-1 C3-B",pduP2BrCktMonBrCctNumber="6",pduP2BrCktMonBrCctPhases="L3-L1",pduP2BrCktMonPduNumber="1"} 1
+breaker_parent_pdu{pduP2BrCktMonBrCctBreakerOutletMap="21,22,23,24",pduP2BrCktMonBrCctID="Yellow-1 C3-B",pduP2BrCktMonBrCctNumber="6",pduP2BrCktMonBrCctPhases="L3-L1",pduP2BrCktMonPduNumber="4"} 4
+breaker_parent_pdu{pduP2BrCktMonBrCctBreakerOutletMap="5,6,7,8",pduP2BrCktMonBrCctID="Red-1 C1-B",pduP2BrCktMonBrCctNumber="2",pduP2BrCktMonBrCctPhases="L2-L3",pduP2BrCktMonPduNumber="1"} 1
+breaker_parent_pdu{pduP2BrCktMonBrCctBreakerOutletMap="5,6,7,8",pduP2BrCktMonBrCctID="Yellow-1 C1-B",pduP2BrCktMonBrCctNumber="2",pduP2BrCktMonBrCctPhases="L2-L3",pduP2BrCktMonPduNumber="4"} 4
+breaker_parent_pdu{pduP2BrCktMonBrCctBreakerOutletMap="9,10,11,12",pduP2BrCktMonBrCctID="Red-1 C2-A",pduP2BrCktMonBrCctNumber="3",pduP2BrCktMonBrCctPhases="L3-L1",pduP2BrCktMonPduNumber="1"} 1
+breaker_parent_pdu{pduP2BrCktMonBrCctBreakerOutletMap="9,10,11,12",pduP2BrCktMonBrCctID="Yellow-1 C2-A",pduP2BrCktMonBrCctNumber="3",pduP2BrCktMonBrCctPhases="L3-L1",pduP2BrCktMonPduNumber="4"} 4
+# HELP breaker_phase_assignment The PDU Branch Circuit Phases. - 1.3.6.1.4.1.3711.24.1.1.11.1.1.1.5
+# TYPE breaker_phase_assignment gauge
+breaker_phase_assignment{breaker_phase_assignment="L1-L2",pduP2BrCktMonBrCctBreakerOutletMap="1,2,3,4",pduP2BrCktMonBrCctID="Red-1 C1-A",pduP2BrCktMonBrCctNumber="1",pduP2BrCktMonBrCctPhases="L1-L2",pduP2BrCktMonPduNumber="1"} 1
+breaker_phase_assignment{breaker_phase_assignment="L1-L2",pduP2BrCktMonBrCctBreakerOutletMap="1,2,3,4",pduP2BrCktMonBrCctID="Yellow-1 C1-A",pduP2BrCktMonBrCctNumber="1",pduP2BrCktMonBrCctPhases="L1-L2",pduP2BrCktMonPduNumber="4"} 1
+breaker_phase_assignment{breaker_phase_assignment="L1-L2",pduP2BrCktMonBrCctBreakerOutletMap="13,14,15,16",pduP2BrCktMonBrCctID="Red-1 C2-B",pduP2BrCktMonBrCctNumber="4",pduP2BrCktMonBrCctPhases="L1-L2",pduP2BrCktMonPduNumber="1"} 1
+breaker_phase_assignment{breaker_phase_assignment="L1-L2",pduP2BrCktMonBrCctBreakerOutletMap="13,14,15,16",pduP2BrCktMonBrCctID="Yellow-1 C2-B",pduP2BrCktMonBrCctNumber="4",pduP2BrCktMonBrCctPhases="L1-L2",pduP2BrCktMonPduNumber="4"} 1
+breaker_phase_assignment{breaker_phase_assignment="L2-L3",pduP2BrCktMonBrCctBreakerOutletMap="17,18,19,20",pduP2BrCktMonBrCctID="Red-1 C3-A",pduP2BrCktMonBrCctNumber="5",pduP2BrCktMonBrCctPhases="L2-L3",pduP2BrCktMonPduNumber="1"} 1
+breaker_phase_assignment{breaker_phase_assignment="L2-L3",pduP2BrCktMonBrCctBreakerOutletMap="17,18,19,20",pduP2BrCktMonBrCctID="Yellow-1 C3-A",pduP2BrCktMonBrCctNumber="5",pduP2BrCktMonBrCctPhases="L2-L3",pduP2BrCktMonPduNumber="4"} 1
+breaker_phase_assignment{breaker_phase_assignment="L2-L3",pduP2BrCktMonBrCctBreakerOutletMap="5,6,7,8",pduP2BrCktMonBrCctID="Red-1 C1-B",pduP2BrCktMonBrCctNumber="2",pduP2BrCktMonBrCctPhases="L2-L3",pduP2BrCktMonPduNumber="1"} 1
+breaker_phase_assignment{breaker_phase_assignment="L2-L3",pduP2BrCktMonBrCctBreakerOutletMap="5,6,7,8",pduP2BrCktMonBrCctID="Yellow-1 C1-B",pduP2BrCktMonBrCctNumber="2",pduP2BrCktMonBrCctPhases="L2-L3",pduP2BrCktMonPduNumber="4"} 1
+breaker_phase_assignment{breaker_phase_assignment="L3-L1",pduP2BrCktMonBrCctBreakerOutletMap="21,22,23,24",pduP2BrCktMonBrCctID="Red-1 C3-B",pduP2BrCktMonBrCctNumber="6",pduP2BrCktMonBrCctPhases="L3-L1",pduP2BrCktMonPduNumber="1"} 1
+breaker_phase_assignment{breaker_phase_assignment="L3-L1",pduP2BrCktMonBrCctBreakerOutletMap="21,22,23,24",pduP2BrCktMonBrCctID="Yellow-1 C3-B",pduP2BrCktMonBrCctNumber="6",pduP2BrCktMonBrCctPhases="L3-L1",pduP2BrCktMonPduNumber="4"} 1
+breaker_phase_assignment{breaker_phase_assignment="L3-L1",pduP2BrCktMonBrCctBreakerOutletMap="9,10,11,12",pduP2BrCktMonBrCctID="Red-1 C2-A",pduP2BrCktMonBrCctNumber="3",pduP2BrCktMonBrCctPhases="L3-L1",pduP2BrCktMonPduNumber="1"} 1
+breaker_phase_assignment{breaker_phase_assignment="L3-L1",pduP2BrCktMonBrCctBreakerOutletMap="9,10,11,12",pduP2BrCktMonBrCctID="Yellow-1 C2-A",pduP2BrCktMonBrCctNumber="3",pduP2BrCktMonBrCctPhases="L3-L1",pduP2BrCktMonPduNumber="4"} 1
+# HELP communication_status_info Indicates comms - 1.3.6.1.4.1.3711.24.1.1.7.1.2.1.6 (EnumAsInfo)
+# TYPE communication_status_info gauge
+communication_status_info{communication_status="commsGood",pduNumber="1"} 1
+communication_status_info{communication_status="commsGood",pduNumber="4"} 1
+communication_status_info{communication_status="commsGood",pduNumber="99"} 1
+# HELP contact_channel The input number. - 1.3.6.1.4.1.3711.24.1.1.1.3.1.1.1
+# TYPE contact_channel gauge
+contact_channel{ipContChan="17",ipContName="F Door"} 17
+contact_channel{ipContChan="18",ipContName="F Door-Handle"} 18
+contact_channel{ipContChan="19",ipContName="F Door-Lock"} 19
+contact_channel{ipContChan="24",ipContName="R Door"} 24
+contact_channel{ipContChan="25",ipContName="R Door-Handle"} 25
+contact_channel{ipContChan="26",ipContName="R Door-Lock"} 26
+# HELP contact_name The name of this input - 1.3.6.1.4.1.3711.24.1.1.1.3.1.1.3
+# TYPE contact_name gauge
+contact_name{contact_name="F Door",ipContChan="17",ipContName="F Door"} 1
+contact_name{contact_name="F Door-Handle",ipContChan="18",ipContName="F Door-Handle"} 1
+contact_name{contact_name="F Door-Lock",ipContChan="19",ipContName="F Door-Lock"} 1
+contact_name{contact_name="R Door",ipContChan="24",ipContName="R Door"} 1
+contact_name{contact_name="R Door-Handle",ipContChan="25",ipContName="R Door-Handle"} 1
+contact_name{contact_name="R Door-Lock",ipContChan="26",ipContName="R Door-Lock"} 1
+# HELP contact_state_info The current state of this contact. - 1.3.6.1.4.1.3711.24.1.1.1.3.1.1.7 (EnumAsInfo)
+# TYPE contact_state_info gauge
+contact_state_info{contact_state="closed",ipContChan="17",ipContName="F Door"} 1
+contact_state_info{contact_state="closed",ipContChan="18",ipContName="F Door-Handle"} 1
+contact_state_info{contact_state="closed",ipContChan="19",ipContName="F Door-Lock"} 1
+contact_state_info{contact_state="closed",ipContChan="26",ipContName="R Door-Lock"} 1
+contact_state_info{contact_state="open",ipContChan="24",ipContName="R Door"} 1
+contact_state_info{contact_state="open",ipContChan="25",ipContName="R Door-Handle"} 1
+# HELP cpu_firmware_version A string identifying the PDU processor firmware version. - 1.3.6.1.4.1.3711.24.1.1.7.1.2.1.12
+# TYPE cpu_firmware_version gauge
+cpu_firmware_version{cpu_firmware_version="N/A",pduNumber="99"} 1
+cpu_firmware_version{cpu_firmware_version="v3.03.10:",pduNumber="1"} 1
+cpu_firmware_version{cpu_firmware_version="v3.03.10:",pduNumber="4"} 1
+# HELP door_module_id The IDM number; maps to the specific IDM Port. - 1.3.6.1.4.1.3711.24.1.1.10.1.1.1
+# TYPE door_module_id gauge
+door_module_id{idmNumber="1"} 1
+door_module_id{idmNumber="2"} 2
+# HELP door_module_status_info Indicates status of the IDM. - 1.3.6.1.4.1.3711.24.1.1.10.1.1.4 (EnumAsInfo)
+# TYPE door_module_status_info gauge
+door_module_status_info{door_module_status="enabled",idmNumber="1"} 1
+door_module_status_info{door_module_status="enabled",idmNumber="2"} 1
+# HELP door_module_version Version information returned by the IDM. - 1.3.6.1.4.1.3711.24.1.1.10.1.1.3
+# TYPE door_module_version gauge
+door_module_version{door_module_version="",idmNumber="1"} 1
+door_module_version{door_module_version="v1.02.04",idmNumber="2"} 1
+# HELP firmware_revision Firmware revision number. - 1.3.6.1.4.1.3711.24.1.1.98.2
+# TYPE firmware_revision gauge
+firmware_revision{firmware_revision="2.08.02"} 1
+# HELP hw_current The PDU Branch Circuit Current - 1.3.6.1.4.1.3711.24.1.1.11.1.1.1.6
+# TYPE hw_current gauge
+hw_current{pduP2BrCktMonBrCctBreakerOutletMap="1,2,3,4",pduP2BrCktMonBrCctID="Red-1 C1-A",pduP2BrCktMonBrCctNumber="1",pduP2BrCktMonBrCctPhases="L1-L2",pduP2BrCktMonPduNumber="1"} 25
+hw_current{pduP2BrCktMonBrCctBreakerOutletMap="1,2,3,4",pduP2BrCktMonBrCctID="Yellow-1 C1-A",pduP2BrCktMonBrCctNumber="1",pduP2BrCktMonBrCctPhases="L1-L2",pduP2BrCktMonPduNumber="4"} 76
+hw_current{pduP2BrCktMonBrCctBreakerOutletMap="13,14,15,16",pduP2BrCktMonBrCctID="Red-1 C2-B",pduP2BrCktMonBrCctNumber="4",pduP2BrCktMonBrCctPhases="L1-L2",pduP2BrCktMonPduNumber="1"} 104
+hw_current{pduP2BrCktMonBrCctBreakerOutletMap="13,14,15,16",pduP2BrCktMonBrCctID="Yellow-1 C2-B",pduP2BrCktMonBrCctNumber="4",pduP2BrCktMonBrCctPhases="L1-L2",pduP2BrCktMonPduNumber="4"} 78
+hw_current{pduP2BrCktMonBrCctBreakerOutletMap="17,18,19,20",pduP2BrCktMonBrCctID="Red-1 C3-A",pduP2BrCktMonBrCctNumber="5",pduP2BrCktMonBrCctPhases="L2-L3",pduP2BrCktMonPduNumber="1"} 77
+hw_current{pduP2BrCktMonBrCctBreakerOutletMap="17,18,19,20",pduP2BrCktMonBrCctID="Yellow-1 C3-A",pduP2BrCktMonBrCctNumber="5",pduP2BrCktMonBrCctPhases="L2-L3",pduP2BrCktMonPduNumber="4"} 79
+hw_current{pduP2BrCktMonBrCctBreakerOutletMap="21,22,23,24",pduP2BrCktMonBrCctID="Red-1 C3-B",pduP2BrCktMonBrCctNumber="6",pduP2BrCktMonBrCctPhases="L3-L1",pduP2BrCktMonPduNumber="1"} 51
+hw_current{pduP2BrCktMonBrCctBreakerOutletMap="21,22,23,24",pduP2BrCktMonBrCctID="Yellow-1 C3-B",pduP2BrCktMonBrCctNumber="6",pduP2BrCktMonBrCctPhases="L3-L1",pduP2BrCktMonPduNumber="4"} 78
+hw_current{pduP2BrCktMonBrCctBreakerOutletMap="5,6,7,8",pduP2BrCktMonBrCctID="Red-1 C1-B",pduP2BrCktMonBrCctNumber="2",pduP2BrCktMonBrCctPhases="L2-L3",pduP2BrCktMonPduNumber="1"} 684
+hw_current{pduP2BrCktMonBrCctBreakerOutletMap="5,6,7,8",pduP2BrCktMonBrCctID="Yellow-1 C1-B",pduP2BrCktMonBrCctNumber="2",pduP2BrCktMonBrCctPhases="L2-L3",pduP2BrCktMonPduNumber="4"} 51
+hw_current{pduP2BrCktMonBrCctBreakerOutletMap="9,10,11,12",pduP2BrCktMonBrCctID="Red-1 C2-A",pduP2BrCktMonBrCctNumber="3",pduP2BrCktMonBrCctPhases="L3-L1",pduP2BrCktMonPduNumber="1"} 104
+hw_current{pduP2BrCktMonBrCctBreakerOutletMap="9,10,11,12",pduP2BrCktMonBrCctID="Yellow-1 C2-A",pduP2BrCktMonBrCctNumber="3",pduP2BrCktMonBrCctPhases="L3-L1",pduP2BrCktMonPduNumber="4"} 1016
+# HELP hw_current_rating The PDU Branch Circuit Breaker Continuous Load Rating Amps.The value precision is thousandths e.g - 1.3.6.1.4.1.3711.24.1.1.11.1.1.1.12
+# TYPE hw_current_rating gauge
+hw_current_rating{pduP2BrCktMonBrCctBreakerOutletMap="1,2,3,4",pduP2BrCktMonBrCctID="Red-1 C1-A",pduP2BrCktMonBrCctNumber="1",pduP2BrCktMonBrCctPhases="L1-L2",pduP2BrCktMonPduNumber="1"} 16000
+hw_current_rating{pduP2BrCktMonBrCctBreakerOutletMap="1,2,3,4",pduP2BrCktMonBrCctID="Yellow-1 C1-A",pduP2BrCktMonBrCctNumber="1",pduP2BrCktMonBrCctPhases="L1-L2",pduP2BrCktMonPduNumber="4"} 16000
+hw_current_rating{pduP2BrCktMonBrCctBreakerOutletMap="13,14,15,16",pduP2BrCktMonBrCctID="Red-1 C2-B",pduP2BrCktMonBrCctNumber="4",pduP2BrCktMonBrCctPhases="L1-L2",pduP2BrCktMonPduNumber="1"} 16000
+hw_current_rating{pduP2BrCktMonBrCctBreakerOutletMap="13,14,15,16",pduP2BrCktMonBrCctID="Yellow-1 C2-B",pduP2BrCktMonBrCctNumber="4",pduP2BrCktMonBrCctPhases="L1-L2",pduP2BrCktMonPduNumber="4"} 16000
+hw_current_rating{pduP2BrCktMonBrCctBreakerOutletMap="17,18,19,20",pduP2BrCktMonBrCctID="Red-1 C3-A",pduP2BrCktMonBrCctNumber="5",pduP2BrCktMonBrCctPhases="L2-L3",pduP2BrCktMonPduNumber="1"} 16000
+hw_current_rating{pduP2BrCktMonBrCctBreakerOutletMap="17,18,19,20",pduP2BrCktMonBrCctID="Yellow-1 C3-A",pduP2BrCktMonBrCctNumber="5",pduP2BrCktMonBrCctPhases="L2-L3",pduP2BrCktMonPduNumber="4"} 16000
+hw_current_rating{pduP2BrCktMonBrCctBreakerOutletMap="21,22,23,24",pduP2BrCktMonBrCctID="Red-1 C3-B",pduP2BrCktMonBrCctNumber="6",pduP2BrCktMonBrCctPhases="L3-L1",pduP2BrCktMonPduNumber="1"} 16000
+hw_current_rating{pduP2BrCktMonBrCctBreakerOutletMap="21,22,23,24",pduP2BrCktMonBrCctID="Yellow-1 C3-B",pduP2BrCktMonBrCctNumber="6",pduP2BrCktMonBrCctPhases="L3-L1",pduP2BrCktMonPduNumber="4"} 16000
+hw_current_rating{pduP2BrCktMonBrCctBreakerOutletMap="5,6,7,8",pduP2BrCktMonBrCctID="Red-1 C1-B",pduP2BrCktMonBrCctNumber="2",pduP2BrCktMonBrCctPhases="L2-L3",pduP2BrCktMonPduNumber="1"} 16000
+hw_current_rating{pduP2BrCktMonBrCctBreakerOutletMap="5,6,7,8",pduP2BrCktMonBrCctID="Yellow-1 C1-B",pduP2BrCktMonBrCctNumber="2",pduP2BrCktMonBrCctPhases="L2-L3",pduP2BrCktMonPduNumber="4"} 16000
+hw_current_rating{pduP2BrCktMonBrCctBreakerOutletMap="9,10,11,12",pduP2BrCktMonBrCctID="Red-1 C2-A",pduP2BrCktMonBrCctNumber="3",pduP2BrCktMonBrCctPhases="L3-L1",pduP2BrCktMonPduNumber="1"} 16000
+hw_current_rating{pduP2BrCktMonBrCctBreakerOutletMap="9,10,11,12",pduP2BrCktMonBrCctID="Yellow-1 C2-A",pduP2BrCktMonBrCctNumber="3",pduP2BrCktMonBrCctPhases="L3-L1",pduP2BrCktMonPduNumber="4"} 16000
+# HELP mean_kva_upper_control_limit Mean kVA UCL value in 0.1 kVA - 1.3.6.1.4.1.3711.24.1.1.7.3.2.1.13
+# TYPE mean_kva_upper_control_limit gauge
+mean_kva_upper_control_limit{pduTrapThreshPduNumber="1"} 221
+mean_kva_upper_control_limit{pduTrapThreshPduNumber="2"} 55
+mean_kva_upper_control_limit{pduTrapThreshPduNumber="3"} 55
+mean_kva_upper_control_limit{pduTrapThreshPduNumber="4"} 221
+mean_kva_upper_control_limit{pduTrapThreshPduNumber="5"} 55
+mean_kva_upper_control_limit{pduTrapThreshPduNumber="6"} 55
+mean_kva_upper_control_limit{pduTrapThreshPduNumber="99"} 95
+# HELP meter_firmware_version A string identifying the PDU meter firmware version. - 1.3.6.1.4.1.3711.24.1.1.7.1.2.1.13
+# TYPE meter_firmware_version gauge
+meter_firmware_version{meter_firmware_version="N/A",pduNumber="99"} 1
+meter_firmware_version{meter_firmware_version="v1.02.05",pduNumber="1"} 1
+meter_firmware_version{meter_firmware_version="v1.02.05",pduNumber="4"} 1
+# HELP model Model name. - 1.3.6.1.4.1.3711.24.1.1.98.4
+# TYPE model gauge
+model{model="EPA126"} 1
+# HELP outlet_name A name identifying the outlet. - 1.3.6.1.4.1.3711.24.1.1.7.2.3.1.4
+# TYPE outlet_name gauge
+outlet_name{outlet_name="A01",pduOutName="A01",pduOutNumber="1",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_name{outlet_name="A02",pduOutName="A02",pduOutNumber="2",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_name{outlet_name="A03",pduOutName="A03",pduOutNumber="3",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_name{outlet_name="A04",pduOutName="A04",pduOutNumber="4",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_name{outlet_name="A05",pduOutName="A05",pduOutNumber="5",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_name{outlet_name="A06",pduOutName="A06",pduOutNumber="6",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_name{outlet_name="A07",pduOutName="A07",pduOutNumber="7",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_name{outlet_name="A08",pduOutName="A08",pduOutNumber="8",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_name{outlet_name="A09",pduOutName="A09",pduOutNumber="9",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_name{outlet_name="A10",pduOutName="A10",pduOutNumber="10",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_name{outlet_name="A11",pduOutName="A11",pduOutNumber="11",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_name{outlet_name="A12",pduOutName="A12",pduOutNumber="12",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_name{outlet_name="A13",pduOutName="A13",pduOutNumber="13",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_name{outlet_name="A14",pduOutName="A14",pduOutNumber="14",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_name{outlet_name="A15",pduOutName="A15",pduOutNumber="15",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_name{outlet_name="A16",pduOutName="A16",pduOutNumber="16",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_name{outlet_name="A17",pduOutName="A17",pduOutNumber="17",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_name{outlet_name="A18",pduOutName="A18",pduOutNumber="18",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_name{outlet_name="A19",pduOutName="A19",pduOutNumber="19",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_name{outlet_name="A20",pduOutName="A20",pduOutNumber="20",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_name{outlet_name="A21",pduOutName="A21",pduOutNumber="21",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_name{outlet_name="A22",pduOutName="A22",pduOutNumber="22",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_name{outlet_name="A23",pduOutName="A23",pduOutNumber="23",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_name{outlet_name="A24",pduOutName="A24",pduOutNumber="24",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_name{outlet_name="B01",pduOutName="B01",pduOutNumber="1",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 1
+outlet_name{outlet_name="B02",pduOutName="B02",pduOutNumber="2",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 1
+outlet_name{outlet_name="B03",pduOutName="B03",pduOutNumber="3",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 1
+outlet_name{outlet_name="B04",pduOutName="B04",pduOutNumber="4",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 1
+outlet_name{outlet_name="B05",pduOutName="B05",pduOutNumber="5",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 1
+outlet_name{outlet_name="B06",pduOutName="B06",pduOutNumber="6",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 1
+outlet_name{outlet_name="B07",pduOutName="B07",pduOutNumber="7",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 1
+outlet_name{outlet_name="B08",pduOutName="B08",pduOutNumber="8",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 1
+outlet_name{outlet_name="B09",pduOutName="B09",pduOutNumber="9",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 1
+outlet_name{outlet_name="B10",pduOutName="B10",pduOutNumber="10",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 1
+outlet_name{outlet_name="B11",pduOutName="B11",pduOutNumber="11",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 1
+outlet_name{outlet_name="B12",pduOutName="B12",pduOutNumber="12",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 1
+outlet_name{outlet_name="B13",pduOutName="B13",pduOutNumber="13",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 1
+outlet_name{outlet_name="B14",pduOutName="B14",pduOutNumber="14",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 1
+outlet_name{outlet_name="B15",pduOutName="B15",pduOutNumber="15",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 1
+outlet_name{outlet_name="B16",pduOutName="B16",pduOutNumber="16",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 1
+outlet_name{outlet_name="B17",pduOutName="B17",pduOutNumber="17",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 1
+outlet_name{outlet_name="B18",pduOutName="B18",pduOutNumber="18",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 1
+outlet_name{outlet_name="B19",pduOutName="B19",pduOutNumber="19",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 1
+outlet_name{outlet_name="B20",pduOutName="B20",pduOutNumber="20",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 1
+outlet_name{outlet_name="B21",pduOutName="B21",pduOutNumber="21",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 1
+outlet_name{outlet_name="B22",pduOutName="B22",pduOutNumber="22",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 1
+outlet_name{outlet_name="B23",pduOutName="B23",pduOutNumber="23",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 1
+outlet_name{outlet_name="B24",pduOutName="B24",pduOutNumber="24",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 1
+# HELP outlet_number The outlet number. - 1.3.6.1.4.1.3711.24.1.1.7.2.3.1.2
+# TYPE outlet_number gauge
+outlet_number{pduOutName="A01",pduOutNumber="1",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_number{pduOutName="A02",pduOutNumber="2",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 2
+outlet_number{pduOutName="A03",pduOutNumber="3",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 3
+outlet_number{pduOutName="A04",pduOutNumber="4",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 4
+outlet_number{pduOutName="A05",pduOutNumber="5",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 5
+outlet_number{pduOutName="A06",pduOutNumber="6",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 6
+outlet_number{pduOutName="A07",pduOutNumber="7",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 7
+outlet_number{pduOutName="A08",pduOutNumber="8",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 8
+outlet_number{pduOutName="A09",pduOutNumber="9",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 9
+outlet_number{pduOutName="A10",pduOutNumber="10",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 10
+outlet_number{pduOutName="A11",pduOutNumber="11",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 11
+outlet_number{pduOutName="A12",pduOutNumber="12",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 12
+outlet_number{pduOutName="A13",pduOutNumber="13",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 13
+outlet_number{pduOutName="A14",pduOutNumber="14",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 14
+outlet_number{pduOutName="A15",pduOutNumber="15",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 15
+outlet_number{pduOutName="A16",pduOutNumber="16",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 16
+outlet_number{pduOutName="A17",pduOutNumber="17",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 17
+outlet_number{pduOutName="A18",pduOutNumber="18",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 18
+outlet_number{pduOutName="A19",pduOutNumber="19",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 19
+outlet_number{pduOutName="A20",pduOutNumber="20",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 20
+outlet_number{pduOutName="A21",pduOutNumber="21",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 21
+outlet_number{pduOutName="A22",pduOutNumber="22",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 22
+outlet_number{pduOutName="A23",pduOutNumber="23",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 23
+outlet_number{pduOutName="A24",pduOutNumber="24",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 24
+outlet_number{pduOutName="B01",pduOutNumber="1",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 1
+outlet_number{pduOutName="B02",pduOutNumber="2",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 2
+outlet_number{pduOutName="B03",pduOutNumber="3",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 3
+outlet_number{pduOutName="B04",pduOutNumber="4",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 4
+outlet_number{pduOutName="B05",pduOutNumber="5",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 5
+outlet_number{pduOutName="B06",pduOutNumber="6",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 6
+outlet_number{pduOutName="B07",pduOutNumber="7",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 7
+outlet_number{pduOutName="B08",pduOutNumber="8",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 8
+outlet_number{pduOutName="B09",pduOutNumber="9",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 9
+outlet_number{pduOutName="B10",pduOutNumber="10",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 10
+outlet_number{pduOutName="B11",pduOutNumber="11",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 11
+outlet_number{pduOutName="B12",pduOutNumber="12",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 12
+outlet_number{pduOutName="B13",pduOutNumber="13",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 13
+outlet_number{pduOutName="B14",pduOutNumber="14",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 14
+outlet_number{pduOutName="B15",pduOutNumber="15",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 15
+outlet_number{pduOutName="B16",pduOutNumber="16",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 16
+outlet_number{pduOutName="B17",pduOutNumber="17",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 17
+outlet_number{pduOutName="B18",pduOutNumber="18",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 18
+outlet_number{pduOutName="B19",pduOutNumber="19",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 19
+outlet_number{pduOutName="B20",pduOutNumber="20",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 20
+outlet_number{pduOutName="B21",pduOutNumber="21",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 21
+outlet_number{pduOutName="B22",pduOutNumber="22",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 22
+outlet_number{pduOutName="B23",pduOutNumber="23",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 23
+outlet_number{pduOutName="B24",pduOutNumber="24",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 24
+# HELP outlet_parent_pdu The PDU number on which the outlet resides. - 1.3.6.1.4.1.3711.24.1.1.7.2.3.1.1
+# TYPE outlet_parent_pdu gauge
+outlet_parent_pdu{pduOutName="A01",pduOutNumber="1",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_parent_pdu{pduOutName="A02",pduOutNumber="2",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_parent_pdu{pduOutName="A03",pduOutNumber="3",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_parent_pdu{pduOutName="A04",pduOutNumber="4",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_parent_pdu{pduOutName="A05",pduOutNumber="5",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_parent_pdu{pduOutName="A06",pduOutNumber="6",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_parent_pdu{pduOutName="A07",pduOutNumber="7",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_parent_pdu{pduOutName="A08",pduOutNumber="8",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_parent_pdu{pduOutName="A09",pduOutNumber="9",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_parent_pdu{pduOutName="A10",pduOutNumber="10",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_parent_pdu{pduOutName="A11",pduOutNumber="11",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_parent_pdu{pduOutName="A12",pduOutNumber="12",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_parent_pdu{pduOutName="A13",pduOutNumber="13",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_parent_pdu{pduOutName="A14",pduOutNumber="14",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_parent_pdu{pduOutName="A15",pduOutNumber="15",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_parent_pdu{pduOutName="A16",pduOutNumber="16",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_parent_pdu{pduOutName="A17",pduOutNumber="17",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_parent_pdu{pduOutName="A18",pduOutNumber="18",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_parent_pdu{pduOutName="A19",pduOutNumber="19",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_parent_pdu{pduOutName="A20",pduOutNumber="20",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_parent_pdu{pduOutName="A21",pduOutNumber="21",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_parent_pdu{pduOutName="A22",pduOutNumber="22",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_parent_pdu{pduOutName="A23",pduOutNumber="23",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_parent_pdu{pduOutName="A24",pduOutNumber="24",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_parent_pdu{pduOutName="B01",pduOutNumber="1",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 4
+outlet_parent_pdu{pduOutName="B02",pduOutNumber="2",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 4
+outlet_parent_pdu{pduOutName="B03",pduOutNumber="3",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 4
+outlet_parent_pdu{pduOutName="B04",pduOutNumber="4",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 4
+outlet_parent_pdu{pduOutName="B05",pduOutNumber="5",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 4
+outlet_parent_pdu{pduOutName="B06",pduOutNumber="6",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 4
+outlet_parent_pdu{pduOutName="B07",pduOutNumber="7",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 4
+outlet_parent_pdu{pduOutName="B08",pduOutNumber="8",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 4
+outlet_parent_pdu{pduOutName="B09",pduOutNumber="9",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 4
+outlet_parent_pdu{pduOutName="B10",pduOutNumber="10",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 4
+outlet_parent_pdu{pduOutName="B11",pduOutNumber="11",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 4
+outlet_parent_pdu{pduOutName="B12",pduOutNumber="12",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 4
+outlet_parent_pdu{pduOutName="B13",pduOutNumber="13",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 4
+outlet_parent_pdu{pduOutName="B14",pduOutNumber="14",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 4
+outlet_parent_pdu{pduOutName="B15",pduOutNumber="15",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 4
+outlet_parent_pdu{pduOutName="B16",pduOutNumber="16",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 4
+outlet_parent_pdu{pduOutName="B17",pduOutNumber="17",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 4
+outlet_parent_pdu{pduOutName="B18",pduOutNumber="18",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 4
+outlet_parent_pdu{pduOutName="B19",pduOutNumber="19",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 4
+outlet_parent_pdu{pduOutName="B20",pduOutNumber="20",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 4
+outlet_parent_pdu{pduOutName="B21",pduOutNumber="21",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 4
+outlet_parent_pdu{pduOutName="B22",pduOutNumber="22",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 4
+outlet_parent_pdu{pduOutName="B23",pduOutNumber="23",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 4
+outlet_parent_pdu{pduOutName="B24",pduOutNumber="24",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 4
+# HELP outlet_power_factor Power factor value at the outlet in 0.01 units - 1.3.6.1.4.1.3711.24.1.1.7.2.3.1.15
+# TYPE outlet_power_factor gauge
+outlet_power_factor{pduOutName="A01",pduOutNumber="1",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 100
+outlet_power_factor{pduOutName="A02",pduOutNumber="2",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 100
+outlet_power_factor{pduOutName="A03",pduOutNumber="3",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 100
+outlet_power_factor{pduOutName="A04",pduOutNumber="4",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+outlet_power_factor{pduOutName="A05",pduOutNumber="5",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+outlet_power_factor{pduOutName="A06",pduOutNumber="6",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 100
+outlet_power_factor{pduOutName="A07",pduOutNumber="7",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 81
+outlet_power_factor{pduOutName="A08",pduOutNumber="8",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 100
+outlet_power_factor{pduOutName="A09",pduOutNumber="9",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+outlet_power_factor{pduOutName="A10",pduOutNumber="10",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+outlet_power_factor{pduOutName="A11",pduOutNumber="11",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+outlet_power_factor{pduOutName="A12",pduOutNumber="12",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+outlet_power_factor{pduOutName="A13",pduOutNumber="13",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+outlet_power_factor{pduOutName="A14",pduOutNumber="14",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+outlet_power_factor{pduOutName="A15",pduOutNumber="15",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+outlet_power_factor{pduOutName="A16",pduOutNumber="16",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+outlet_power_factor{pduOutName="A17",pduOutNumber="17",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+outlet_power_factor{pduOutName="A18",pduOutNumber="18",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 100
+outlet_power_factor{pduOutName="A19",pduOutNumber="19",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+outlet_power_factor{pduOutName="A20",pduOutNumber="20",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+outlet_power_factor{pduOutName="A21",pduOutNumber="21",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 100
+outlet_power_factor{pduOutName="A22",pduOutNumber="22",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+outlet_power_factor{pduOutName="A23",pduOutNumber="23",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 100
+outlet_power_factor{pduOutName="A24",pduOutNumber="24",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+outlet_power_factor{pduOutName="B01",pduOutNumber="1",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+outlet_power_factor{pduOutName="B02",pduOutNumber="2",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 100
+outlet_power_factor{pduOutName="B03",pduOutNumber="3",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+outlet_power_factor{pduOutName="B04",pduOutNumber="4",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+outlet_power_factor{pduOutName="B05",pduOutNumber="5",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+outlet_power_factor{pduOutName="B06",pduOutNumber="6",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 100
+outlet_power_factor{pduOutName="B07",pduOutNumber="7",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+outlet_power_factor{pduOutName="B08",pduOutNumber="8",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 100
+outlet_power_factor{pduOutName="B09",pduOutNumber="9",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+outlet_power_factor{pduOutName="B10",pduOutNumber="10",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+outlet_power_factor{pduOutName="B11",pduOutNumber="11",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 73
+outlet_power_factor{pduOutName="B12",pduOutNumber="12",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 100
+outlet_power_factor{pduOutName="B13",pduOutNumber="13",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+outlet_power_factor{pduOutName="B14",pduOutNumber="14",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 100
+outlet_power_factor{pduOutName="B15",pduOutNumber="15",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+outlet_power_factor{pduOutName="B16",pduOutNumber="16",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+outlet_power_factor{pduOutName="B17",pduOutNumber="17",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+outlet_power_factor{pduOutName="B18",pduOutNumber="18",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+outlet_power_factor{pduOutName="B19",pduOutNumber="19",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 100
+outlet_power_factor{pduOutName="B20",pduOutNumber="20",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+outlet_power_factor{pduOutName="B21",pduOutNumber="21",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+outlet_power_factor{pduOutName="B22",pduOutNumber="22",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+outlet_power_factor{pduOutName="B23",pduOutNumber="23",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 100
+outlet_power_factor{pduOutName="B24",pduOutNumber="24",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+# HELP outlet_status_info The current state for this outlet. - 1.3.6.1.4.1.3711.24.1.1.7.2.3.1.5 (EnumAsInfo)
+# TYPE outlet_status_info gauge
+outlet_status_info{outlet_status="on",pduOutName="A01",pduOutNumber="1",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_status_info{outlet_status="on",pduOutName="A02",pduOutNumber="2",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_status_info{outlet_status="on",pduOutName="A03",pduOutNumber="3",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_status_info{outlet_status="on",pduOutName="A04",pduOutNumber="4",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_status_info{outlet_status="on",pduOutName="A05",pduOutNumber="5",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_status_info{outlet_status="on",pduOutName="A06",pduOutNumber="6",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_status_info{outlet_status="on",pduOutName="A07",pduOutNumber="7",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_status_info{outlet_status="on",pduOutName="A08",pduOutNumber="8",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_status_info{outlet_status="on",pduOutName="A09",pduOutNumber="9",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_status_info{outlet_status="on",pduOutName="A10",pduOutNumber="10",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_status_info{outlet_status="on",pduOutName="A11",pduOutNumber="11",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_status_info{outlet_status="on",pduOutName="A12",pduOutNumber="12",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_status_info{outlet_status="on",pduOutName="A13",pduOutNumber="13",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_status_info{outlet_status="on",pduOutName="A14",pduOutNumber="14",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_status_info{outlet_status="on",pduOutName="A15",pduOutNumber="15",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_status_info{outlet_status="on",pduOutName="A16",pduOutNumber="16",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_status_info{outlet_status="on",pduOutName="A17",pduOutNumber="17",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_status_info{outlet_status="on",pduOutName="A18",pduOutNumber="18",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_status_info{outlet_status="on",pduOutName="A19",pduOutNumber="19",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_status_info{outlet_status="on",pduOutName="A20",pduOutNumber="20",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_status_info{outlet_status="on",pduOutName="A21",pduOutNumber="21",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_status_info{outlet_status="on",pduOutName="A22",pduOutNumber="22",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_status_info{outlet_status="on",pduOutName="A23",pduOutNumber="23",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_status_info{outlet_status="on",pduOutName="A24",pduOutNumber="24",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 1
+outlet_status_info{outlet_status="on",pduOutName="B01",pduOutNumber="1",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 1
+outlet_status_info{outlet_status="on",pduOutName="B02",pduOutNumber="2",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 1
+outlet_status_info{outlet_status="on",pduOutName="B03",pduOutNumber="3",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 1
+outlet_status_info{outlet_status="on",pduOutName="B04",pduOutNumber="4",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 1
+outlet_status_info{outlet_status="on",pduOutName="B05",pduOutNumber="5",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 1
+outlet_status_info{outlet_status="on",pduOutName="B06",pduOutNumber="6",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 1
+outlet_status_info{outlet_status="on",pduOutName="B07",pduOutNumber="7",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 1
+outlet_status_info{outlet_status="on",pduOutName="B08",pduOutNumber="8",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 1
+outlet_status_info{outlet_status="on",pduOutName="B09",pduOutNumber="9",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 1
+outlet_status_info{outlet_status="on",pduOutName="B10",pduOutNumber="10",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 1
+outlet_status_info{outlet_status="on",pduOutName="B11",pduOutNumber="11",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 1
+outlet_status_info{outlet_status="on",pduOutName="B12",pduOutNumber="12",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 1
+outlet_status_info{outlet_status="on",pduOutName="B13",pduOutNumber="13",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 1
+outlet_status_info{outlet_status="on",pduOutName="B14",pduOutNumber="14",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 1
+outlet_status_info{outlet_status="on",pduOutName="B15",pduOutNumber="15",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 1
+outlet_status_info{outlet_status="on",pduOutName="B16",pduOutNumber="16",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 1
+outlet_status_info{outlet_status="on",pduOutName="B17",pduOutNumber="17",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 1
+outlet_status_info{outlet_status="on",pduOutName="B18",pduOutNumber="18",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 1
+outlet_status_info{outlet_status="on",pduOutName="B19",pduOutNumber="19",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 1
+outlet_status_info{outlet_status="on",pduOutName="B20",pduOutNumber="20",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 1
+outlet_status_info{outlet_status="on",pduOutName="B21",pduOutNumber="21",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 1
+outlet_status_info{outlet_status="on",pduOutName="B22",pduOutNumber="22",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 1
+outlet_status_info{outlet_status="on",pduOutName="B23",pduOutNumber="23",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 1
+outlet_status_info{outlet_status="on",pduOutName="B24",pduOutNumber="24",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 1
+# HELP pdu3PhPduNumber The PDU number. - 1.3.6.1.4.1.3711.24.1.1.7.3.5.1.1
+# TYPE pdu3PhPduNumber gauge
+pdu3PhPduNumber{pdu3PhPduNumber="1"} 1
+pdu3PhPduNumber{pdu3PhPduNumber="4"} 4
+# HELP pdu3PhkVAAgg Total apparent power value in 0.1 kVA - 1.3.6.1.4.1.3711.24.1.1.7.3.5.1.11
+# TYPE pdu3PhkVAAgg gauge
+pdu3PhkVAAgg{pdu3PhPduNumber="1"} 1
+pdu3PhkVAAgg{pdu3PhPduNumber="4"} 2
+# HELP pdu3PhkWAgg Total true power value in 0.1 kVW - 1.3.6.1.4.1.3711.24.1.1.7.3.5.1.12
+# TYPE pdu3PhkWAgg gauge
+pdu3PhkWAgg{pdu3PhPduNumber="1"} 1
+pdu3PhkWAgg{pdu3PhPduNumber="4"} 2
+# HELP pdu3PhkWhAgg Total true energy value in 0.1 kWh - 1.3.6.1.4.1.3711.24.1.1.7.3.5.1.14
+# TYPE pdu3PhkWhAgg gauge
+pdu3PhkWhAgg{pdu3PhPduNumber="1"} 17157
+pdu3PhkWhAgg{pdu3PhPduNumber="4"} 20710
+# HELP pduCircuitName A string identifying the circuit. - 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.16
+# TYPE pduCircuitName gauge
+pduCircuitName{pduCircuitName="A2",pduMonPduNumber="2"} 1
+pduCircuitName{pduCircuitName="A3",pduMonPduNumber="3"} 1
+pduCircuitName{pduCircuitName="B2",pduMonPduNumber="5"} 1
+pduCircuitName{pduCircuitName="B3",pduMonPduNumber="6"} 1
+pduCircuitName{pduCircuitName="PDU Red",pduMonPduNumber="1"} 1
+pduCircuitName{pduCircuitName="PDU Yellow",pduMonPduNumber="4"} 1
+pduCircuitName{pduCircuitName="PDU Yellow",pduMonPduNumber="99"} 1
+# HELP pduMeanKWattsValue Kilo Watts supplied to load in 0.1 kW - 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.7
+# TYPE pduMeanKWattsValue gauge
+pduMeanKWattsValue{pduMonPduNumber="1"} 1
+pduMeanKWattsValue{pduMonPduNumber="2"} 0
+pduMeanKWattsValue{pduMonPduNumber="3"} 0
+pduMeanKWattsValue{pduMonPduNumber="4"} 0
+pduMeanKWattsValue{pduMonPduNumber="5"} 2
+pduMeanKWattsValue{pduMonPduNumber="6"} 0
+pduMeanKWattsValue{pduMonPduNumber="99"} 3
+# HELP pduMonPduNumber The PDU number. - 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.1
+# TYPE pduMonPduNumber gauge
+pduMonPduNumber{pduMonPduNumber="1"} 1
+pduMonPduNumber{pduMonPduNumber="2"} 2
+pduMonPduNumber{pduMonPduNumber="3"} 3
+pduMonPduNumber{pduMonPduNumber="4"} 4
+pduMonPduNumber{pduMonPduNumber="5"} 5
+pduMonPduNumber{pduMonPduNumber="6"} 6
+pduMonPduNumber{pduMonPduNumber="99"} 99
+# HELP pduMonRS The PDU table row status. - 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.2
+# TYPE pduMonRS gauge
+pduMonRS{pduMonPduNumber="1",pduMonRS="1"} 1
+pduMonRS{pduMonPduNumber="2",pduMonRS="1"} 1
+pduMonRS{pduMonPduNumber="3",pduMonRS="1"} 1
+pduMonRS{pduMonPduNumber="4",pduMonRS="1"} 1
+pduMonRS{pduMonPduNumber="5",pduMonRS="1"} 1
+pduMonRS{pduMonPduNumber="6",pduMonRS="1"} 1
+pduMonRS{pduMonPduNumber="99",pduMonRS="1"} 1
+# HELP pduName A string identifying the PDU. - 1.3.6.1.4.1.3711.24.1.1.7.1.2.1.3
+# TYPE pduName gauge
+pduName{pduName="Aggregate",pduNumber="99"} 1
+pduName{pduName="Red-1-A3031",pduNumber="1"} 1
+pduName{pduName="Yellow-1-A3031",pduNumber="4"} 1
+# HELP pduOutKWHrValue kWhr value at the outlet in 0.1 kWhr - 1.3.6.1.4.1.3711.24.1.1.7.2.3.1.14
+# TYPE pduOutKWHrValue gauge
+pduOutKWHrValue{pduOutName="A01",pduOutNumber="1",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutKWHrValue{pduOutName="A02",pduOutNumber="2",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutKWHrValue{pduOutName="A03",pduOutNumber="3",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 42
+pduOutKWHrValue{pduOutName="A04",pduOutNumber="4",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutKWHrValue{pduOutName="A05",pduOutNumber="5",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutKWHrValue{pduOutName="A06",pduOutNumber="6",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutKWHrValue{pduOutName="A07",pduOutNumber="7",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 16187
+pduOutKWHrValue{pduOutName="A08",pduOutNumber="8",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutKWHrValue{pduOutName="A09",pduOutNumber="9",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutKWHrValue{pduOutName="A10",pduOutNumber="10",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutKWHrValue{pduOutName="A11",pduOutNumber="11",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 43
+pduOutKWHrValue{pduOutName="A12",pduOutNumber="12",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutKWHrValue{pduOutName="A13",pduOutNumber="13",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 43
+pduOutKWHrValue{pduOutName="A14",pduOutNumber="14",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutKWHrValue{pduOutName="A15",pduOutNumber="15",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutKWHrValue{pduOutName="A16",pduOutNumber="16",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutKWHrValue{pduOutName="A17",pduOutNumber="17",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutKWHrValue{pduOutName="A18",pduOutNumber="18",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutKWHrValue{pduOutName="A19",pduOutNumber="19",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 43
+pduOutKWHrValue{pduOutName="A20",pduOutNumber="20",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutKWHrValue{pduOutName="A21",pduOutNumber="21",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 43
+pduOutKWHrValue{pduOutName="A22",pduOutNumber="22",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutKWHrValue{pduOutName="A23",pduOutNumber="23",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutKWHrValue{pduOutName="A24",pduOutNumber="24",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutKWHrValue{pduOutName="B01",pduOutNumber="1",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutKWHrValue{pduOutName="B02",pduOutNumber="2",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutKWHrValue{pduOutName="B03",pduOutNumber="3",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutKWHrValue{pduOutName="B04",pduOutNumber="4",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutKWHrValue{pduOutName="B05",pduOutNumber="5",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutKWHrValue{pduOutName="B06",pduOutNumber="6",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutKWHrValue{pduOutName="B07",pduOutNumber="7",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutKWHrValue{pduOutName="B08",pduOutNumber="8",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutKWHrValue{pduOutName="B09",pduOutNumber="9",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutKWHrValue{pduOutName="B10",pduOutNumber="10",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutKWHrValue{pduOutName="B11",pduOutNumber="11",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 20869
+pduOutKWHrValue{pduOutName="B12",pduOutNumber="12",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutKWHrValue{pduOutName="B13",pduOutNumber="13",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutKWHrValue{pduOutName="B14",pduOutNumber="14",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutKWHrValue{pduOutName="B15",pduOutNumber="15",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutKWHrValue{pduOutName="B16",pduOutNumber="16",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutKWHrValue{pduOutName="B17",pduOutNumber="17",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutKWHrValue{pduOutName="B18",pduOutNumber="18",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutKWHrValue{pduOutName="B19",pduOutNumber="19",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutKWHrValue{pduOutName="B20",pduOutNumber="20",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutKWHrValue{pduOutName="B21",pduOutNumber="21",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutKWHrValue{pduOutName="B22",pduOutNumber="22",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutKWHrValue{pduOutName="B23",pduOutNumber="23",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutKWHrValue{pduOutName="B24",pduOutNumber="24",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+# HELP pduOutMeanKVAValue Mean kVA value at the outlet in 0.1 kVA - 1.3.6.1.4.1.3711.24.1.1.7.2.3.1.13
+# TYPE pduOutMeanKVAValue gauge
+pduOutMeanKVAValue{pduOutName="A01",pduOutNumber="1",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutMeanKVAValue{pduOutName="A02",pduOutNumber="2",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutMeanKVAValue{pduOutName="A03",pduOutNumber="3",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutMeanKVAValue{pduOutName="A04",pduOutNumber="4",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutMeanKVAValue{pduOutName="A05",pduOutNumber="5",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutMeanKVAValue{pduOutName="A06",pduOutNumber="6",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutMeanKVAValue{pduOutName="A07",pduOutNumber="7",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 2
+pduOutMeanKVAValue{pduOutName="A08",pduOutNumber="8",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutMeanKVAValue{pduOutName="A09",pduOutNumber="9",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutMeanKVAValue{pduOutName="A10",pduOutNumber="10",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutMeanKVAValue{pduOutName="A11",pduOutNumber="11",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutMeanKVAValue{pduOutName="A12",pduOutNumber="12",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutMeanKVAValue{pduOutName="A13",pduOutNumber="13",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutMeanKVAValue{pduOutName="A14",pduOutNumber="14",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutMeanKVAValue{pduOutName="A15",pduOutNumber="15",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutMeanKVAValue{pduOutName="A16",pduOutNumber="16",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutMeanKVAValue{pduOutName="A17",pduOutNumber="17",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutMeanKVAValue{pduOutName="A18",pduOutNumber="18",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutMeanKVAValue{pduOutName="A19",pduOutNumber="19",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutMeanKVAValue{pduOutName="A20",pduOutNumber="20",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutMeanKVAValue{pduOutName="A21",pduOutNumber="21",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutMeanKVAValue{pduOutName="A22",pduOutNumber="22",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutMeanKVAValue{pduOutName="A23",pduOutNumber="23",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutMeanKVAValue{pduOutName="A24",pduOutNumber="24",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutMeanKVAValue{pduOutName="B01",pduOutNumber="1",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutMeanKVAValue{pduOutName="B02",pduOutNumber="2",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutMeanKVAValue{pduOutName="B03",pduOutNumber="3",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutMeanKVAValue{pduOutName="B04",pduOutNumber="4",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutMeanKVAValue{pduOutName="B05",pduOutNumber="5",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutMeanKVAValue{pduOutName="B06",pduOutNumber="6",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutMeanKVAValue{pduOutName="B07",pduOutNumber="7",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutMeanKVAValue{pduOutName="B08",pduOutNumber="8",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutMeanKVAValue{pduOutName="B09",pduOutNumber="9",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutMeanKVAValue{pduOutName="B10",pduOutNumber="10",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutMeanKVAValue{pduOutName="B11",pduOutNumber="11",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 2
+pduOutMeanKVAValue{pduOutName="B12",pduOutNumber="12",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutMeanKVAValue{pduOutName="B13",pduOutNumber="13",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutMeanKVAValue{pduOutName="B14",pduOutNumber="14",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutMeanKVAValue{pduOutName="B15",pduOutNumber="15",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutMeanKVAValue{pduOutName="B16",pduOutNumber="16",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutMeanKVAValue{pduOutName="B17",pduOutNumber="17",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutMeanKVAValue{pduOutName="B18",pduOutNumber="18",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutMeanKVAValue{pduOutName="B19",pduOutNumber="19",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutMeanKVAValue{pduOutName="B20",pduOutNumber="20",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutMeanKVAValue{pduOutName="B21",pduOutNumber="21",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutMeanKVAValue{pduOutName="B22",pduOutNumber="22",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutMeanKVAValue{pduOutName="B23",pduOutNumber="23",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutMeanKVAValue{pduOutName="B24",pduOutNumber="24",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+# HELP pduOutRMSAmpsUTL Upper threshold of pduOutRMSAmpsValue in 0.1 Amps - 1.3.6.1.4.1.3711.24.1.1.7.2.3.1.16
+# TYPE pduOutRMSAmpsUTL gauge
+pduOutRMSAmpsUTL{pduOutName="A01",pduOutNumber="1",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 100
+pduOutRMSAmpsUTL{pduOutName="A02",pduOutNumber="2",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 100
+pduOutRMSAmpsUTL{pduOutName="A03",pduOutNumber="3",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 100
+pduOutRMSAmpsUTL{pduOutName="A04",pduOutNumber="4",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 160
+pduOutRMSAmpsUTL{pduOutName="A05",pduOutNumber="5",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 100
+pduOutRMSAmpsUTL{pduOutName="A06",pduOutNumber="6",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 100
+pduOutRMSAmpsUTL{pduOutName="A07",pduOutNumber="7",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 100
+pduOutRMSAmpsUTL{pduOutName="A08",pduOutNumber="8",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 160
+pduOutRMSAmpsUTL{pduOutName="A09",pduOutNumber="9",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 100
+pduOutRMSAmpsUTL{pduOutName="A10",pduOutNumber="10",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 100
+pduOutRMSAmpsUTL{pduOutName="A11",pduOutNumber="11",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 100
+pduOutRMSAmpsUTL{pduOutName="A12",pduOutNumber="12",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 160
+pduOutRMSAmpsUTL{pduOutName="A13",pduOutNumber="13",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 100
+pduOutRMSAmpsUTL{pduOutName="A14",pduOutNumber="14",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 100
+pduOutRMSAmpsUTL{pduOutName="A15",pduOutNumber="15",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 100
+pduOutRMSAmpsUTL{pduOutName="A16",pduOutNumber="16",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 160
+pduOutRMSAmpsUTL{pduOutName="A17",pduOutNumber="17",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 100
+pduOutRMSAmpsUTL{pduOutName="A18",pduOutNumber="18",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 100
+pduOutRMSAmpsUTL{pduOutName="A19",pduOutNumber="19",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 100
+pduOutRMSAmpsUTL{pduOutName="A20",pduOutNumber="20",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 160
+pduOutRMSAmpsUTL{pduOutName="A21",pduOutNumber="21",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 100
+pduOutRMSAmpsUTL{pduOutName="A22",pduOutNumber="22",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 100
+pduOutRMSAmpsUTL{pduOutName="A23",pduOutNumber="23",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 100
+pduOutRMSAmpsUTL{pduOutName="A24",pduOutNumber="24",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 160
+pduOutRMSAmpsUTL{pduOutName="B01",pduOutNumber="1",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 100
+pduOutRMSAmpsUTL{pduOutName="B02",pduOutNumber="2",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 100
+pduOutRMSAmpsUTL{pduOutName="B03",pduOutNumber="3",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 100
+pduOutRMSAmpsUTL{pduOutName="B04",pduOutNumber="4",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 160
+pduOutRMSAmpsUTL{pduOutName="B05",pduOutNumber="5",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 100
+pduOutRMSAmpsUTL{pduOutName="B06",pduOutNumber="6",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 100
+pduOutRMSAmpsUTL{pduOutName="B07",pduOutNumber="7",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 100
+pduOutRMSAmpsUTL{pduOutName="B08",pduOutNumber="8",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 160
+pduOutRMSAmpsUTL{pduOutName="B09",pduOutNumber="9",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 100
+pduOutRMSAmpsUTL{pduOutName="B10",pduOutNumber="10",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 100
+pduOutRMSAmpsUTL{pduOutName="B11",pduOutNumber="11",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 100
+pduOutRMSAmpsUTL{pduOutName="B12",pduOutNumber="12",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 160
+pduOutRMSAmpsUTL{pduOutName="B13",pduOutNumber="13",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 100
+pduOutRMSAmpsUTL{pduOutName="B14",pduOutNumber="14",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 100
+pduOutRMSAmpsUTL{pduOutName="B15",pduOutNumber="15",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 100
+pduOutRMSAmpsUTL{pduOutName="B16",pduOutNumber="16",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 160
+pduOutRMSAmpsUTL{pduOutName="B17",pduOutNumber="17",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 100
+pduOutRMSAmpsUTL{pduOutName="B18",pduOutNumber="18",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 100
+pduOutRMSAmpsUTL{pduOutName="B19",pduOutNumber="19",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 100
+pduOutRMSAmpsUTL{pduOutName="B20",pduOutNumber="20",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 160
+pduOutRMSAmpsUTL{pduOutName="B21",pduOutNumber="21",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 100
+pduOutRMSAmpsUTL{pduOutName="B22",pduOutNumber="22",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 100
+pduOutRMSAmpsUTL{pduOutName="B23",pduOutNumber="23",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 100
+pduOutRMSAmpsUTL{pduOutName="B24",pduOutNumber="24",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 160
+# HELP pduOutRMSAmpsValue RMS current value at the outlet in 0.1 Amps - 1.3.6.1.4.1.3711.24.1.1.7.2.3.1.9
+# TYPE pduOutRMSAmpsValue gauge
+pduOutRMSAmpsValue{pduOutName="A01",pduOutNumber="1",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutRMSAmpsValue{pduOutName="A02",pduOutNumber="2",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutRMSAmpsValue{pduOutName="A03",pduOutNumber="3",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutRMSAmpsValue{pduOutName="A04",pduOutNumber="4",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutRMSAmpsValue{pduOutName="A05",pduOutNumber="5",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutRMSAmpsValue{pduOutName="A06",pduOutNumber="6",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutRMSAmpsValue{pduOutName="A07",pduOutNumber="7",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 7
+pduOutRMSAmpsValue{pduOutName="A08",pduOutNumber="8",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutRMSAmpsValue{pduOutName="A09",pduOutNumber="9",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutRMSAmpsValue{pduOutName="A10",pduOutNumber="10",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutRMSAmpsValue{pduOutName="A11",pduOutNumber="11",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutRMSAmpsValue{pduOutName="A12",pduOutNumber="12",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutRMSAmpsValue{pduOutName="A13",pduOutNumber="13",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutRMSAmpsValue{pduOutName="A14",pduOutNumber="14",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutRMSAmpsValue{pduOutName="A15",pduOutNumber="15",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutRMSAmpsValue{pduOutName="A16",pduOutNumber="16",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutRMSAmpsValue{pduOutName="A17",pduOutNumber="17",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutRMSAmpsValue{pduOutName="A18",pduOutNumber="18",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutRMSAmpsValue{pduOutName="A19",pduOutNumber="19",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutRMSAmpsValue{pduOutName="A20",pduOutNumber="20",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutRMSAmpsValue{pduOutName="A21",pduOutNumber="21",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutRMSAmpsValue{pduOutName="A22",pduOutNumber="22",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutRMSAmpsValue{pduOutName="A23",pduOutNumber="23",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutRMSAmpsValue{pduOutName="A24",pduOutNumber="24",pduOutOn="on",pduOutPduNumber="1",pduOutRS="active"} 0
+pduOutRMSAmpsValue{pduOutName="B01",pduOutNumber="1",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutRMSAmpsValue{pduOutName="B02",pduOutNumber="2",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutRMSAmpsValue{pduOutName="B03",pduOutNumber="3",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutRMSAmpsValue{pduOutName="B04",pduOutNumber="4",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutRMSAmpsValue{pduOutName="B05",pduOutNumber="5",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutRMSAmpsValue{pduOutName="B06",pduOutNumber="6",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutRMSAmpsValue{pduOutName="B07",pduOutNumber="7",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutRMSAmpsValue{pduOutName="B08",pduOutNumber="8",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutRMSAmpsValue{pduOutName="B09",pduOutNumber="9",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutRMSAmpsValue{pduOutName="B10",pduOutNumber="10",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutRMSAmpsValue{pduOutName="B11",pduOutNumber="11",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 10
+pduOutRMSAmpsValue{pduOutName="B12",pduOutNumber="12",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutRMSAmpsValue{pduOutName="B13",pduOutNumber="13",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutRMSAmpsValue{pduOutName="B14",pduOutNumber="14",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutRMSAmpsValue{pduOutName="B15",pduOutNumber="15",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutRMSAmpsValue{pduOutName="B16",pduOutNumber="16",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutRMSAmpsValue{pduOutName="B17",pduOutNumber="17",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutRMSAmpsValue{pduOutName="B18",pduOutNumber="18",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutRMSAmpsValue{pduOutName="B19",pduOutNumber="19",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutRMSAmpsValue{pduOutName="B20",pduOutNumber="20",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutRMSAmpsValue{pduOutName="B21",pduOutNumber="21",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutRMSAmpsValue{pduOutName="B22",pduOutNumber="22",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutRMSAmpsValue{pduOutName="B23",pduOutNumber="23",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+pduOutRMSAmpsValue{pduOutName="B24",pduOutNumber="24",pduOutOn="on",pduOutPduNumber="4",pduOutRS="active"} 0
+# HELP pduPhaseAmpsValue RMS current supplied by phase in 0.1 Amps - 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.11
+# TYPE pduPhaseAmpsValue gauge
+pduPhaseAmpsValue{pduMonPduNumber="1"} 6
+pduPhaseAmpsValue{pduMonPduNumber="2"} 0
+pduPhaseAmpsValue{pduMonPduNumber="3"} 0
+pduPhaseAmpsValue{pduMonPduNumber="4"} 0
+pduPhaseAmpsValue{pduMonPduNumber="5"} 7
+pduPhaseAmpsValue{pduMonPduNumber="6"} 0
+pduPhaseAmpsValue{pduMonPduNumber="99"} 11
+# HELP pduPhaseKVAValue Apparent power supplied by phase in 0.1 kVA - 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.13
+# TYPE pduPhaseKVAValue gauge
+pduPhaseKVAValue{pduMonPduNumber="1"} 1
+pduPhaseKVAValue{pduMonPduNumber="2"} 0
+pduPhaseKVAValue{pduMonPduNumber="3"} 0
+pduPhaseKVAValue{pduMonPduNumber="4"} 0
+pduPhaseKVAValue{pduMonPduNumber="5"} 2
+pduPhaseKVAValue{pduMonPduNumber="6"} 0
+pduPhaseKVAValue{pduMonPduNumber="99"} 3
+# HELP pduPhaseVoltsValue RMS Volts across phase in Volts - 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.10
+# TYPE pduPhaseVoltsValue gauge
+pduPhaseVoltsValue{pduMonPduNumber="1"} 229
+pduPhaseVoltsValue{pduMonPduNumber="2"} 229
+pduPhaseVoltsValue{pduMonPduNumber="3"} 229
+pduPhaseVoltsValue{pduMonPduNumber="4"} 228
+pduPhaseVoltsValue{pduMonPduNumber="5"} 228
+pduPhaseVoltsValue{pduMonPduNumber="6"} 228
+pduPhaseVoltsValue{pduMonPduNumber="99"} 0
+# HELP pduPwrFactorValue Power factor of load in 0.01 - 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.8
+# TYPE pduPwrFactorValue gauge
+pduPwrFactorValue{pduMonPduNumber="1"} 89
+pduPwrFactorValue{pduMonPduNumber="2"} 0
+pduPwrFactorValue{pduMonPduNumber="3"} 0
+pduPwrFactorValue{pduMonPduNumber="4"} 0
+pduPwrFactorValue{pduMonPduNumber="5"} 89
+pduPwrFactorValue{pduMonPduNumber="6"} 0
+pduPwrFactorValue{pduMonPduNumber="99"} 100
+# HELP pduRMSAmpsValue RMS current through load in 0.1 Amps - 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.4
+# TYPE pduRMSAmpsValue gauge
+pduRMSAmpsValue{pduMonPduNumber="1"} 6
+pduRMSAmpsValue{pduMonPduNumber="2"} 0
+pduRMSAmpsValue{pduMonPduNumber="3"} 0
+pduRMSAmpsValue{pduMonPduNumber="4"} 0
+pduRMSAmpsValue{pduMonPduNumber="5"} 7
+pduRMSAmpsValue{pduMonPduNumber="6"} 0
+pduRMSAmpsValue{pduMonPduNumber="99"} 11
+# HELP pduRMSVoltsValue RMS Volts across load in Volts - 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.3
+# TYPE pduRMSVoltsValue gauge
+pduRMSVoltsValue{pduMonPduNumber="1"} 229
+pduRMSVoltsValue{pduMonPduNumber="2"} 229
+pduRMSVoltsValue{pduMonPduNumber="3"} 229
+pduRMSVoltsValue{pduMonPduNumber="4"} 228
+pduRMSVoltsValue{pduMonPduNumber="5"} 228
+pduRMSVoltsValue{pduMonPduNumber="6"} 228
+pduRMSVoltsValue{pduMonPduNumber="99"} 0
+# HELP pduTotalEnergyValue Total energy supplied to load in 0.1 kWh - 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.5
+# TYPE pduTotalEnergyValue gauge
+pduTotalEnergyValue{pduMonPduNumber="1"} 16978
+pduTotalEnergyValue{pduMonPduNumber="2"} 88
+pduTotalEnergyValue{pduMonPduNumber="3"} 91
+pduTotalEnergyValue{pduMonPduNumber="4"} 5
+pduTotalEnergyValue{pduMonPduNumber="5"} 20700
+pduTotalEnergyValue{pduMonPduNumber="6"} 5
+pduTotalEnergyValue{pduMonPduNumber="99"} 37867
+# HELP pdu_identifier The PDU number. - 1.3.6.1.4.1.3711.24.1.1.7.1.2.1.1
+# TYPE pdu_identifier gauge
+pdu_identifier{pduNumber="1"} 1
+pdu_identifier{pduNumber="4"} 4
+pdu_identifier{pduNumber="99"} 99
+# HELP pdu_type_info Indicates the type of device connected. - 1.3.6.1.4.1.3711.24.1.1.7.1.2.1.7 (EnumAsInfo)
+# TYPE pdu_type_info gauge
+pdu_type_info{pduNumber="1",pdu_type="rs485PduMk3"} 1
+pdu_type_info{pduNumber="4",pdu_type="rs485PduMk3"} 1
+pdu_type_info{pduNumber="99",pdu_type="virtual"} 1
+# HELP phase_configuration_mode_info Indicates the phase circuit topology. - 1.3.6.1.4.1.3711.24.1.1.7.1.2.1.8 (EnumAsInfo)
+# TYPE phase_configuration_mode_info gauge
+phase_configuration_mode_info{pduNumber="1",phase_configuration_mode="threePhaseStar"} 1
+phase_configuration_mode_info{pduNumber="4",phase_configuration_mode="threePhaseStar"} 1
+phase_configuration_mode_info{pduNumber="99",phase_configuration_mode="aggregate"} 1
+# HELP sensor_channel The input number. - 1.3.6.1.4.1.3711.24.1.1.1.2.2.1.1
+# TYPE sensor_channel gauge
+sensor_channel{ipTHAChan="13",ipTHAName="F Temp Top",ipTHAType="temperature"} 13
+sensor_channel{ipTHAChan="14",ipTHAName="F Temp Mid",ipTHAType="temperature"} 14
+sensor_channel{ipTHAChan="15",ipTHAName="F Temp Bot",ipTHAType="temperature"} 15
+sensor_channel{ipTHAChan="16",ipTHAName="F Humidity",ipTHAType="humidity"} 16
+sensor_channel{ipTHAChan="21",ipTHAName="R Temp",ipTHAType="temperature"} 21
+# HELP sensor_name The name of this input - 1.3.6.1.4.1.3711.24.1.1.1.2.2.1.3
+# TYPE sensor_name gauge
+sensor_name{ipTHAChan="13",ipTHAName="F Temp Top",ipTHAType="temperature",sensor_name="F Temp Top"} 1
+sensor_name{ipTHAChan="14",ipTHAName="F Temp Mid",ipTHAType="temperature",sensor_name="F Temp Mid"} 1
+sensor_name{ipTHAChan="15",ipTHAName="F Temp Bot",ipTHAType="temperature",sensor_name="F Temp Bot"} 1
+sensor_name{ipTHAChan="16",ipTHAName="F Humidity",ipTHAType="humidity",sensor_name="F Humidity"} 1
+sensor_name{ipTHAChan="21",ipTHAName="R Temp",ipTHAType="temperature",sensor_name="R Temp"} 1
+# HELP sensor_type_info Indicates the type of data this input is monitoring. - 1.3.6.1.4.1.3711.24.1.1.1.2.2.1.6 (EnumAsInfo)
+# TYPE sensor_type_info gauge
+sensor_type_info{ipTHAChan="13",ipTHAName="F Temp Top",ipTHAType="temperature",sensor_type="temperature"} 1
+sensor_type_info{ipTHAChan="14",ipTHAName="F Temp Mid",ipTHAType="temperature",sensor_type="temperature"} 1
+sensor_type_info{ipTHAChan="15",ipTHAName="F Temp Bot",ipTHAType="temperature",sensor_type="temperature"} 1
+sensor_type_info{ipTHAChan="16",ipTHAName="F Humidity",ipTHAType="humidity",sensor_type="humidity"} 1
+sensor_type_info{ipTHAChan="21",ipTHAName="R Temp",ipTHAType="temperature",sensor_type="temperature"} 1
+# HELP sensor_value The current reading in the relevant measurement units - 1.3.6.1.4.1.3711.24.1.1.1.2.2.1.7
+# TYPE sensor_value gauge
+sensor_value{ipTHAChan="13",ipTHAName="F Temp Top",ipTHAType="temperature"} -1
+sensor_value{ipTHAChan="14",ipTHAName="F Temp Mid",ipTHAType="temperature"} -1
+sensor_value{ipTHAChan="15",ipTHAName="F Temp Bot",ipTHAType="temperature"} -1
+sensor_value{ipTHAChan="16",ipTHAName="F Humidity",ipTHAType="humidity"} -9.99999999e+08
+sensor_value{ipTHAChan="21",ipTHAName="R Temp",ipTHAType="temperature"} 353
+# HELP serial_number Serial number. - 1.3.6.1.4.1.3711.24.1.1.99.11
+# TYPE serial_number gauge
+serial_number{serial_number="47281"} 1
+# HELP snmp_scrape_duration_seconds Total SNMP time scrape took (walk and processing).
+# TYPE snmp_scrape_duration_seconds gauge
+snmp_scrape_duration_seconds{module="pdu"} 1.620840475
+# HELP snmp_scrape_packets_retried Packets retried for get, bulkget, and walk.
+# TYPE snmp_scrape_packets_retried gauge
+snmp_scrape_packets_retried{module="pdu"} 0
+# HELP snmp_scrape_packets_sent Packets sent for get, bulkget, and walk; including retries.
+# TYPE snmp_scrape_packets_sent gauge
+snmp_scrape_packets_sent{module="pdu"} 61
+# HELP snmp_scrape_pdus_returned PDUs returned from get, bulkget, and walk.
+# TYPE snmp_scrape_pdus_returned gauge
+snmp_scrape_pdus_returned{module="pdu"} 727
+# HELP snmp_scrape_walk_duration_seconds Time SNMP walk/bulkwalk took.
+# TYPE snmp_scrape_walk_duration_seconds gauge
+snmp_scrape_walk_duration_seconds{module="pdu"} 1.6146435540000001
+# HELP sysLocation The physical location of this node (e.g., 'telephone closet, 3rd floor') - 1.3.6.1.2.1.1.6
+# TYPE sysLocation gauge
+sysLocation{sysLocation="5e8c7aea-eaab-4ebe-8f43-edcc9c3569ec"} 1
+# HELP sysName An administratively-assigned name for this managed node - 1.3.6.1.2.1.1.5
+# TYPE sysName gauge
+sysName{sysName="ROT2-RZ64-R03-09"} 1
+# HELP system_uptime The time (in hundredths of a second) since the network management portion of the system was last re-initialized. - 1.3.6.1.2.1.1.3
+# TYPE system_uptime gauge
+system_uptime 7.09652612e+08å
