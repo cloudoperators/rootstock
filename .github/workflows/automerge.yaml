@@ -9,8 +9,6 @@ on:
     types: [completed]
   pull_request_review:
     types: [submitted]
-  pull_request:
-    types: [review_requested, review_request_removed]
   schedule:
     - cron: '*/10 * * * *'
   workflow_dispatch:
