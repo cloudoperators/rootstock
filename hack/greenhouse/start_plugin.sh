@@ -262,22 +262,22 @@ apply_plugindefinition() {
 # Builder notes: docker-container driver + network=host are both required:
 #   - the plain `docker` driver cannot push to an insecure registry;
 #   - without network=host the builder cannot reach localhost:5000.
-OCI_BUILDER="rootstock-ghverify-oci"
+oci_builder="rootstock-ghverify-oci"
 
 # Create the shared OCI builder once; safe to call repeatedly.
 ensure_oci_builder() {
-    if docker buildx inspect "$OCI_BUILDER" >/dev/null 2>&1; then
+    if docker buildx inspect "${oci_builder}" >/dev/null 2>&1; then
         return
     fi
-    docker buildx create --name "$OCI_BUILDER" \
+    docker buildx create --name "${oci_builder}" \
         --driver docker-container \
         --driver-opt network=host \
         --buildkitd-flags '--allow-insecure-entitlement network.host' \
         >/dev/null 2>&1 \
-        || die "failed to create buildx builder ${OCI_BUILDER}"
-    docker buildx inspect --bootstrap "$OCI_BUILDER" >/dev/null 2>&1 \
-        || { docker buildx rm "$OCI_BUILDER" >/dev/null 2>&1 || true; \
-             die "failed to bootstrap buildx builder ${OCI_BUILDER}"; }
+        || die "failed to create buildx builder ${oci_builder}"
+    docker buildx inspect --bootstrap "${oci_builder}" >/dev/null 2>&1 \
+        || { docker buildx rm "${oci_builder}" >/dev/null 2>&1 || true; \
+             die "failed to bootstrap buildx builder ${oci_builder}"; }
 }
 
 push_image_oci() {
@@ -302,8 +302,8 @@ push_image_oci() {
         build_extra_args="--build-arg VERSION=${APP_VERSION}"
     fi
 
-    docker buildx --builder "$OCI_BUILDER" build \
-        ${build_extra_args} \
+    docker buildx --builder "${oci_builder}" build \
+        "${build_extra_args}" \
         --platform "${BUILD_PLATFORM:-linux/arm64}" \
         --provenance=false \
         --output "type=registry,registry.insecure=true,name=${dest_host}" \
@@ -481,7 +481,7 @@ run_plugin_e2e() {
 # UNUSED: probe_check() {
 #     log "verifying /healthz and /probe on the deployed workload (remote cluster)"
 #     local ns="rootstock" release="rootstock" local_port="${LOCAL_PORT:-9220}"
-#     
+#
 #     # Wait for deployment to exist (Flux may need time to reconcile)
 #     local retries=30
 #     for ((i=0; i<retries; i++)); do
@@ -493,10 +493,10 @@ run_plugin_e2e() {
 #         fi
 #         sleep 2
 #     done
-#     
+#
 #     kubectl --context "$remote_context" -n "$ns" get "deploy/${release}" >/dev/null 2>&1 \
 #         || die "rootstock deployment was not created by Flux in ${ns}"
-#     
+#
 #     kubectl --context "$remote_context" -n "$ns" rollout status "deploy/${release}" --timeout=120s \
 #         || die "rootstock deployment never became ready on ${remote_context}"
 #
@@ -540,16 +540,16 @@ run_plugin_e2e() {
 #     kubectl --context "$remote_context" -n "$ns" port-forward "svc/${release}" "${snmp_port}:9116" \
 #         >/dev/null 2>&1 &
 #     local snmp_pf_pid=$!
-#     
+#
 #     cleanup_snmp_pf() {
 #         [[ -n "${snmp_pf_pid:-}" ]] && kill "$snmp_pf_pid" 2>/dev/null || true
 #     }
 #     trap cleanup_snmp_pf RETURN
-#     
+#
 #     sleep 2
 #     if curl -sf "http://localhost:${snmp_port}/metrics" >/dev/null 2>&1; then
 #         ok "SNMP exporter /metrics endpoint responding"
-#         
+#
 #         # Check if snmp-exporter container is running in the pod
 #         local pod_name
 #         pod_name=$(kubectl --context "$remote_context" -n "$ns" get pods -l app.kubernetes.io/name=rootstock -o jsonpath='{.items[0].metadata.name}')
@@ -557,7 +557,7 @@ run_plugin_e2e() {
 #         container_count=$(kubectl --context "$remote_context" -n "$ns" get pod "$pod_name" -o jsonpath='{.status.containerStatuses[*].name}' | wc -w | tr -d ' ')
 #         if [[ "$container_count" == "2" ]]; then
 #             ok "Pod has 2 containers (rootstock + snmp-exporter sidecar)"
-#             
+#
 #             # Check snmp-exporter logs for successful startup
 #             if kubectl --context "$remote_context" -n "$ns" logs "$pod_name" -c snmp-exporter --tail=10 2>/dev/null | grep -q "Listening on"; then
 #                 ok "SNMP exporter container started successfully"
@@ -580,7 +580,7 @@ teardown() {
     [[ -n "$workdir" && -d "$workdir" ]] && rm -rf "$workdir"
     # Always remove the shared OCI buildx builder (a host-side resource, not part
     # of the kept cluster state).
-    docker buildx rm "$OCI_BUILDER" >/dev/null 2>&1 || true
+    docker buildx rm "${oci_builder}" >/dev/null 2>&1 || true
     return $rc
 }
 
