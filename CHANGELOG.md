@@ -98,8 +98,8 @@ and this project adheres to
   [#122](https://github.com/cloudoperators/rootstock/pull/122)
   ([diff](https://github.com/cloudoperators/rootstock/compare/v0.1.0...v0.2.0))
   by [@idafurjes](https://github.com/idafurjes)
-- (0.2.0 - 🚀) automerge: Detects and closes issues that a pr addresses
-  [#127](https://github.com/cloudoperators/rootstock/pull/127)
+- (0.2.0 - ⚙️) doc: Add SLO definitions
+  [#126](https://github.com/cloudoperators/rootstock/pull/126)
   ([diff](https://github.com/cloudoperators/rootstock/compare/v0.1.0...v0.2.0))
   by [@blackhat-jan](https://github.com/blackhat-jan)
 
