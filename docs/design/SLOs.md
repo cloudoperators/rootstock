@@ -1,14 +1,12 @@
 # Service level objectives (draft — indicators only, targets pending)
 
-> **Status:** This document defines the *indicators* (SLIs) for the planned
+> **Status:** This document defines the _indicators_ (SLIs) for the planned
 > asynchronous, cache-backed collection architecture. SLO targets (percentages,
-> latency budgets, evaluation windows) and the source of `collection_interval`
-> (config key, default value, valid range) have not yet been decided and must be
+> latency budgets, evaluation windows) have not yet been decided and must be
 > filled in before these indicators become actionable SLOs.
 >
 > The performance tests, runtime SLO instrumentation, and cache-backed probe
-> serving described below are design goals, not currently implemented
-> capabilities.
+> serving described below are not implemented yet.
 
 ## Table of contents
 
@@ -39,9 +37,9 @@ exposed as prometheus metrics at the dedicated rootstock `/metrics` endpoint.
 
 We need to cover the logic of asynchronous metric-collection which cover
 
-- scraping
+- metrics scraping
 - temporary storage
-- serving
+- metrics serving
 
 Ideally, SLO tests validate these aspects individually, to obtain cleaner
 signals for debugging.
