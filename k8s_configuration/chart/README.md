@@ -102,11 +102,10 @@ default.
 ### Architecture
 
 When enabled, the SNMP exporter runs as a sidecar container in the same pod as
-rootstock. Both containers share the pod and are accessible through a single
-Service:
+rootstock. Both containers share the pod:
 
-- **rootstock**: Port 9220 (Redfish `/probe` endpoint)
-- **snmp-exporter**: Port 9116 (SNMP `/snmp` endpoint)
+- **rootstock**: Port 9220 (Redfish `/probe` endpoint) - exposed via Service
+- **snmp-exporter**: Port 9116 (SNMP `/snmp` endpoint) - accessible via pod IP or port-forward
 
 ### Enabling SNMP Exporter
 
@@ -114,6 +113,41 @@ Service:
 helm install rootstock k8s_configuration/chart \
   --set snmpExporter.enabled=true \
   --set redfish.password='s3cr3t'
+```
+
+### Accessing SNMP Exporter
+
+The SNMP exporter sidecar is **not exposed via the Service** by default. Access it using:
+
+**Option 1: Port-forward (recommended for testing)**
+```bash
+kubectl port-forward -n rootstock deployment/rootstock 9116:9116
+curl "http://localhost:9116/snmp?target=192.168.1.1&module=if_mib"
+```
+
+**Option 2: Direct pod access (from within cluster)**
+```bash
+# Get pod name
+POD=$(kubectl get pod -n rootstock -l app.kubernetes.io/name=rootstock -o jsonpath='{.items[0].metadata.name}')
+
+# Query via pod IP
+POD_IP=$(kubectl get pod -n rootstock $POD -o jsonpath='{.status.podIP}')
+curl "http://${POD_IP}:9116/snmp?target=192.168.1.1&module=if_mib"
+```
+
+**Option 3: Create a dedicated Service (for production)**
+If you need the SNMP exporter exposed via a Service, create one manually:
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: rootstock-snmp
+spec:
+  selector:
+    app.kubernetes.io/name: rootstock
+  ports:
+    - port: 9116
+      targetPort: snmp-metrics
 ```
 
 ### Configuration
@@ -176,6 +210,8 @@ scrape_configs:
         replacement: rootstock:9220
 
   # SNMP device monitoring (sidecar)
+  # Note: SNMP exporter is not exposed via Service by default.
+  # Access via kubectl port-forward or create a dedicated Service.
   - job_name: "snmp"
     static_configs:
       - targets: ["192.168.1.1"] # SNMP device
@@ -188,7 +224,7 @@ scrape_configs:
       - source_labels: [__param_target]
         target_label: instance
       - target_label: __address__
-        replacement: rootstock:9116 # Same service, different port
+        replacement: rootstock-pod-ip:9116 # Use pod IP or port-forward
 ```
 
 | Key                                | Default                            | Description                                    |
@@ -208,9 +244,9 @@ scrape_configs:
 ## Endpoints
 
 rootstock serves `/healthz`, `/ready`, `/metrics`, and the multi-target
-`/probe?target=<redfish-url>&labels=<pdu_id>` on `server.port` (default: 9220).
+`/probe?target=<redfish-url>&labels=<pdu_id>` on `rootstock.port` (default: 9220).
 
 When SNMP exporter sidecar is enabled, it exposes
 `/snmp?target=<snmp-device>&module=<snmp-module>` for SNMP device probing on
-port `9116` (configurable via `snmpExporter.service.port`).
-`/probe?target=<redfish-url>&labels=<pdu_id>` on `rootstock.port`.
+port `9116`. The SNMP exporter is accessible via pod IP or `kubectl port-forward`.
+It is not exposed via the Service by default (only rootstock port 9220 is in the Service).

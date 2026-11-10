@@ -21,6 +21,5 @@ spec:
       targetPort: http
       protocol: TCP
       name: http
-
   selector:
     {{- include "rootstock.selectorLabels" . | nindent 4 }}
