@@ -105,7 +105,8 @@ When enabled, the SNMP exporter runs as a sidecar container in the same pod as
 rootstock. Both containers share the pod:
 
 - **rootstock**: Port 9220 (Redfish `/probe` endpoint) - exposed via Service
-- **snmp-exporter**: Port 9116 (SNMP `/snmp` endpoint) - accessible via pod IP or port-forward
+- **snmp-exporter**: Port 9116 (SNMP `/snmp` endpoint) - accessible via pod IP
+  or port-forward
 
 ### Enabling SNMP Exporter
 
@@ -117,15 +118,18 @@ helm install rootstock k8s_configuration/chart \
 
 ### Accessing SNMP Exporter
 
-The SNMP exporter sidecar is **not exposed via the Service** by default. Access it using:
+The SNMP exporter sidecar is **not exposed via the Service** by default. Access
+it using:
 
 **Option 1: Port-forward (recommended for testing)**
+
 ```bash
 kubectl port-forward -n rootstock deployment/rootstock 9116:9116
 curl "http://localhost:9116/snmp?target=192.168.1.1&module=if_mib"
 ```
 
 **Option 2: Direct pod access (from within cluster)**
+
 ```bash
 # Get pod name
 POD=$(kubectl get pod -n rootstock -l app.kubernetes.io/name=rootstock -o jsonpath='{.items[0].metadata.name}')
@@ -135,8 +139,9 @@ POD_IP=$(kubectl get pod -n rootstock $POD -o jsonpath='{.status.podIP}')
 curl "http://${POD_IP}:9116/snmp?target=192.168.1.1&module=if_mib"
 ```
 
-**Option 3: Create a dedicated Service (for production)**
-If you need the SNMP exporter exposed via a Service, create one manually:
+**Option 3: Create a dedicated Service (for production)** If you need the SNMP
+exporter exposed via a Service, create one manually:
+
 ```yaml
 apiVersion: v1
 kind: Service
@@ -244,9 +249,11 @@ scrape_configs:
 ## Endpoints
 
 rootstock serves `/healthz`, `/ready`, `/metrics`, and the multi-target
-`/probe?target=<redfish-url>&labels=<pdu_id>` on `rootstock.port` (default: 9220).
+`/probe?target=<redfish-url>&labels=<pdu_id>` on `rootstock.port` (default:
+9220).
 
 When SNMP exporter sidecar is enabled, it exposes
 `/snmp?target=<snmp-device>&module=<snmp-module>` for SNMP device probing on
-port `9116`. The SNMP exporter is accessible via pod IP or `kubectl port-forward`.
-It is not exposed via the Service by default (only rootstock port 9220 is in the Service).
+port `9116`. The SNMP exporter is accessible via pod IP or
+`kubectl port-forward`. It is not exposed via the Service by default (only
+rootstock port 9220 is in the Service).
