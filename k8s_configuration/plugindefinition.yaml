@@ -58,3 +58,11 @@ spec:
       type: bool
       required: false
       default: false
+    - name: snmpExporter.enabled
+      displayName: Enable SNMP Exporter sidecar
+      description: >-
+        Deploy SNMP exporter as a sidecar container for monitoring network
+        devices via SNMP. Exposes port 9116 with /snmp endpoint.
+      type: bool
+      required: false
+      default: false

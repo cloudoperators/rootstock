@@ -33,7 +33,7 @@ spec:
       value: docker.io/library/rootstock
     - name: image.tag
       # Container image tag (the app version from VERSION.yaml) -- NOT a Helm
-      # chart version. The verifier (verify-plugindefinition.sh --with-plugin)
+      # chart version. The start_plugin.sh script (with --with-plugin)
       # overrides this and image.repository at runtime from ROOTSTOCK_IMAGE
       # (default rootstock:<VERSION.yaml .version>). For a manual apply, set it
       # to match the image you built/imported.
@@ -50,3 +50,6 @@ spec:
           key: redfish_password
     - name: serviceMonitor.enabled
       value: false
+    # Uncomment to enable SNMP exporter sidecar for network device monitoring
+    # - name: snmpExporter.enabled
+    #   value: true

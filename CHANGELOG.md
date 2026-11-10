@@ -8,7 +8,7 @@ and this project adheres to
 
 <!-- git-cliff: end of header -->
 
-## 2026-11-09
+## 2026-11-10
 
 - (0.2.0 - 🚀) tooling: Local kind deployment
   [#80](https://github.com/cloudoperators/rootstock/pull/80)
@@ -98,8 +98,16 @@ and this project adheres to
   [#122](https://github.com/cloudoperators/rootstock/pull/122)
   ([diff](https://github.com/cloudoperators/rootstock/compare/v0.1.0...v0.2.0))
   by [@idafurjes](https://github.com/idafurjes)
+- (0.2.0 - 🚀) automerge: Detects and closes issues that a pr addresses
+  [#127](https://github.com/cloudoperators/rootstock/pull/127)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.1.0...v0.2.0))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
 - (0.2.0 - ⚙️) doc: Add SLO definitions
   [#126](https://github.com/cloudoperators/rootstock/pull/126)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.1.0...v0.2.0))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.2.0 - ⚙️) tooling: Cleanup greenhouse local testing
+  [#120](https://github.com/cloudoperators/rootstock/pull/120)
   ([diff](https://github.com/cloudoperators/rootstock/compare/v0.1.0...v0.2.0))
   by [@blackhat-jan](https://github.com/blackhat-jan)
 
