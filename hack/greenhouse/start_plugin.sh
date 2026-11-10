@@ -13,7 +13,25 @@
 # Committed plugindefinition.yaml is NEVER mutated; all rewrites happen on temp copies.
 set -euo pipefail
 
-# --- Configuration ------------------------------------------------------------
+
+# --- Variables ------------------------------------------------------------
+curl_image="curlimages/curl:8.11.1"
+snmp_exp_image="quay.io/prometheus/snmp-exporter:v0.26.0"
+
+# SNMP exporter config file, relative to the chart directory.
+SNMP_CONFIG_FILE="${SNMP_CONFIG_FILE:-files/snmp.yml}"
+
+# rootstock image. Defaults to the Makefile IMAGE default; override via env.
+ROOTSTOCK_IMAGE="${ROOTSTOCK_IMAGE:-"ghcr.io/cloudoperators/rootstock:dev-${USER}"}"
+
+# Polling (seconds).
+READY_TIMEOUT="${READY_TIMEOUT:-60}"
+POLL_INTERVAL="${POLL_INTERVAL:-5}"
+
+# Flags (set by parse_args).
+WITH_PLUGIN=false
+
+# --- Greenhouse setup ------------------------------------------------------------
 # Cluster / org / context names (must match what setup_greenhouse.sh created).
 # Greenhouse onboards the remote cluster under its kube-context name
 # ("kind-<cluster>"), which is what Plugin spec.clusterName must reference.
@@ -22,25 +40,19 @@ remote_cluster="greenhouse-remote"
 admin_context="kind-${admin_cluster}"
 remote_context="kind-${remote_cluster}"
 
-demo_org="demo"
+demo_org="demo"                       # greenhouse organisation
 
-# Local registry (zot) from Greenhouse's hack/registry/setup.sh.
-# registry_host: host-visible (helm push); registry_in_cluster: in-cluster (Flux).
-# registry_chart_repo: OCI path (sans oci://) the chart is pushed under.
-registry_host="localhost:5000"
-registry_in_cluster="registry:5000"
-registry_chart_repo="charts"
+registry_host="localhost:5000"        # local registry (zot) from Greenhouse's hack/registry/setup.sh.
+registry_in_cluster="registry:5000"   # host-visible (helm push); registry_in_cluster: in-cluster (Flux).
+registry_chart_repo="charts"          # OCI path (sans oci://) the chart is pushed under.
 
-# Name of the throwaway buildx builder used to push OCI images (see below).
-oci_builder="rootstock-ghverify-oci"
+oci_builder="rootstock-ghverify-oci"  # buildx builder name used to push OCI images (thowaway)
 
-# Helm test-hook image. zot can't mirror Docker Hub (docker2s2 disabled), so we
-# re-publish it as OCI and override testConnection.image.* in the Plugin.
-test_conn_image="curlimages/curl:8.11.1"
-
-# SNMP exporter sidecar image. zot can't mirror quay.io either, so we re-publish
-# it as OCI and override snmpExporter.image.* in the Plugin.
-snmp_exporter_image="quay.io/prometheus/snmp-exporter:v0.26.0"
+# zot image overwrites (quay.io and local docker images don't work)
+# images are overwritten in Plugin helm values as well
+zot_reg_rootstock_image="${registry_in_cluster}/rootstock:${ROOTSTOCK_IMAGE##*:}"
+zot_reg_curl_image="${registry_in_cluster}/${curl_image}"
+zot_reg_snmp_exp_image="${registry_in_cluster}/${snmp_exp_image#*/}"
 
 
 # --- Paths --------------------------------------------------------------------
@@ -51,18 +63,6 @@ greenhouse_test_dir="${rootstock_root}/k8s_configuration/greenhouse-test"
 workdir="${rootstock_root}/tmp/greenhouse/verify"
 
 
-# SNMP exporter config file, relative to the chart directory.
-SNMP_CONFIG_FILE="${SNMP_CONFIG_FILE:-files/snmp.yml}"
-
-# rootstock image. Defaults to the Makefile IMAGE default; override via env.
-ROOTSTOCK_IMAGE="${ROOTSTOCK_IMAGE:-}"
-
-# Polling (seconds).
-READY_TIMEOUT="${READY_TIMEOUT:-60}"
-POLL_INTERVAL="${POLL_INTERVAL:-5}"
-
-# Flags (set by parse_args).
-WITH_PLUGIN=false
 
 # =============================================================================
 # main
@@ -73,7 +73,14 @@ main() {
     trap teardown EXIT
 
     preflight
-    resolve_versions
+
+    chart_version="$(yq -r '.version' "${chart_dir}/Chart.yaml" 2>/dev/null)" \
+        || die "failed to read .version from ${chart_dir}/Chart.yaml"
+    ok "chart version ${chart_version} (from Chart.yaml)"
+    ok "registry image ${zot_reg_rootstock_image} (derived)"
+    ok "test-connection image ${zot_reg_curl_image} (derived)"
+    ok "snmp-exporter image ${zot_reg_snmp_exp_image} (derived)"
+
     publish_chart
     apply_plugindefinition
     if $WITH_PLUGIN; then
@@ -151,15 +158,13 @@ publish_chart() {
 
     local pkgdir="${workdir}/chart"
     mkdir -p "$pkgdir"
-    # chart_version mirrors Chart.yaml; pass it explicitly so the packaged tgz
-    # name is deterministic.
+
     helm package "$chart_dir" --version "$chart_version" -d "$pkgdir" >/dev/null \
         || die "helm package failed"
     local tgz="${pkgdir}/rootstock-${chart_version}.tgz"
     [[ -f "$tgz" ]] || die "expected packaged chart ${tgz} not found"
     ok "packaged $(basename "$tgz")"
 
-    # Push over plain HTTP (zot is HTTP on localhost:5000).
     helm push "$tgz" "oci://${registry_host}/${registry_chart_repo}" --plain-http \
         || die "helm push to oci://${registry_host}/${registry_chart_repo} failed"
     ok "pushed chart to oci://${registry_host}/${registry_chart_repo}/rootstock:${chart_version}"
@@ -269,13 +274,12 @@ ensure_oci_builder() {
              die "failed to bootstrap buildx builder ${oci_builder}"; }
 }
 
-# Re-publish a local docker-daemon image to the OCI registry without rebuilding.
+# Re-publish an image from the local docker-daemon to the OCI registry without rebuilding.
 #
 # The docker-container builder has its own image store and can't read daemon
 # images, so we bridge the two with `docker save` (Docker >=25 writes an
 # OCI-layout tarball) and feed the extracted layout to the builder as a build
-# context — layers are copied, nothing is recompiled. Missing images are pulled
-# first, so upstream refs (e.g. curlimages/curl) work too.
+# context. Missing images are pulled so that upstream refs work too.
 #
 #   push_local_image_oci <dest_host> <local_image>
 push_local_image_oci() {
@@ -325,33 +329,21 @@ run_plugin_e2e() {
     log "Phase 3: full Plugin E2E (--with-plugin)"
 
     # 1. Make the rootstock image available to the remote cluster via the local
-    #    registry (zot). Greenhouse resolves the HelmRelease image from the
-    #    registry, so a `kind load` into node containerd is not enough -- we push
-    #    an OCI image and point the Plugin at registry_in_cluster/rootstock.
+    #    registry (zot).
     if ! docker image inspect "$ROOTSTOCK_IMAGE" >/dev/null 2>&1; then
         die "image ${ROOTSTOCK_IMAGE} not found locally; build it first (e.g. 'make docker-build' / 'make kind-up')"
     fi
-    # Reuse the image already built in the local docker daemon (make docker-build)
-    # instead of rebuilding it from the Dockerfile. Push using the HOST-visible
-    # address; the Plugin references registry_in_cluster (same zot, but reachable
-    # in-cluster).
+
     push_local_image_oci "${registry_host}/rootstock:${ROOTSTOCK_IMAGE##*:}" "$ROOTSTOCK_IMAGE"
-    ok "image available in registry as ${rootstock_registry_image}"
+    ok "image available in registry as ${zot_reg_rootstock_image}"
 
-    # Re-publish the test-connection curl image as OCI; dev-env zot can't mirror
-    # Docker Hub (docker2s2 disabled), so override testConnection.image.* in the Plugin.
-    push_local_image_oci "${registry_host}/${test_conn_image}" "$test_conn_image"
-    ok "test-connection image available in registry as ${testconn_registry_image}"
+    push_local_image_oci "${registry_host}/${curl_image}" "$curl_image"
+    ok "test-connection image available in registry as ${zot_reg_curl_image}"
 
-    # Re-publish the SNMP exporter image as OCI; dev-env zot can't mirror quay.io,
-    # so override snmpExporter.image.* in the Plugin. Strip the quay.io host so the
-    # local path matches snmp_exporter_registry_image.
-    push_local_image_oci "${registry_host}/${snmp_exporter_image#*/}" "$snmp_exporter_image"
-    ok "snmp-exporter image available in registry as ${snmp_exporter_registry_image}"
+    push_local_image_oci "${registry_host}/${snmp_exp_image#*/}" "$snmp_exp_image"
+    ok "snmp-exporter image available in registry as ${zot_reg_snmp_exp_image}"
 
     # 2. Wait for Greenhouse to register the remote cluster's nodes as ready.
-    #    Freshly created clusters race: nodes go Ready before Greenhouse updates
-    #    the cluster status, which would otherwise fail Plugin deployment.
     log "waiting for Greenhouse to recognize cluster nodes as ready"
     local timeout=300 elapsed=0 refreshed=false
     local nodes_ready payload_schedulable
@@ -399,15 +391,15 @@ run_plugin_e2e() {
       del(.spec.pluginDefinition) |
       del(.spec.disabled) |
       (.spec.optionValues[] | select(.name == \"image.pullPolicy\").value) = \"IfNotPresent\" |
-      (.spec.optionValues[] | select(.name == \"image.repository\").value) = \"${rootstock_registry_image%:*}\" |
-      (.spec.optionValues[] | select(.name == \"image.tag\").value) = \"${rootstock_registry_image##*:}\" |
+      (.spec.optionValues[] | select(.name == \"image.repository\").value) = \"${zot_reg_rootstock_image%:*}\" |
+      (.spec.optionValues[] | select(.name == \"image.tag\").value) = \"${zot_reg_rootstock_image##*:}\" |
       .spec.optionValues += [
         {\"name\": \"snmpExporter.enabled\", \"value\": true},
         {\"name\": \"snmpExporter.configFile\", \"value\": \"${SNMP_CONFIG_FILE}\"},
-        {\"name\": \"snmpExporter.image.repository\", \"value\": \"${snmp_exporter_registry_image%:*}\"},
-        {\"name\": \"snmpExporter.image.tag\", \"value\": \"${snmp_exporter_registry_image##*:}\"},
-        {\"name\": \"testConnection.image.repository\", \"value\": \"${testconn_registry_image%:*}\"},
-        {\"name\": \"testConnection.image.tag\", \"value\": \"${testconn_registry_image##*:}\"}
+        {\"name\": \"snmpExporter.image.repository\", \"value\": \"${zot_reg_snmp_exp_image%:*}\"},
+        {\"name\": \"snmpExporter.image.tag\", \"value\": \"${zot_reg_snmp_exp_image##*:}\"},
+        {\"name\": \"testConnection.image.repository\", \"value\": \"${zot_reg_curl_image%:*}\"},
+        {\"name\": \"testConnection.image.tag\", \"value\": \"${zot_reg_curl_image##*:}\"}
       ]
     " "$plugin"
     kubectl --context "$admin_context" apply -f "$plugin" \
@@ -437,42 +429,5 @@ teardown() {
     return $rc
 }
 
-# =============================================================================
-# Version resolution
-# =============================================================================
-# Resolve the chart version (always from Chart.yaml), honouring the
-# ROOTSTOCK_IMAGE override. Called once at the start of main() so every phase
-# stays in lockstep.
-resolve_versions() {
-    log "resolving versions"
-
-    chart_version="$(yq -r '.version' "${chart_dir}/Chart.yaml" 2>/dev/null)" \
-        || die "failed to read .version from ${chart_dir}/Chart.yaml"
-    [[ -n "$chart_version" && "$chart_version" != "null" ]] \
-        || die "chart version is empty/null in ${chart_dir}/Chart.yaml"
-    ok "chart version ${chart_version} (from Chart.yaml)"
-
-    if [[ -z "$ROOTSTOCK_IMAGE" ]]; then
-        # Mirror the Makefile default: IMAGE ?= ghcr.io/cloudoperators/rootstock:dev-$(USER)
-        ROOTSTOCK_IMAGE="ghcr.io/cloudoperators/rootstock:dev-${USER}"
-        ok "image ${ROOTSTOCK_IMAGE} (Makefile IMAGE default)"
-    else
-        ok "image ${ROOTSTOCK_IMAGE} (ROOTSTOCK_IMAGE override)"
-    fi
-
-    rootstock_registry_image="${registry_in_cluster}/rootstock:${ROOTSTOCK_IMAGE##*:}"
-    ok "registry image ${rootstock_registry_image} (derived)"
-
-    # Test-hook image re-published under the in-cluster registry
-    # (curlimages/curl:8.11.1 -> ${registry_in_cluster}/curlimages/curl:8.11.1).
-    testconn_registry_image="${registry_in_cluster}/${test_conn_image}"
-    ok "test-connection image ${testconn_registry_image} (derived)"
-
-    # SNMP exporter image re-published under the in-cluster registry (strip the
-    # quay.io host: quay.io/prometheus/snmp-exporter:v0.26.0 ->
-    # ${registry_in_cluster}/prometheus/snmp-exporter:v0.26.0).
-    snmp_exporter_registry_image="${registry_in_cluster}/${snmp_exporter_image#*/}"
-    ok "snmp-exporter image ${snmp_exporter_registry_image} (derived)"
-}
 
 main "$@"
