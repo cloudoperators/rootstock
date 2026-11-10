@@ -158,15 +158,13 @@ publish_chart() {
 
     local pkgdir="${workdir}/chart"
     mkdir -p "$pkgdir"
-    # chart_version mirrors Chart.yaml; pass it explicitly so the packaged tgz
-    # name is deterministic.
+
     helm package "$chart_dir" --version "$chart_version" -d "$pkgdir" >/dev/null \
         || die "helm package failed"
     local tgz="${pkgdir}/rootstock-${chart_version}.tgz"
     [[ -f "$tgz" ]] || die "expected packaged chart ${tgz} not found"
     ok "packaged $(basename "$tgz")"
 
-    # Push over plain HTTP (zot is HTTP on localhost:5000).
     helm push "$tgz" "oci://${registry_host}/${registry_chart_repo}" --plain-http \
         || die "helm push to oci://${registry_host}/${registry_chart_repo} failed"
     ok "pushed chart to oci://${registry_host}/${registry_chart_repo}/rootstock:${chart_version}"
