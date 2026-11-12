@@ -51,6 +51,11 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git pull --no-rebase origin main
 
+      - name: Validate Helm chart version bump
+        env:
+          BASE_SHA: ${{ inputs.base_sha }}
+        run: make helm-lint
+
       - name: Generate changelog entry from PR
         env:
           PR_TITLE: ${{ inputs.pr_title }}

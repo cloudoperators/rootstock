@@ -34,6 +34,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      pull-requests: read
     steps:
       - uses: actions/create-github-app-token@v2
         id: app-token
@@ -45,6 +46,7 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.repo.full_name == github.repository && github.head_ref || github.ref }}
           token: ${{ steps.app-token.outputs.token }}
+          fetch-depth: 0
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
@@ -74,6 +76,12 @@ jobs:
             git commit -am "chore: apply linter auto-fixes"
             git push
           fi
+      - name: Ensure helm version update
+        id: helm-version
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: make helm-lint
 
   code-scans:
     name: Code Scans
@@ -124,10 +132,25 @@ jobs:
       security-events: write
     secrets: inherit
     uses: ./.github/workflows/docker-build.yaml
-    needs:
-      - variables
+    needs: [variables]
     with:
       version: ${{ needs.variables.outputs.version }}-pr-${{ github.event.number }}
+
+  test-helm-release:
+    permissions:
+      contents: write
+      packages: write
+      # This is used to complete the identity challenge
+      # with sigstore/fulcio when running outside of PRs.
+      id-token: write
+      # security-events: write
+    secrets: inherit
+    uses: ./.github/workflows/helm-release.yaml
+    needs: [variables]
+    with:
+      version: ${{ needs.variables.outputs.version }}-pr-${{ github.event.number }}
+
+
 
   contract-tests:
     name: Contract Tests
