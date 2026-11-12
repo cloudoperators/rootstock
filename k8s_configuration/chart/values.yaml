@@ -29,7 +29,6 @@ rootstock:
     format: text
     trace: false
   redfish:
-    username: redfish
     # The password is ALWAYS consumed from a mounted file, never an environment
     # variable. There are two mutually exclusive ways to supply it:
     #
@@ -56,6 +55,7 @@ rootstock:
   # Timeout for scraping upstream Redfish APIs. Maps to --scrape-timeout.
   scrape:
     timeout: 30s
+
 
 # Image used by the Helm test hook (templates/tests/test-connection.yaml) that
 # curls the /healthz and /ready endpoints. Parameterized so environments that
@@ -153,17 +153,17 @@ global:
 snmpExporter:
   # Enable/disable the SNMP exporter sidecar container
   enabled: false
-  
+
   # Service configuration
   service:
     port: 9116
-  
+
   # Image configuration
   image:
     repository: quay.io/prometheus/snmp-exporter
     tag: v0.26.0
     pullPolicy: IfNotPresent
-  
+
   # Resources for the sidecar container
   resources:
     requests:
@@ -172,7 +172,7 @@ snmpExporter:
     limits:
       cpu: 200m
       memory: 128Mi
-  
+
   # Security context for the sidecar container
   securityContext:
     allowPrivilegeEscalation: false
@@ -182,12 +182,12 @@ snmpExporter:
     capabilities:
       drop:
         - ALL
-  
+
   # SNMP exporter configuration
   # Option 1: Use a local file (recommended for complex configs)
   # Uncomment to use files/snmp.yml instead of inline config
   # configFile: "files/snmp.yml"
-  
+
   # Option 2: Inline configuration (default)
   # The default config includes common MIBs (if_mib, etc.)
   # Override this with your custom snmp.yml configuration

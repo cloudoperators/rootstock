@@ -39,12 +39,6 @@ spec:
       type: string
       required: false
       default: IfNotPresent
-    - name: redfish.username
-      displayName: Redfish username
-      description: Username used for Redfish session authentication.
-      type: string
-      required: true
-      default: "redfish"
     - name: redfish.password
       displayName: Redfish password
       description: >-

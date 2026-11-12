@@ -81,7 +81,6 @@ Key options:
 | ------------------------------- | ---------------------------------- | -------------------------------------------- |
 | `image.repository`              | `ghcr.io/cloudoperators/rootstock` | Image repository.                            |
 | `image.tag`                     | `""` (chart appVersion)            | Image tag.                                   |
-| `redfish.username`              | `redfish`                          | Redfish auth username.                       |
 | `redfish.existingSecret`        | `""`                               | Pre-created Secret holding the password.     |
 | `redfish.password`              | `""`                               | Inline password (renders a Secret).          |
 | `redfish.secretKey`             | `redfish_password`                 | Key within the Secret.                       |
@@ -236,7 +235,6 @@ scrape_configs:
 | ---------------------------------- | ---------------------------------- | ---------------------------------------------- |
 | `image.repository`                 | `ghcr.io/cloudoperators/rootstock` | Image repository.                              |
 | `image.tag`                        | `""` (chart appVersion)            | Image tag.                                     |
-| `rootstock.redfish.username`       | `redfish`                          | Redfish auth username.                         |
 | `rootstock.redfish.existingSecret` | `""`                               | Pre-created Secret holding credentials.        |
 | `rootstock.redfish.access`         | `{pdu1: {username: redfish, ...}}` | Inline per-PDU credentials (renders a Secret). |
 | `rootstock.config.folder`          | `/config`                          | Mount directory for config and credentials.    |

@@ -41,8 +41,6 @@ spec:
     # CRITICAL: the image only exists in the node's containerd, not a registry.
     - name: image.pullPolicy
       value: Never
-    - name: redfish.username
-      value: redfish
     - name: redfish.password
       valueFrom:
         secret:
