@@ -2,11 +2,16 @@
 # SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Greenhouse contributors
 # SPDX-License-Identifier: Apache-2.0
 #
-# start_plugin.sh — start the rootstock Greenhouse Plugin.
+# start_plugin.sh — start/stop the rootstock Greenhouse Plugin.
 #
 # Requires a running Greenhouse-in-kind environment (run setup_greenhouse.sh first).
-# Default: preflight → helm package+push → apply PluginDefinition and assert READY=True.
-# --with-plugin: also load image, create Redfish Secret, apply Plugin, and start deployment.
+#
+# Commands:
+#   create   preflight → helm package+push → apply PluginDefinition and assert
+#            READY=True. --with-plugin also loads the image, creates the Redfish
+#            Secret, applies the Plugin, and starts the deployment.
+#   delete   remove all resources that `create` added/updated (Plugin, Redfish
+#            Secret, PluginDefinition, and the Flux HelmChart cache).
 #
 # Environment:
 #   SNMP_CONFIG_FILE: SNMP config file path (default: files/snmp.yml)
@@ -28,8 +33,9 @@ ROOTSTOCK_IMAGE="${ROOTSTOCK_IMAGE:-"ghcr.io/cloudoperators/rootstock:dev-${USER
 READY_TIMEOUT="${READY_TIMEOUT:-60}"
 POLL_INTERVAL="${POLL_INTERVAL:-5}"
 
-# Flags (set by parse_args).
+# Flags / command (set by parse_args).
 WITH_PLUGIN=false
+COMMAND=""
 
 # --- Greenhouse setup ------------------------------------------------------------
 # Cluster / org / context names (must match what setup_greenhouse.sh created).
@@ -44,7 +50,9 @@ demo_org="demo"                       # greenhouse organisation
 
 registry_host="localhost:5000"        # local registry (zot) from Greenhouse's hack/registry/setup.sh.
 registry_in_cluster="registry:5000"   # host-visible (helm push); registry_in_cluster: in-cluster (Flux).
-registry_chart_repo="charts"          # OCI path (sans oci://) the chart is pushed under.
+# OCI sub-path the chart is pushed under (sans oci://). Must match hack/helm_release.sh,
+# which publishes to oci://<registry>/cloudoperators/rootstock/charts/<chart>.
+registry_chart_repo="cloudoperators/rootstock/charts"
 
 oci_builder="rootstock-ghverify-oci"  # buildx builder name used to push OCI images (thowaway)
 
@@ -72,6 +80,17 @@ main() {
     workdir="$(mktemp -d "${TMPDIR:-/tmp}/rootstock-ghverify.XXXXXX")"
     trap teardown EXIT
 
+    case "$COMMAND" in
+        create) create ;;
+        delete) delete ;;
+        *)      usage; die "unknown or missing command: ${COMMAND:-<none>}" ;;
+    esac
+}
+
+# =============================================================================
+# create: apply/update all rootstock resources
+# =============================================================================
+create() {
     preflight
 
     chart_version="$(yq -r '.version' "${chart_dir}/Chart.yaml" 2>/dev/null)" \
@@ -92,6 +111,44 @@ main() {
     log "VERIFICATION PASSED"
 }
 
+# =============================================================================
+# delete: remove everything create added/updated
+# =============================================================================
+delete() {
+    log "deleting rootstock resources from ns ${demo_org}"
+
+    chart_version="$(yq -r '.version' "${chart_dir}/Chart.yaml" 2>/dev/null || true)"
+
+    # Reverse order of creation: Plugin → Secret → PluginDefinition → HelmChart cache.
+    delete_resource plugin rootstock "$demo_org"
+    delete_resource secret rootstock-redfish "$demo_org"
+    delete_resource plugindefinition rootstock "$demo_org"
+
+    if [[ -n "$chart_version" ]]; then
+        delete_resource helmchart "rootstock-${chart_version}" "$demo_org"
+    fi
+
+    log "DELETE COMPLETE"
+}
+
+# delete_resource <kind> <name> <namespace-or-empty>
+delete_resource() {
+    local kind="$1" name="$2" ns="${3:-}"
+    local nsargs=()
+    [[ -n "$ns" ]] && nsargs=(-n "$ns")
+
+    if kubectl --context "$admin_context" "${nsargs[@]}" get "$kind" "$name" >/dev/null 2>&1; then
+        if kubectl --context "$admin_context" "${nsargs[@]}" delete "$kind" "$name" --ignore-not-found \
+            >/dev/null 2>&1; then
+            ok "deleted ${kind}/${name}${ns:+ (ns ${ns})}"
+        else
+            warn "failed to delete ${kind}/${name}${ns:+ (ns ${ns})}"
+        fi
+    else
+        log "${kind}/${name}${ns:+ (ns ${ns})} not present; skipping"
+    fi
+}
+
 # --- Logging helpers ----------------------------------------------------------
 log()  { printf '\033[1;34m==>\033[0m %s\n' "$*"; }
 ok()   { printf '\033[1;32m  OK\033[0m %s\n' "$*"; }
@@ -100,11 +157,19 @@ die()  { printf '\033[1;31mERROR:\033[0m %s\n' "$*" >&2; exit 1; }
 
 usage() {
     cat <<EOF
-Usage: $(basename "$0") [--with-plugin] [-h|--help]
+Usage: $(basename "$0") <create|delete> [--with-plugin] [-h|--help]
 
-  --with-plugin   Also run the full E2E: load image into the remote cluster,
-                  create the Redfish Secret, apply a Plugin and assert it is
-                  Ready, deploy the bundled DMTF Redfish mockup
+Commands:
+  create          Package + push the chart, apply the PluginDefinition and
+                  assert READY=True. With --with-plugin, also load the image,
+                  create the Redfish Secret, apply the Plugin and assert it is
+                  Ready, deploy the bundled DMTF Redfish mockup.
+  delete          Remove all resources create added/updated: the Plugin, the
+                  Redfish Secret, the PluginDefinition, and the Flux HelmChart
+                  cache (all in the ${demo_org} namespace).
+
+Options:
+  --with-plugin   (create only) Run the full E2E described above.
   -h, --help      Show this help.
 
 Key environment overrides:
@@ -117,12 +182,16 @@ EOF
 parse_args() {
     while [[ $# -gt 0 ]]; do
         case "$1" in
+            create|delete)
+                [[ -n "$COMMAND" ]] && { usage; die "multiple commands given: ${COMMAND}, $1"; }
+                COMMAND="$1" ;;
             --with-plugin) WITH_PLUGIN=true ;;
             -h|--help)     usage; exit 0 ;;
             *)             usage; die "unknown argument: $1" ;;
         esac
         shift
     done
+    [[ -n "$COMMAND" ]] || { usage; die "no command given (expected 'create' or 'delete')"; }
 }
 
 # =============================================================================
@@ -150,7 +219,7 @@ preflight() {
 # Phase 1: publish the rootstock chart to the local registry
 # =============================================================================
 publish_chart() {
-    log "Phase 1: package + push rootstock chart to oci://${registry_host}/${registry_chart_repo}"
+    log "Phase 1: package + push rootstock chart via 'make helm-release' to oci://${registry_host}/${registry_chart_repo}"
 
     # Confirm the registry container exists (started by setup_greenhouse.sh).
     docker inspect registry >/dev/null 2>&1 \
@@ -159,14 +228,11 @@ publish_chart() {
     local pkgdir="${workdir}/chart"
     mkdir -p "$pkgdir"
 
-    helm package "$chart_dir" --version "$chart_version" -d "$pkgdir" >/dev/null \
-        || die "helm package failed"
-    local tgz="${pkgdir}/rootstock-${chart_version}.tgz"
-    [[ -f "$tgz" ]] || die "expected packaged chart ${tgz} not found"
-    ok "packaged $(basename "$tgz")"
-
-    helm push "$tgz" "oci://${registry_host}/${registry_chart_repo}" --plain-http \
-        || die "helm push to oci://${registry_host}/${registry_chart_repo} failed"
+    # --plain-http targets the insecure local zot; --force re-pushes the pinned
+    # dev chart version that the Greenhouse verify flow reuses on every run.
+    make -C "$rootstock_root" helm-release \
+        ARGS="--registry ${registry_host} --chart-folder ${chart_dir} --version ${chart_version} --out-dir ${pkgdir} --plain-http --force" \
+        || die "make helm-release failed"
     ok "pushed chart to oci://${registry_host}/${registry_chart_repo}/rootstock:${chart_version}"
 
     # Flux keys its OCI chart cache by version; re-pushing the same version without
