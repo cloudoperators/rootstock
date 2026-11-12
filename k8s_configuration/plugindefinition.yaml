@@ -22,7 +22,7 @@ spec:
     exposes Prometheus metrics using a multi-target probe pattern.
   helmChart:
     name: rootstock
-    repository: oci://ghcr.io/cloudoperators/charts
+    repository: oci://ghcr.io/cloudoperators/rootstock/charts
     version: 0.1.0
   options:
     - name: image.repository

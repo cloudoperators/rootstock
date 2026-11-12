@@ -3,15 +3,20 @@
 # SPDX-License-Identifier: Apache-2.0
 set -euo pipefail
 
-NEXT_VERSION=$(DEBUG=false hack/update_changelog.sh --get-version)
-VERSION="${NEXT_VERSION#v}"
+next_version=$(DEBUG=false hack/update_changelog.sh --get-version)
+version="${next_version#v}"
 
-if [[ -z "$VERSION" ]] || ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9][a-zA-Z0-9.]*)?$ ]]; then
-  echo "error: could not determine next version (got: '${NEXT_VERSION}')" >&2
+if [[ -z "$version" ]] || ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9][a-zA-Z0-9.]*)?$ ]]; then
+  echo "error: could not determine next version (got: '${next_version}')" >&2
   exit 1
 fi
 
+chart_file="k8s_configuration/chart/Chart.yaml"
+
 case "$(uname)" in
-  Darwin) sed -i ''  "s|^version:.*|version: ${VERSION}|" VERSION.yaml ;;
-  *)      sed -i     "s|^version:.*|version: ${VERSION}|" VERSION.yaml ;;
+  Darwin) SED_INPLACE=(-i '') ;;
+  *)      SED_INPLACE=(-i) ;;
 esac
+
+sed "${SED_INPLACE[@]}" "s|^version:.*|version: ${version}|" VERSION.yaml
+sed "${SED_INPLACE[@]}" "s|^appVersion:.*|appVersion: \"${version}\"|" "$chart_file"

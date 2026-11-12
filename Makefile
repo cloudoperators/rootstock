@@ -34,7 +34,7 @@ MOCKUP_CONTAINER := redfish-mockup
 				scan \
 				docker-build \
         kind-up kind-deploy kind-% \
-        helm-lint helm-template \
+        helm-lint helm-template helm-release\
 				generate generate-changelog generate-version \
 				get-version test-changelog \
 				automerge-check \
@@ -58,6 +58,8 @@ build: ## Compile a static server binary to bin/
 			-ldflags $(LDFLAGS) \
 			-o bin/rootstock \
 			.
+docker-login: ## Login to the ghcr.io registry with the GITHUB_TOKEN
+	docker login ghcr.io -u $(shell gh api user --jq .login) -p ${GITHUB_TOKEN}
 
 docker-build: ## Build the container image for rootstock
 	@echo "$(green) building docker image$(reset)"
@@ -161,9 +163,14 @@ automerge-check: ## Check PR eligibility for automerge (GitHub Actions only)
 # mirror CHART_RELEASE/CHART_NAMESPACE).
 KIND_CONTROL := IMAGE=$(IMAGE) hack/kind/control.sh
 
-helm-lint: ## Lint the Helm chart
+helm-release: ## Package the Helm chart and publish it to the OCI registry (assumes 'helm registry login')
+	@hack/helm_release.sh $(ARGS)
+
+helm-lint: ## Lint the Helm chart and ensure helm version updates for chart changes
 	@echo "$(green) helm lint$(reset)"
 	helm lint k8s_configuration/chart
+	@echo "$(green) ensure helm version consistency$(reset)"
+	@BASE_SHA=$${BASE_SHA:-$$(git merge-base origin/main HEAD)} hack/validate_helm_version.sh
 
 helm-template: ## Render the Helm chart to stdout
 	@helm template k8s_configuration/chart
@@ -191,10 +198,13 @@ greenhouse-create: ## Bootstrap a local Greenhouse-in-kind environment
 	@hack/greenhouse/control.sh create
 
 greenhouse-plugin: ## Start the rootstock Plugin in Greenhouse dev env
-	@hack/greenhouse/start_plugin.sh
+	@hack/greenhouse/plugin_control.sh create
+
+greenhouse-plugin-delete: ## Delete the rootstock Plugin in Greenhouse dev env
+	@hack/greenhouse/plugin_control.sh delete
 
 greenhouse-plugin-full: ## Start the rootstock Plugin with full deployment verification
-	@hack/greenhouse/start_plugin.sh --with-plugin
+	@hack/greenhouse/plugin_control.sh create --with-plugin
 
 greenhouse-delete: ## Tear down the local Greenhouse-in-kind environment
 	@hack/greenhouse/control.sh delete
