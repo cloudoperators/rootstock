@@ -33,8 +33,8 @@ make kind-delete    # delete the cluster
 ```bash
 # Self-contained (inline per-PDU credentials, chart renders the Secret):
 helm install rootstock k8s_configuration/chart \
-  --set 'rootstock.redfish.access.pdu1.username=redfish' \
-  --set 'rootstock.redfish.access.pdu1.password=s3cr3t'
+  --set 'redfish.access.pdu1.username=redfish' \
+  --set 'redfish.access.pdu1.password=s3cr3t'
 
 # Production style (reference a pre-created Secret):
 kubectl create secret generic rootstock-redfish \
@@ -55,7 +55,7 @@ There are two mutually exclusive ways to provide credentials:
 | Mode                | Value                                      | Use case                                                        |
 | ------------------- | ------------------------------------------ | --------------------------------------------------------------- |
 | **Existing Secret** | `rootstock.redfish.existingSecret: <name>` | Production; Secret managed outside the chart.                   |
-| **Inline**          | `rootstock.redfish.access: {pdu1: {...}}`  | Self-contained / local (kind) runs; the chart renders a Secret. |
+| **Inline**          | `redfish.access: {pdu1: {...}}`  | Self-contained / local (kind) runs; the chart renders a Secret. |
 
 In both modes the Secret must contain the key `redfish_pdus.yaml` in this
 format:
@@ -69,7 +69,7 @@ pdu1:
 ### Greenhouse
 
 Use `rootstock.redfish.existingSecret` and pre-create the Secret in the
-namespace before installing the Plugin, or set `rootstock.redfish.access`
+namespace before installing the Plugin, or set `redfish.access`
 directly via `optionValues` if the Plugin operator supports map values.
 
 ## Values
@@ -236,7 +236,7 @@ scrape_configs:
 | `image.repository`                 | `ghcr.io/cloudoperators/rootstock` | Image repository.                              |
 | `image.tag`                        | `""` (chart appVersion)            | Image tag.                                     |
 | `rootstock.redfish.existingSecret` | `""`                               | Pre-created Secret holding credentials.        |
-| `rootstock.redfish.access`         | `{pdu1: {username: redfish, ...}}` | Inline per-PDU credentials (renders a Secret). |
+| `redfish.access`                   | `{pdu1: {username: redfish, ...}}` | Inline per-PDU credentials (renders a Secret). |
 | `rootstock.config.folder`          | `/config`                          | Mount directory for config and credentials.    |
 | `rootstock.port`                   | `9220`                             | Container port.                                |
 | `rootstock.log.level`              | `debug`                            | Log level (`debug`, `info`, `warn`, `error`).  |
