@@ -55,7 +55,7 @@ There are two mutually exclusive ways to provide credentials:
 | Mode                | Value                                      | Use case                                                        |
 | ------------------- | ------------------------------------------ | --------------------------------------------------------------- |
 | **Existing Secret** | `rootstock.redfish.existingSecret: <name>` | Production; Secret managed outside the chart.                   |
-| **Inline**          | `redfish.access: {pdu1: {...}}`  | Self-contained / local (kind) runs; the chart renders a Secret. |
+| **Inline**          | `redfish.access: {pdu1: {...}}`            | Self-contained / local (kind) runs; the chart renders a Secret. |
 
 In both modes the Secret must contain the key `redfish_pdus.yaml` in this
 format:
@@ -69,8 +69,8 @@ pdu1:
 ### Greenhouse
 
 Use `rootstock.redfish.existingSecret` and pre-create the Secret in the
-namespace before installing the Plugin, or set `redfish.access`
-directly via `optionValues` if the Plugin operator supports map values.
+namespace before installing the Plugin, or set `redfish.access` directly via
+`optionValues` if the Plugin operator supports map values.
 
 ## Values
 
