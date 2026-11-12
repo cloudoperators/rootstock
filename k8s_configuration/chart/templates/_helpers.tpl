@@ -31,19 +31,29 @@ Properties:
   - It leaves room for a suffix of up to 30 characters: resources append
     suffixes such as "-redfish-pdu-access", and the combined
     "<fullname>-<suffix>" must still satisfy the 63-char DNS label limit.
-
+  - When the underlying name is longer than the budget (33 chars) and would be
+    truncated, a 5-hex-digit hash of the full, untruncated name is appended
+    (as "<truncated>-<hash>"). This keeps otherwise-colliding long names
+    distinct and stable across renders.
 */}}
 {{- define "rootstock.fullname" -}}
 {{- $maxLen := 33 -}}
+{{- $full := "" -}}
 {{- if .Values.fullnameOverride }}
-{{- .Values.fullnameOverride | trunc $maxLen | trimSuffix "-" }}
+  {{- $full = .Values.fullnameOverride | trimSuffix "-" }}
 {{- else }}
-{{- $name := default .Chart.Name .Values.nameOverride }}
-{{- if contains $name (include "rootstock.releaseName" .) }}
-{{- include "rootstock.releaseName" . | trunc $maxLen | trimSuffix "-" }}
-{{- else }}
-{{- printf "%s-%s" (include "rootstock.releaseName" .) $name | trunc $maxLen | trimSuffix "-" }}
+  {{- $name := default .Chart.Name .Values.nameOverride }}
+  {{- if contains $name (include "rootstock.releaseName" .) }}
+    {{- $full = include "rootstock.releaseName" . | trimSuffix "-" }}
+  {{- else }}
+    {{- $full = printf "%s-%s" (include "rootstock.releaseName" .) $name | trimSuffix "-" }}
+  {{- end }}
 {{- end }}
+{{- if le (len $full) $maxLen }}
+  {{- $full }}
+{{- else }}
+  {{- $hash := $full | sha256sum | trunc 5 }}
+  {{- printf "%s-%s" ($full | trunc (int (sub $maxLen 6))) $hash | trimSuffix "-" }}
 {{- end }}
 {{- end }}
 
