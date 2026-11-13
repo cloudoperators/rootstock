@@ -129,10 +129,20 @@ jobs:
       actions: read
       contents: read
 
+  helm-release:
+    needs: [gate]
+    if: needs.gate.outputs.release == 'true'
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
+    secrets: inherit
+    uses: ./.github/workflows/helm-release.yaml
+
 
   github-release:
     name: GitHub Release
-    needs: [gate, build]
+    needs: [gate, build, helm-release]
     if: needs.gate.outputs.release == 'true'
     runs-on: ubuntu-latest
     permissions:

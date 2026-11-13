@@ -9,9 +9,7 @@ description: A Helm chart for rootstock, a data-center energy/carbon telemetry c
 # a deployable application chart that is also compatible with Greenhouse plugins.
 type: application
 
-# Chart version. Increment on every change to the chart or its templates.
-# Follows Semantic Versioning (https://semver.org/).
-version: 0.1.0
-
-# Version of the application being deployed. Mirrors rootstock's VERSION.yaml.
-appVersion: "0.1.0"
+# For ease of tooling, chart version and application version are tied together in
+# rootstock: each change to the chart updates this field and each change to the rootstock
+# application updates it as well
+version: "0.2.0"

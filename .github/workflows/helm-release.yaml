@@ -1,0 +1,77 @@
+name: Package Helm Chart and publish to GitHub Packages
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: 'Overwrite version that will be used for the helm chart'
+        required: false
+        type: string
+        default: ""
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Overwrite version that will be used for the helm chart'
+        required: false
+        type: string
+        default: ""
+
+
+permissions:
+  contents: write
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  CHART_FOLDER: k8s_configuration/chart
+  ACTIONS_RUNNER_DEBUG: false
+
+jobs:
+  helm-release:
+    runs-on: [ ubuntu-latest ]
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+            fetch-depth: 0
+            token: ${{ github.token }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+
+      - name: Set up Helm
+        uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
+        with:
+          version: "v3.19.5"
+
+      - name: Log into registry ${{ env.REGISTRY }}
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
+        with:
+            registry: ${{ env.REGISTRY }}
+            username: ${{ github.actor }}
+            password: ${{ github.token }}
+
+      - name: Get changed files
+        id: changed-files
+        if: github.event_name != 'workflow_dispatch'
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
+        with:
+          files: |
+            ${{ env.CHART_FOLDER }}/**
+          files_ignore:
+            ${{ env.CHART_FOLDER }}/Chart.yaml
+
+      # Bypass the gate for manual runs. Th registry version guard in `make helm-release`
+      # decide whether to publish.
+      - name: Package and push Helm chart
+        if: github.event_name == 'workflow_dispatch' || steps.changed-files.outputs.all_changed_files != ''
+        env:
+          ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
+          REGISTRY: ${{ env.REGISTRY }}
+          CHART_FOLDER: ${{ env.CHART_FOLDER }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          echo "Changed files: $ALL_CHANGED_FILES"
+          make helm-release
+

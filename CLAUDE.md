@@ -174,15 +174,25 @@ top (after `set -euo pipefail`):
 HC="\033[1m"
 FMAG="\033[35m"
 GREEN="\033[1;32m"
+YELLOW="\033[1;33m"
+RED="\033[1;31m"
 NC="\033[0m"
 
 log_debug() { if [ "${DEBUG:-false}" = "true" ]; then printf "${HC}${FMAG}[.]${NC} %s\n" "$*" >&2; fi; }
 log_info()  { printf "${GREEN}[+]${NC} %s\n" "$*" >&2; }
+log_warn()  { printf "${YELLOW}[!]${NC} %s\n" "$*" >&2; }
+log_error() { printf "${RED}[error]${NC} %s\n" "$*" >&2; }
 ```
 
 - `log_debug` — bold-magenta `[.]` prefix; no-ops unless `DEBUG=true`; always
   writes to stderr.
 - `log_info` — bold-green `[+]` prefix; always prints; always writes to stderr.
+- `log_warn` — bold-yellow `[!]` prefix; always prints; always writes to stderr.
+- `log_error` — bold-red `[error]` prefix; always prints; always writes to
+  stderr.
+
+Define `log_warn`/`log_error` (and their `YELLOW`/`RED` constants) only in
+scripts that use them; `log_debug` and `log_info` are always required.
 
 Never use bare `echo` for diagnostic or status output; use these helpers
 exclusively.

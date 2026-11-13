@@ -47,7 +47,7 @@ Create chart name and version as used by the chart label.
 {{- end }}
 
 {{/*
-Print the image reference. Digest takes precedence over tag; tag defaults to appVersion.
+Print the image reference. Digest takes precedence over tag; tag defaults to version.
 */}}
 {{- define "rootstock.image" -}}
 {{- $repository := .Values.image.repository -}}
@@ -55,7 +55,7 @@ Print the image reference. Digest takes precedence over tag; tag defaults to app
 {{- if $digest -}}
   {{- printf "%s@%s" $repository $digest -}}
 {{- else -}}
-  {{- printf "%s:%s" $repository (.Values.image.tag | default .Chart.AppVersion) -}}
+  {{- printf "%s:%s" $repository (.Values.image.tag | default .Chart.Version) -}}
 {{- end -}}
 {{- end -}}
 
