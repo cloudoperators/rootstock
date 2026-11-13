@@ -191,10 +191,10 @@ greenhouse-create: ## Bootstrap a local Greenhouse-in-kind environment
 	@hack/greenhouse/control.sh create
 
 greenhouse-plugin: ## Start the rootstock Plugin in Greenhouse dev env
-	@hack/greenhouse/start_plugin.sh
+	@hack/greenhouse/plugin_control.sh create
 
 greenhouse-plugin-full: ## Start the rootstock Plugin with full deployment verification
-	@hack/greenhouse/start_plugin.sh --with-plugin
+	@hack/greenhouse/plugin_control.sh create --with-plugin
 
 greenhouse-delete: ## Tear down the local Greenhouse-in-kind environment
 	@hack/greenhouse/control.sh delete
