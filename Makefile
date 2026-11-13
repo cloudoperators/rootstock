@@ -196,6 +196,9 @@ greenhouse-plugin: ## Start the rootstock Plugin in Greenhouse dev env
 greenhouse-plugin-full: ## Start the rootstock Plugin with full deployment verification
 	@hack/greenhouse/plugin_control.sh create --with-plugin
 
+greenhouse-plugin-delete: ## Delete the rootstock Plugin in Greenhouse dev env
+	@hack/greenhouse/plugin_control.sh delete
+
 greenhouse-delete: ## Tear down the local Greenhouse-in-kind environment
 	@hack/greenhouse/control.sh delete
 
