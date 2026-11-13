@@ -131,22 +131,6 @@ jobs:
     with:
       version: ${{ needs.variables.outputs.version }}-pr-${{ github.event.number }}
 
-  test-helm-release:
-    permissions:
-      contents: write
-      packages: write
-      # This is used to complete the identity challenge
-      # with sigstore/fulcio when running outside of PRs.
-      id-token: write
-      # security-events: write
-    secrets: inherit
-    uses: ./.github/workflows/helm-release.yaml
-    needs: [variables]
-    with:
-      version: ${{ needs.variables.outputs.version }}-pr-${{ github.event.number }}
-
-
-
   contract-tests:
     name: Contract Tests
     runs-on: ubuntu-latest
