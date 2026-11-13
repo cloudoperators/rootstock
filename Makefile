@@ -98,18 +98,19 @@ PERFTEST_COUNT   ?= 1
 PERFTEST_CPU     ?= 1
 PERFTEST_TIMEOUT ?= 10m
 
-test-performance: ## Run end-to-end performance benchmarks (virtual Redfish device -> processing -> result cache)
+test-performance: ## Run asynchronous processing benchmarks (scraped reading -> queue -> result cache)
 	@echo "$(green) performance testing$(reset)"
-	go test \
+	bash -o pipefail -c 'go test \
 		-tags=performance \
-		-run='^$$' \
+		-run="^$$" \
+		-v \
 		-bench=. \
 		-benchmem \
 		-benchtime=$(PERFTEST_TIME) \
 		-count=$(PERFTEST_COUNT) \
 		-cpu=$(PERFTEST_CPU) \
 		-timeout=$(PERFTEST_TIMEOUT) \
-		./test/performance/... | tee performance.txt
+		./test/performance/... | tee performance.txt'
 
 test-changelog: ## Run the local changelog generation test suite
 	@echo "$(green) testing changelog generation$(reset)"
