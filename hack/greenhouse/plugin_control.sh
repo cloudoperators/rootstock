@@ -13,29 +13,24 @@
 #   delete   remove all resources that `create` added/updated (Plugin, Redfish
 #            Secret, PluginDefinition, and the Flux HelmChart cache).
 #
-# Environment:
-#   SNMP_CONFIG_FILE: SNMP config file path (default: files/snmp.yml)
+# Environment (all also settable via --flag; see --help):
+#   SNMP_CONFIG_FILE, ROOTSTOCK_IMAGE, READY_TIMEOUT, POLL_INTERVAL, REDFISH_PASSWORD
 # Committed plugindefinition.yaml is NEVER mutated; all rewrites happen on temp copies.
 set -euo pipefail
+
+HC="\033[1m"
+FMAG="\033[35m"
+GREEN="\033[1;32m"
+NC="\033[0m"
+
+log_debug() { if [ "${DEBUG:-false}" = "true" ]; then printf "${HC}${FMAG}[.]${NC} %s\n" "$*" >&2; fi; }
+log_info()  { printf "${GREEN}[+]${NC} %s\n" "$*" >&2; }
 
 
 # --- Variables ------------------------------------------------------------
 curl_image="curlimages/curl:8.11.1"
 snmp_exp_image="quay.io/prometheus/snmp-exporter:v0.26.0"
 
-# SNMP exporter config file, relative to the chart directory.
-SNMP_CONFIG_FILE="${SNMP_CONFIG_FILE:-files/snmp.yml}"
-
-# rootstock image. Defaults to the Makefile IMAGE default; override via env.
-ROOTSTOCK_IMAGE="${ROOTSTOCK_IMAGE:-"ghcr.io/cloudoperators/rootstock:dev-${USER}"}"
-
-# Polling (seconds).
-READY_TIMEOUT="${READY_TIMEOUT:-60}"
-POLL_INTERVAL="${POLL_INTERVAL:-5}"
-
-# Flags / command (set by parse_args).
-WITH_PLUGIN=false
-COMMAND=""
 
 # --- Greenhouse setup ------------------------------------------------------------
 # Cluster / org / context names (must match what setup_greenhouse.sh created).
@@ -56,9 +51,9 @@ registry_chart_repo="cloudoperators/rootstock/charts"
 
 oci_builder="rootstock-ghverify-oci"  # buildx builder name used to push OCI images (thowaway)
 
-# zot image overwrites (quay.io and local docker images don't work)
-# images are overwritten in Plugin helm values as well
-zot_reg_rootstock_image="${registry_in_cluster}/rootstock:${ROOTSTOCK_IMAGE##*:}"
+# zot image refs (quay.io and local docker images don't work in the in-cluster registry).
+# images are overwritten in Plugin helm values as well.
+# zot_reg_rootstock_image is computed in main() after ROOTSTOCK_IMAGE is resolved.
 zot_reg_curl_image="${registry_in_cluster}/${curl_image}"
 zot_reg_snmp_exp_image="${registry_in_cluster}/${snmp_exp_image#*/}"
 
@@ -76,7 +71,16 @@ workdir="${rootstock_root}/tmp/greenhouse/verify"
 # main
 # =============================================================================
 main() {
+    SNMP_CONFIG_FILE="${SNMP_CONFIG_FILE:-files/snmp.yml}"
+    ROOTSTOCK_IMAGE="${ROOTSTOCK_IMAGE:-"ghcr.io/cloudoperators/rootstock:dev-${USER}"}"
+    READY_TIMEOUT="${READY_TIMEOUT:-60}"
+    POLL_INTERVAL="${POLL_INTERVAL:-5}"
+    REDFISH_PASSWORD="${REDFISH_PASSWORD:-redfish-test-password}"
+    WITH_PLUGIN=false
+    COMMAND=""
+
     parse_args "$@"
+    zot_reg_rootstock_image="${registry_in_cluster}/rootstock:${ROOTSTOCK_IMAGE##*:}"
     workdir="$(mktemp -d "${TMPDIR:-/tmp}/rootstock-ghverify.XXXXXX")"
     trap teardown EXIT
 
@@ -153,7 +157,7 @@ die()  { printf '\033[1;31mERROR:\033[0m %s\n' "$*" >&2; exit 1; }
 
 usage() {
     cat <<EOF
-Usage: $(basename "$0") <create|delete> [--with-plugin] [-h|--help]
+Usage: $(basename "$0") <create|delete> [OPTIONS] [-h|--help]
 
 Commands:
   create          Package + push the chart, apply the PluginDefinition and
@@ -165,13 +169,20 @@ Commands:
                   cache (all in the ${demo_org} namespace).
 
 Options:
-  --with-plugin   (create only) Run the full E2E described above.
-  -h, --help      Show this help.
-
-Key environment overrides:
-  READY_TIMEOUT   (default: ${READY_TIMEOUT}s)
-  ROOTSTOCK_IMAGE (default: ghcr.io/cloudoperators/rootstock:dev-\$USER, the
-                  Makefile IMAGE default) Image used by --with-plugin.
+  --with-plugin                 (create only) Run the full E2E described above.
+  --snmp-config-file FILE       SNMP config file path relative to chart dir
+                                (env: SNMP_CONFIG_FILE, default: files/snmp.yml)
+  --rootstock-image IMAGE       rootstock image to publish and deploy
+                                (env: ROOTSTOCK_IMAGE,
+                                default: ghcr.io/cloudoperators/rootstock:dev-\$USER)
+  --ready-timeout SECONDS       timeout waiting for resources to become Ready
+                                (env: READY_TIMEOUT, default: 60)
+  --poll-interval SECONDS       polling interval for Ready checks
+                                (env: POLL_INTERVAL, default: 5)
+  --redfish-password PASSWORD   password for the rootstock-redfish Secret
+                                (env: REDFISH_PASSWORD,
+                                default: redfish-test-password)
+  -h, --help                    Show this help.
 EOF
 }
 
@@ -181,9 +192,14 @@ parse_args() {
             create|delete)
                 [[ -n "$COMMAND" ]] && { usage; die "multiple commands given: ${COMMAND}, $1"; }
                 COMMAND="$1" ;;
-            --with-plugin) WITH_PLUGIN=true ;;
-            -h|--help)     usage; exit 0 ;;
-            *)             usage; die "unknown argument: $1" ;;
+            --with-plugin)       WITH_PLUGIN=true ;;
+            --snmp-config-file)  SNMP_CONFIG_FILE="$2"; shift ;;
+            --rootstock-image)   ROOTSTOCK_IMAGE="$2"; shift ;;
+            --ready-timeout)     READY_TIMEOUT="$2"; shift ;;
+            --poll-interval)     POLL_INTERVAL="$2"; shift ;;
+            --redfish-password)  REDFISH_PASSWORD="$2"; shift ;;
+            -h|--help)           usage; exit 0 ;;
+            *)                   usage; die "unknown argument: $1" ;;
         esac
         shift
     done
@@ -215,7 +231,8 @@ preflight() {
 # Phase 1: publish the rootstock chart to the local registry
 # =============================================================================
 publish_chart() {
-    log "Phase 1: package + push rootstock chart via 'make helm-release' to oci://${registry_host}/${registry_chart_repo}"
+    local oci_target="oci://${registry_host}/${registry_chart_repo}"
+    log "Phase 1: package + push rootstock chart via 'make helm-release' to ${oci_target}"
 
     # Confirm the registry container exists (started by setup_greenhouse.sh).
     docker inspect registry >/dev/null 2>&1 \
@@ -246,8 +263,10 @@ publish_chart() {
                 "reconcile.fluxcd.io/requestedAt=$(date +%s)" --overwrite >/dev/null 2>&1 || true
         done
     fi
-    if kubectl --context "$admin_context" -n "$demo_org" get helmchart "rootstock-${chart_version}" >/dev/null 2>&1; then
-        kubectl --context "$admin_context" -n "$demo_org" delete helmchart "rootstock-${chart_version}" >/dev/null 2>&1 || true
+    if kubectl --context "$admin_context" -n "$demo_org" \
+            get helmchart "rootstock-${chart_version}" >/dev/null 2>&1; then
+        kubectl --context "$admin_context" -n "$demo_org" \
+            delete helmchart "rootstock-${chart_version}" >/dev/null 2>&1 || true
         ok "invalidated stale Flux HelmChart cache (rootstock-${chart_version})"
     fi
 }
@@ -356,7 +375,8 @@ push_local_image_oci() {
     if ! docker image inspect "$local_image" >/dev/null 2>&1; then
         log "image ${local_image} not present locally; pulling"
         docker pull "$local_image" >/dev/null 2>&1 \
-            || die "image ${local_image} not found locally and could not be pulled; build it first (e.g. 'make docker-build')"
+            || die "image ${local_image} not found locally and could not be pulled;" \
+                   "build it first (e.g. 'make docker-build')"
     fi
 
     log "re-publishing local image ${local_image} as OCI ${dest_host} (no rebuild)"
@@ -369,8 +389,11 @@ push_local_image_oci() {
     # `docker save` streams an OCI-layout tarball; extract it into $layout.
     docker save "$local_image" | tar -x -C "$layout" \
         || { rm -rf "$ctx"; die "failed to export local image ${local_image} via docker save"; }
-    [[ -f "${layout}/index.json" ]] \
-        || { rm -rf "$ctx"; die "docker save did not produce an OCI layout; Docker >= 25 is required to reuse the local image"; }
+    [[ -f "${layout}/index.json" ]] || {
+        rm -rf "$ctx"
+        die "docker save did not produce an OCI layout;" \
+            "Docker >= 25 is required to reuse the local image"
+    }
 
     # A throwaway `FROM base` Dockerfile whose base is the extracted OCI layout.
     printf 'FROM base\n' > "${ctx}/Dockerfile"
@@ -416,17 +439,18 @@ run_plugin_e2e() {
         nodes_ready="$(cluster_condition AllNodesReady)"
         payload_schedulable="$(cluster_condition PayloadSchedulable)"
         if [[ "$nodes_ready" == "True" && "$payload_schedulable" == "True" ]]; then
-            echo
+            printf '\n'
             ok "cluster nodes are ready and schedulable in Greenhouse"
             break
         fi
         if (( elapsed >= timeout )); then
-            echo
-            die "cluster ${remote_context} not ready after ${timeout}s (AllNodesReady=${nodes_ready}, PayloadSchedulable=${payload_schedulable})"
+            printf '\n'
+            die "cluster ${remote_context} not ready after ${timeout}s" \
+                "(AllNodesReady=${nodes_ready}, PayloadSchedulable=${payload_schedulable})"
         fi
         # Nudge a status refresh once at the 60s mark.
         if (( elapsed >= 60 )) && [[ "$refreshed" == false ]]; then
-            echo; log "forcing cluster status refresh"
+            printf '\n'; log "forcing cluster status refresh"
             kubectl --context "$admin_context" annotate cluster "$remote_context" -n "$demo_org" \
                 greenhouse.sap/force-refresh="$(date +%s)" --overwrite >/dev/null 2>&1 || true
             refreshed=true
@@ -437,9 +461,8 @@ run_plugin_e2e() {
     done
 
     # 3. Redfish Secret in the org namespace (Greenhouse resolves valueFrom.secret there).
-    local redfish_pw="${REDFISH_PASSWORD:-redfish-test-password}"
     kubectl --context "$admin_context" -n "$demo_org" create secret generic rootstock-redfish \
-        --from-literal=redfish_password="$redfish_pw" \
+        --from-literal=redfish_password="$REDFISH_PASSWORD" \
         --dry-run=client -o yaml | kubectl --context "$admin_context" apply -f - \
         || die "failed to create rootstock-redfish secret"
     ok "created Secret rootstock-redfish in ns ${demo_org}"
