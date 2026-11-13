@@ -30,11 +30,11 @@ MOCKUP_CONTAINER := redfish-mockup
 
 .PHONY: build test test-unit test-integration test-contract test-performance \
 				mockup-start mockup-stop \
-				lint lint-go lint-md lint-shell \
+				lint lint-go lint-md lint-shell lint-helm \
 				scan \
 				docker-build \
         kind-up kind-deploy kind-% \
-        helm-lint helm-template \
+        helm-template helm-release\
 				generate generate-changelog generate-version \
 				get-version test-changelog \
 				automerge-check \
@@ -58,6 +58,8 @@ build: ## Compile a static server binary to bin/
 			-ldflags $(LDFLAGS) \
 			-o bin/rootstock \
 			.
+docker-login: ## Login to the ghcr.io registry with the GITHUB_TOKEN
+	docker login ghcr.io -u $(shell gh api user --jq .login) -p ${GITHUB_TOKEN}
 
 docker-build: ## Build the container image for rootstock
 	@echo "$(green) building docker image$(reset)"
@@ -122,7 +124,10 @@ lint-md: ## Run prettier for markdown files
 lint-shell: ## Run shellcheck on shell scripts
 	find . -name '*.sh' -not -path './.git/*' -print0 | xargs -r -0 shellcheck
 
-lint: lint-go lint-md lint-shell ## Run all linters (alias)
+lint-helm: ## Lint the Helm chart
+	helm lint k8s_configuration/chart
+
+lint: lint-go lint-md lint-shell lint-helm ## Run all linters (alias)
 	go mod tidy
 
 scan: ## Run security vulnerability scan
@@ -161,9 +166,8 @@ automerge-check: ## Check PR eligibility for automerge (GitHub Actions only)
 # mirror CHART_RELEASE/CHART_NAMESPACE).
 KIND_CONTROL := IMAGE=$(IMAGE) hack/kind/control.sh
 
-helm-lint: ## Lint the Helm chart
-	@echo "$(green) helm lint$(reset)"
-	helm lint k8s_configuration/chart
+helm-release: ## Package the Helm chart and publish it to the OCI registry (assumes 'helm registry login')
+	@hack/helm_release.sh $(ARGS)
 
 helm-template: ## Render the Helm chart to stdout
 	@helm template k8s_configuration/chart
@@ -193,11 +197,11 @@ greenhouse-create: ## Bootstrap a local Greenhouse-in-kind environment
 greenhouse-plugin: ## Start the rootstock Plugin in Greenhouse dev env
 	@hack/greenhouse/plugin_control.sh create
 
-greenhouse-plugin-full: ## Start the rootstock Plugin with full deployment verification
-	@hack/greenhouse/plugin_control.sh create --with-plugin
-
 greenhouse-plugin-delete: ## Delete the rootstock Plugin in Greenhouse dev env
 	@hack/greenhouse/plugin_control.sh delete
+
+greenhouse-plugin-full: ## Start the rootstock Plugin with full deployment verification
+	@hack/greenhouse/plugin_control.sh create --with-plugin
 
 greenhouse-delete: ## Tear down the local Greenhouse-in-kind environment
 	@hack/greenhouse/control.sh delete

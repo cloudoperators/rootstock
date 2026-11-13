@@ -22,7 +22,7 @@ spec:
     exposes Prometheus metrics using a multi-target probe pattern.
   helmChart:
     name: rootstock
-    repository: oci://ghcr.io/cloudoperators/charts
+    repository: oci://ghcr.io/cloudoperators/rootstock/charts
     version: 0.1.0
   options:
     - name: image.repository
@@ -31,7 +31,7 @@ spec:
       required: false
       default: "ghcr.io/cloudoperators/rootstock"
     - name: image.tag
-      description: Container image tag. Defaults to the chart appVersion when empty.
+      description: Container image tag. Defaults to the chart version when empty.
       type: string
       required: false
     - name: image.pullPolicy
