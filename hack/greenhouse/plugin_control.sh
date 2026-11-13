@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Greenhouse contributors
 # SPDX-License-Identifier: Apache-2.0
 #
-# start_plugin.sh — start/stop the rootstock Greenhouse Plugin.
+# plugin_control.sh — start/stop the rootstock Greenhouse Plugin.
 #
 # Requires a running Greenhouse-in-kind environment (run setup_greenhouse.sh first).
 #
@@ -14,20 +14,27 @@
 #            Secret, PluginDefinition, and the Flux HelmChart cache).
 #
 # Environment (all also settable via --flag; see --help):
-#   SNMP_CONFIG_FILE, ROOTSTOCK_IMAGE, READY_TIMEOUT, POLL_INTERVAL, REDFISH_PASSWORD
+#   SNMP_CONFIG_FILE, VERSION, READY_TIMEOUT, POLL_INTERVAL,
+#   REDFISH_PASSWORD, BUILD_PLATFORM, DEBUG
 # Committed plugindefinition.yaml is NEVER mutated; all rewrites happen on temp copies.
 set -euo pipefail
 
 HC="\033[1m"
 FMAG="\033[35m"
 GREEN="\033[1;32m"
+YELLOW="\033[1;33m"
+RED="\033[1;31m"
 NC="\033[0m"
 
 log_debug() { if [ "${DEBUG:-false}" = "true" ]; then printf "${HC}${FMAG}[.]${NC} %s\n" "$*" >&2; fi; }
 log_info()  { printf "${GREEN}[+]${NC} %s\n" "$*" >&2; }
+log_warn()  { printf "${YELLOW}[!]${NC} %s\n" "$*" >&2; }
+log_error() { printf "${RED}[error]${NC} %s\n" "$*" >&2; }
+die()       { log_error "$*"; exit 1; }
 
 
 # --- Variables ------------------------------------------------------------
+rootstock_image="ghcr.io/cloudoperators/rootstock"   # fixed repo; tag is ${VERSION}
 curl_image="curlimages/curl:8.11.1"
 snmp_exp_image="quay.io/prometheus/snmp-exporter:v0.26.0"
 
@@ -53,7 +60,7 @@ oci_builder="rootstock-ghverify-oci"  # buildx builder name used to push OCI ima
 
 # zot image refs (quay.io and local docker images don't work in the in-cluster registry).
 # images are overwritten in Plugin helm values as well.
-# zot_reg_rootstock_image is computed in main() after ROOTSTOCK_IMAGE is resolved.
+# zot_reg_rootstock_image is computed in main() after VERSION is resolved.
 zot_reg_curl_image="${registry_in_cluster}/${curl_image}"
 zot_reg_snmp_exp_image="${registry_in_cluster}/${snmp_exp_image#*/}"
 
@@ -71,16 +78,25 @@ workdir="${rootstock_root}/tmp/greenhouse/verify"
 # main
 # =============================================================================
 main() {
+    # Greenhouse derives Kubernetes object names from the version (e.g. the Flux
+    # HelmChart "rootstock-<version>"), which must be a lowercase RFC 1123 name.
+    # Lowercase ${USER} so a mixed-case login (e.g. "I503834") is still valid.
+    local user_lc
+    user_lc="$(printf '%s' "${USER}" | tr '[:upper:]' '[:lower:]')"
     SNMP_CONFIG_FILE="${SNMP_CONFIG_FILE:-files/snmp.yml}"
-    ROOTSTOCK_IMAGE="${ROOTSTOCK_IMAGE:-"ghcr.io/cloudoperators/rootstock:dev-${USER}"}"
+    VERSION="${VERSION:-0.0.0-dev-${user_lc}}"
     READY_TIMEOUT="${READY_TIMEOUT:-60}"
     POLL_INTERVAL="${POLL_INTERVAL:-5}"
     REDFISH_PASSWORD="${REDFISH_PASSWORD:-redfish-test-password}"
+    BUILD_PLATFORM="${BUILD_PLATFORM:-linux/arm64}"
+    DEBUG="${DEBUG:-false}"
     WITH_PLUGIN=false
     COMMAND=""
 
     parse_args "$@"
-    zot_reg_rootstock_image="${registry_in_cluster}/rootstock:${ROOTSTOCK_IMAGE##*:}"
+    # Single VERSION drives both the image tag and the deployed Helm chart version.
+    zot_reg_rootstock_image="${registry_in_cluster}/rootstock:${VERSION}"
+    chart_version="${VERSION}"
     workdir="$(mktemp -d "${TMPDIR:-/tmp}/rootstock-ghverify.XXXXXX")"
     trap teardown EXIT
 
@@ -97,42 +113,35 @@ main() {
 create() {
     preflight
 
-    chart_version="$(yq -r '.version' "${chart_dir}/Chart.yaml" 2>/dev/null)" \
-        || die "failed to read .version from ${chart_dir}/Chart.yaml"
-    ok "chart version ${chart_version} (from Chart.yaml)"
-    ok "registry image ${zot_reg_rootstock_image} (derived)"
-    ok "test-connection image ${zot_reg_curl_image} (derived)"
-    ok "snmp-exporter image ${zot_reg_snmp_exp_image} (derived)"
+    log_info "version ${VERSION} (image tag + Helm chart version)"
+    log_info "registry image ${zot_reg_rootstock_image} (derived)"
+    log_info "test-connection image ${zot_reg_curl_image} (derived)"
+    log_info "snmp-exporter image ${zot_reg_snmp_exp_image} (derived)"
 
     publish_chart
     apply_plugindefinition
     if $WITH_PLUGIN; then
         run_plugin_e2e
     else
-        log "skipping Plugin E2E (pass --with-plugin to enable)"
+        log_info "skipping Plugin E2E (pass --with-plugin to enable)"
     fi
 
-    log "VERIFICATION PASSED"
+    log_info "VERIFICATION PASSED"
 }
 
 # =============================================================================
 # delete: remove everything create added/updated
 # =============================================================================
 delete() {
-    log "deleting rootstock resources from ns ${demo_org}"
-
-    chart_version="$(yq -r '.version' "${chart_dir}/Chart.yaml" 2>/dev/null || true)"
+    log_info "deleting rootstock resources from ns ${demo_org}"
 
     # Reverse order of creation: Plugin → Secret → PluginDefinition → HelmChart cache.
     delete_resource plugin rootstock "$demo_org"
     delete_resource secret rootstock-redfish "$demo_org"
     delete_resource plugindefinition rootstock "$demo_org"
+    delete_resource helmchart "rootstock-${chart_version}" "$demo_org"
 
-    if [[ -n "$chart_version" ]]; then
-        delete_resource helmchart "rootstock-${chart_version}" "$demo_org"
-    fi
-
-    log "DELETE COMPLETE"
+    log_info "DELETE COMPLETE"
 }
 
 # delete_resource <kind> <name> <namespace-or-empty>
@@ -143,17 +152,11 @@ delete_resource() {
 
     if kubectl --context "$admin_context" "${nsargs[@]}" delete "$kind" "$name" --ignore-not-found \
         >/dev/null; then
-        ok "removed or already absent: ${kind}/${name}${ns:+ (ns ${ns})}"
+        log_info "removed or already absent: ${kind}/${name}${ns:+ (ns ${ns})}"
     else
-        warn "failed to delete ${kind}/${name}${ns:+ (ns ${ns})}"
+        log_warn "failed to delete ${kind}/${name}${ns:+ (ns ${ns})}"
     fi
 }
-
-# --- Logging helpers ----------------------------------------------------------
-log()  { printf '\033[1;34m==>\033[0m %s\n' "$*"; }
-ok()   { printf '\033[1;32m  OK\033[0m %s\n' "$*"; }
-warn() { printf '\033[1;33m  !!\033[0m %s\n' "$*" >&2; }
-die()  { printf '\033[1;31mERROR:\033[0m %s\n' "$*" >&2; exit 1; }
 
 usage() {
     cat <<EOF
@@ -172,9 +175,11 @@ Options:
   --with-plugin                 (create only) Run the full E2E described above.
   --snmp-config-file FILE       SNMP config file path relative to chart dir
                                 (env: SNMP_CONFIG_FILE, default: files/snmp.yml)
-  --rootstock-image IMAGE       rootstock image to publish and deploy
-                                (env: ROOTSTOCK_IMAGE,
-                                default: ghcr.io/cloudoperators/rootstock:dev-\$USER)
+  --version VERSION             version used for both the rootstock image tag
+                                (ghcr.io/cloudoperators/rootstock:VERSION) and
+                                the deployed Helm chart version; must be valid
+                                SemVer (Helm requirement)
+                                (env: VERSION, default: 0.0.0-dev-\$USER)
   --ready-timeout SECONDS       timeout waiting for resources to become Ready
                                 (env: READY_TIMEOUT, default: 60)
   --poll-interval SECONDS       polling interval for Ready checks
@@ -182,6 +187,9 @@ Options:
   --redfish-password PASSWORD   password for the rootstock-redfish Secret
                                 (env: REDFISH_PASSWORD,
                                 default: redfish-test-password)
+  --build-platform PLATFORM     target platform for OCI image re-publishing
+                                (env: BUILD_PLATFORM, default: linux/arm64)
+  --debug                       Verbose debug logging (env: DEBUG, default: false)
   -h, --help                    Show this help.
 EOF
 }
@@ -194,10 +202,12 @@ parse_args() {
                 COMMAND="$1" ;;
             --with-plugin)       WITH_PLUGIN=true ;;
             --snmp-config-file)  SNMP_CONFIG_FILE="$2"; shift ;;
-            --rootstock-image)   ROOTSTOCK_IMAGE="$2"; shift ;;
+            --version)           VERSION="$2"; shift ;;
             --ready-timeout)     READY_TIMEOUT="$2"; shift ;;
             --poll-interval)     POLL_INTERVAL="$2"; shift ;;
             --redfish-password)  REDFISH_PASSWORD="$2"; shift ;;
+            --build-platform)    BUILD_PLATFORM="$2"; shift ;;
+            --debug)             DEBUG=true ;;
             -h|--help)           usage; exit 0 ;;
             *)                   usage; die "unknown argument: $1" ;;
         esac
@@ -210,7 +220,7 @@ parse_args() {
 # Phase 0: preflight
 # =============================================================================
 preflight() {
-    log "Phase 0: preflight tool checks"
+    log_info "Phase 0: preflight tool checks"
     local missing=()
     local t
     for t in docker kind kubectl helm yq go git jq; do
@@ -224,7 +234,7 @@ preflight() {
     [[ -f "$plugin_def" ]] || die "plugindefinition.yaml not found at ${plugin_def}"
     docker inspect registry >/dev/null 2>&1 \
         || die "local registry container not running; run setup_greenhouse.sh first"
-    ok "all tools present and docker daemon reachable"
+    log_info "all tools present and docker daemon reachable"
 }
 
 # =============================================================================
@@ -232,7 +242,7 @@ preflight() {
 # =============================================================================
 publish_chart() {
     local oci_target="oci://${registry_host}/${registry_chart_repo}"
-    log "Phase 1: package + push rootstock chart via 'make helm-release' to ${oci_target}"
+    log_info "Phase 1: package + push rootstock chart via 'make helm-release' to ${oci_target}"
 
     # Confirm the registry container exists (started by setup_greenhouse.sh).
     docker inspect registry >/dev/null 2>&1 \
@@ -248,7 +258,7 @@ publish_chart() {
       args+="--version ${chart_version} --out-dir ${pkgdir} --plain-http --force"
     make -C "$rootstock_root" helm-release ARGS="${args}" \
         || die "make helm-release failed"
-    ok "pushed chart to oci://${registry_host}/${registry_chart_repo}/rootstock:${chart_version}"
+    log_info "pushed chart to oci://${registry_host}/${registry_chart_repo}/rootstock:${chart_version}"
 
     # Flux keys its OCI chart cache by version; re-pushing the same version without
     # invalidating the HelmChart causes Greenhouse to render the stale artifact.
@@ -267,7 +277,7 @@ publish_chart() {
             get helmchart "rootstock-${chart_version}" >/dev/null 2>&1; then
         kubectl --context "$admin_context" -n "$demo_org" \
             delete helmchart "rootstock-${chart_version}" >/dev/null 2>&1 || true
-        ok "invalidated stale Flux HelmChart cache (rootstock-${chart_version})"
+        log_info "invalidated stale Flux HelmChart cache (rootstock-${chart_version})"
     fi
 }
 
@@ -290,7 +300,7 @@ wait_ready() {
         printf '    waiting for %s/%s Ready (current: %s)\n' "$kind" "$name" "${status:-<none>}"
         sleep "$POLL_INTERVAL"
     done
-    warn "timed out waiting for ${kind}/${name} Ready; last status: ${status:-<none>}"
+    log_warn "timed out waiting for ${kind}/${name} Ready; last status: ${status:-<none>}"
     kubectl --context "$admin_context" "${nsargs[@]}" get "$kind" "$name" -o yaml 2>/dev/null \
         | yq '.status' - || true
     return 1
@@ -305,7 +315,7 @@ cluster_condition() {
 }
 
 apply_plugindefinition() {
-    log "Phase 2: apply PluginDefinition and assert READY=True"
+    log_info "Phase 2: apply PluginDefinition and assert READY=True"
 
     # Operate on a TEMP COPY — never mutate the committed plugindefinition.yaml.
     # Rewrite helmChart.repository to the in-cluster address, pin versions to chart_version.
@@ -320,14 +330,14 @@ apply_plugindefinition() {
       .spec.helmChart.repository = \"${repo}\" |
       .spec.helmChart.version = \"${chart_version}\"
     " "$pd"
-    ok "temp PluginDefinition: namespace=${demo_org}, version=${chart_version}, repository=${repo}"
+    log_info "temp PluginDefinition: namespace=${demo_org}, version=${chart_version}, repository=${repo}"
 
     kubectl --context "$admin_context" -n "$demo_org" apply -f "$pd" \
         || die "kubectl apply of PluginDefinition failed"
-    ok "applied PluginDefinition 'rootstock' in ns ${demo_org}"
+    log_info "applied PluginDefinition 'rootstock' in ns ${demo_org}"
 
     if wait_ready plugindefinition rootstock "$demo_org"; then
-        ok "PluginDefinition rootstock is READY=True"
+        log_info "PluginDefinition rootstock is READY=True"
     else
         die "PluginDefinition rootstock did not become READY within ${READY_TIMEOUT}s"
     fi
@@ -373,13 +383,13 @@ push_local_image_oci() {
 
     [[ -n "$local_image" ]] || die "push_local_image_oci: local_image is required"
     if ! docker image inspect "$local_image" >/dev/null 2>&1; then
-        log "image ${local_image} not present locally; pulling"
+        log_info "image ${local_image} not present locally; pulling"
         docker pull "$local_image" >/dev/null 2>&1 \
             || die "image ${local_image} not found locally and could not be pulled;" \
                    "build it first (e.g. 'make docker-build')"
     fi
 
-    log "re-publishing local image ${local_image} as OCI ${dest_host} (no rebuild)"
+    log_info "re-publishing local image ${local_image} as OCI ${dest_host} (no rebuild)"
     ensure_oci_builder
 
     ctx="$(mktemp -d "${TMPDIR:-/tmp}/ghverify-oci.XXXXXX")"
@@ -399,7 +409,7 @@ push_local_image_oci() {
     printf 'FROM base\n' > "${ctx}/Dockerfile"
 
     docker buildx --builder "${oci_builder}" build \
-        --platform "${BUILD_PLATFORM:-linux/arm64}" \
+        --platform "${BUILD_PLATFORM}" \
         --provenance=false \
         --build-context "base=oci-layout://${layout}" \
         --output "type=registry,registry.insecure=true,name=${dest_host}" \
@@ -407,32 +417,33 @@ push_local_image_oci() {
         || { rm -rf "$ctx"; die "OCI push of ${dest_host} (from local image ${local_image}) failed"; }
 
     rm -rf "$ctx"
-    ok "pushed OCI image ${dest_host} (reused local ${local_image})"
+    log_info "pushed OCI image ${dest_host} (reused local ${local_image})"
 }
 
 # =============================================================================
 # Phase 3: optional full Plugin E2E (--with-plugin)
 # =============================================================================
 run_plugin_e2e() {
-    log "Phase 3: full Plugin E2E (--with-plugin)"
+    log_info "Phase 3: full Plugin E2E (--with-plugin)"
 
     # 1. Make the rootstock image available to the remote cluster via the local
     #    registry (zot).
-    if ! docker image inspect "$ROOTSTOCK_IMAGE" >/dev/null 2>&1; then
-        die "image ${ROOTSTOCK_IMAGE} not found locally; build it first (e.g. 'make docker-build' / 'make kind-up')"
+    local local_image="${rootstock_image}:${VERSION}"
+    if ! docker image inspect "$local_image" >/dev/null 2>&1; then
+        die "image ${local_image} not found locally; build it first (e.g. 'make docker-build' / 'make kind-up')"
     fi
 
-    push_local_image_oci "${registry_host}/rootstock:${ROOTSTOCK_IMAGE##*:}" "$ROOTSTOCK_IMAGE"
-    ok "image available in registry as ${zot_reg_rootstock_image}"
+    push_local_image_oci "${registry_host}/rootstock:${VERSION}" "$local_image"
+    log_info "image available in registry as ${zot_reg_rootstock_image}"
 
     push_local_image_oci "${registry_host}/${curl_image}" "$curl_image"
-    ok "test-connection image available in registry as ${zot_reg_curl_image}"
+    log_info "test-connection image available in registry as ${zot_reg_curl_image}"
 
     push_local_image_oci "${registry_host}/${snmp_exp_image#*/}" "$snmp_exp_image"
-    ok "snmp-exporter image available in registry as ${zot_reg_snmp_exp_image}"
+    log_info "snmp-exporter image available in registry as ${zot_reg_snmp_exp_image}"
 
     # 2. Wait for Greenhouse to register the remote cluster's nodes as ready.
-    log "waiting for Greenhouse to recognize cluster nodes as ready"
+    log_info "waiting for Greenhouse to recognize cluster nodes as ready"
     local timeout=300 elapsed=0 refreshed=false
     local nodes_ready payload_schedulable
     while true; do
@@ -440,7 +451,7 @@ run_plugin_e2e() {
         payload_schedulable="$(cluster_condition PayloadSchedulable)"
         if [[ "$nodes_ready" == "True" && "$payload_schedulable" == "True" ]]; then
             printf '\n'
-            ok "cluster nodes are ready and schedulable in Greenhouse"
+            log_info "cluster nodes are ready and schedulable in Greenhouse"
             break
         fi
         if (( elapsed >= timeout )); then
@@ -450,7 +461,7 @@ run_plugin_e2e() {
         fi
         # Nudge a status refresh once at the 60s mark.
         if (( elapsed >= 60 )) && [[ "$refreshed" == false ]]; then
-            printf '\n'; log "forcing cluster status refresh"
+            printf '\n'; log_info "forcing cluster status refresh"
             kubectl --context "$admin_context" annotate cluster "$remote_context" -n "$demo_org" \
                 greenhouse.sap/force-refresh="$(date +%s)" --overwrite >/dev/null 2>&1 || true
             refreshed=true
@@ -465,7 +476,7 @@ run_plugin_e2e() {
         --from-literal=redfish_password="$REDFISH_PASSWORD" \
         --dry-run=client -o yaml | kubectl --context "$admin_context" apply -f - \
         || die "failed to create rootstock-redfish secret"
-    ok "created Secret rootstock-redfish in ns ${demo_org}"
+    log_info "created Secret rootstock-redfish in ns ${demo_org}"
 
     # 4. Apply the Plugin on a temp copy. Normalize to the pinned Greenhouse CRD schema
     # (spec.pluginDefinitionRef, drop legacy spec.pluginDefinition/disabled), repoint
@@ -492,17 +503,17 @@ run_plugin_e2e() {
     " "$plugin"
     kubectl --context "$admin_context" apply -f "$plugin" \
         || die "kubectl apply of Plugin failed"
-    ok "applied Plugin 'rootstock' (cluster=${remote_context}, ns=${demo_org})"
+    log_info "applied Plugin 'rootstock' (cluster=${remote_context}, ns=${demo_org})"
 
     if wait_ready plugin rootstock "$demo_org"; then
-        ok "Plugin rootstock is READY=True"
+        log_info "Plugin rootstock is READY=True"
     else
         die "Plugin rootstock did not become READY within ${READY_TIMEOUT}s"
     fi
 
     # 4. Skip probe check (no mockup deployment)
-    log "Skipping probe check (no Redfish target configured)"
-    ok "Plugin deployed successfully"
+    log_info "Skipping probe check (no Redfish target configured)"
+    log_info "Plugin deployed successfully"
 }
 
 # =============================================================================

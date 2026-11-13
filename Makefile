@@ -17,7 +17,10 @@ endif
 
 ## Version setting
 VERSION ?= $(shell sed -n 's/^version:[[:space:]]*//p' VERSION.yaml)
-IMAGE   ?= ghcr.io/cloudoperators/rootstock:dev-$(USER)
+# Lowercase $(USER): the dev tag doubles as a Helm chart version, from which
+# Greenhouse derives RFC 1123 (lowercase-only) Kubernetes object names.
+USER_LC ?= $(shell printf '%s' '$(USER)' | tr '[:upper:]' '[:lower:]')
+IMAGE   ?= ghcr.io/cloudoperators/rootstock:0.0.0-dev-$(USER_LC)
 
 # Integration test mockup server
 # Requires pdu-mockup data at testdata/pdu-mockup (already added to the repo).

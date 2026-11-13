@@ -9,7 +9,10 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 # Defaults — mirror the Makefile variables
 KIND_CLUSTER="${KIND_CLUSTER:-rootstock-local}"
 CHART_DIR="${REPO_ROOT}/k8s_configuration/chart"
-IMAGE="${IMAGE:-ghcr.io/cloudoperators/rootstock:dev-${USER}}"
+# Lowercase ${USER}: the dev tag doubles as a Helm chart version, from which
+# Greenhouse derives RFC 1123 (lowercase-only) Kubernetes object names.
+USER_LC="$(printf '%s' "${USER}" | tr '[:upper:]' '[:lower:]')"
+IMAGE="${IMAGE:-ghcr.io/cloudoperators/rootstock:0.0.0-dev-${USER_LC}}"
 # Path to a local file whose contents become the redfish_password secret value.
 REDFISH_PASSWORD_FILE="${REDFISH_PASSWORD_FILE:-tmp/redfish_access.yaml}"
 
@@ -110,7 +113,8 @@ Commands:
 Environment variables (override Makefile defaults):
   KIND_CLUSTER         Cluster name                          (default: rootstock-local)
   REDFISH_PASSWORD_FILE Local file holding the redfish password (required for 'prepare')
-  IMAGE                Container image                       (default: ghcr.io/cloudoperators/rootstock:dev-\$USER)
+  IMAGE                Container image
+                       (default: ghcr.io/cloudoperators/rootstock:0.0.0-dev-\$USER)
 EOF
 }
 
