@@ -19,4 +19,4 @@ case "$(uname)" in
 esac
 
 sed "${SED_INPLACE[@]}" "s|^version:.*|version: ${version}|" VERSION.yaml
-sed "${SED_INPLACE[@]}" "s|^appVersion:.*|appVersion: \"${version}\"|" "$chart_file"
+sed "${SED_INPLACE[@]}" "s|^version:.*|version: \"${version}\"|" "$chart_file"

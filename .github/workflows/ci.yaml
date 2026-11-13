@@ -66,6 +66,8 @@ jobs:
         run: make lint-md
       - name: Lint Shell
         run: make lint-shell
+      - name: Lint helm
+        run: make lint-helm
       - name: Commit auto-fixes
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
@@ -76,12 +78,7 @@ jobs:
             git commit -am "chore: apply linter auto-fixes"
             git push
           fi
-      - name: Ensure helm version update
-        id: helm-version
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: make helm-lint
+
 
   code-scans:
     name: Code Scans

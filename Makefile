@@ -30,11 +30,11 @@ MOCKUP_CONTAINER := redfish-mockup
 
 .PHONY: build test test-unit test-integration test-contract test-performance \
 				mockup-start mockup-stop \
-				lint lint-go lint-md lint-shell \
+				lint lint-go lint-md lint-shell lint-helm \
 				scan \
 				docker-build \
         kind-up kind-deploy kind-% \
-        helm-lint helm-template helm-release\
+        helm-template helm-release\
 				generate generate-changelog generate-version \
 				get-version test-changelog \
 				automerge-check \
@@ -124,7 +124,10 @@ lint-md: ## Run prettier for markdown files
 lint-shell: ## Run shellcheck on shell scripts
 	find . -name '*.sh' -not -path './.git/*' -print0 | xargs -r -0 shellcheck
 
-lint: lint-go lint-md lint-shell ## Run all linters (alias)
+lint-helm: ## Lint the Helm chart
+	helm lint k8s_configuration/chart
+
+lint: lint-go lint-md lint-shell lint-helm ## Run all linters (alias)
 	go mod tidy
 
 scan: ## Run security vulnerability scan
@@ -165,12 +168,6 @@ KIND_CONTROL := IMAGE=$(IMAGE) hack/kind/control.sh
 
 helm-release: ## Package the Helm chart and publish it to the OCI registry (assumes 'helm registry login')
 	@hack/helm_release.sh $(ARGS)
-
-helm-lint: ## Lint the Helm chart and ensure helm version updates for chart changes
-	@echo "$(green) helm lint$(reset)"
-	helm lint k8s_configuration/chart
-	@echo "$(green) ensure helm version consistency$(reset)"
-	@BASE_SHA=$${BASE_SHA:-$$(git merge-base origin/main HEAD)} hack/validate_helm_version.sh
 
 helm-template: ## Render the Helm chart to stdout
 	@helm template k8s_configuration/chart

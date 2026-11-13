@@ -31,7 +31,7 @@ spec:
       required: false
       default: "ghcr.io/cloudoperators/rootstock"
     - name: image.tag
-      description: Container image tag. Defaults to the chart appVersion when empty.
+      description: Container image tag. Defaults to the chart version when empty.
       type: string
       required: false
     - name: image.pullPolicy
