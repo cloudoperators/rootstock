@@ -8,7 +8,7 @@ and this project adheres to
 
 <!-- git-cliff: end of header -->
 
-## 2026-11-10
+## 2026-11-13
 
 - (0.2.0 - 🚀) tooling: Local kind deployment
   [#80](https://github.com/cloudoperators/rootstock/pull/80)
@@ -108,6 +108,10 @@ and this project adheres to
   by [@blackhat-jan](https://github.com/blackhat-jan)
 - (0.2.0 - ⚙️) tooling: Cleanup greenhouse local testing
   [#120](https://github.com/cloudoperators/rootstock/pull/120)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.1.0...v0.2.0))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.2.0 - 🚀) k8s-config: Helm release
+  [#128](https://github.com/cloudoperators/rootstock/pull/128)
   ([diff](https://github.com/cloudoperators/rootstock/compare/v0.1.0...v0.2.0))
   by [@blackhat-jan](https://github.com/blackhat-jan)
 
