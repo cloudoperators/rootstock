@@ -145,6 +145,7 @@ jobs:
         run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
 
   vulnerability-scan:
+    if: inputs.release == 'true' || github.event_name == 'pull_request'
     permissions:
       contents: read
       packages: read
