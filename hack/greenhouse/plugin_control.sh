@@ -230,8 +230,10 @@ publish_chart() {
 
     # --plain-http targets the insecure local zot; --force re-pushes the pinned
     # dev chart version that the Greenhouse verify flow reuses on every run.
-    make -C "$rootstock_root" helm-release \
-        ARGS="--registry ${registry_host} --chart-folder ${chart_dir} --version ${chart_version} --out-dir ${pkgdir} --plain-http --force" \
+    local args=""
+      args+="--registry ${registry_host} --chart-folder ${chart_dir} "
+      args+="--version ${chart_version} --out-dir ${pkgdir} --plain-http --force"
+    make -C "$rootstock_root" helm-release ARGS="${args}" \
         || die "make helm-release failed"
     ok "pushed chart to oci://${registry_host}/${registry_chart_repo}/rootstock:${chart_version}"
 
@@ -295,14 +297,15 @@ apply_plugindefinition() {
     # NOTE: PluginDefinition is namespaced in Greenhouse; it must live in the org namespace
     # (${demo_org}) or the reconciler won't find the org and will never become Ready.
     local pd="${workdir}/plugindefinition.yaml"
+    local repo="oci://${registry_in_cluster}/${registry_chart_repo}"
     cp "$plugin_def" "$pd"
     yq -i "
       .metadata.namespace = \"${demo_org}\" |
       .spec.version = \"${chart_version}\" |
-      .spec.helmChart.repository = \"oci://${registry_in_cluster}/${registry_chart_repo}\" |
+      .spec.helmChart.repository = \"${repo}\" |
       .spec.helmChart.version = \"${chart_version}\"
     " "$pd"
-    ok "temp PluginDefinition: namespace=${demo_org}, version=${chart_version}, repository=oci://${registry_in_cluster}/${registry_chart_repo}"
+    ok "temp PluginDefinition: namespace=${demo_org}, version=${chart_version}, repository=${repo}"
 
     kubectl --context "$admin_context" -n "$demo_org" apply -f "$pd" \
         || die "kubectl apply of PluginDefinition failed"
