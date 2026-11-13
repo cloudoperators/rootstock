@@ -137,15 +137,11 @@ delete_resource() {
     local nsargs=()
     [[ -n "$ns" ]] && nsargs=(-n "$ns")
 
-    if kubectl --context "$admin_context" "${nsargs[@]}" get "$kind" "$name" >/dev/null 2>&1; then
-        if kubectl --context "$admin_context" "${nsargs[@]}" delete "$kind" "$name" --ignore-not-found \
-            >/dev/null 2>&1; then
-            ok "deleted ${kind}/${name}${ns:+ (ns ${ns})}"
-        else
-            warn "failed to delete ${kind}/${name}${ns:+ (ns ${ns})}"
-        fi
+    if kubectl --context "$admin_context" "${nsargs[@]}" delete "$kind" "$name" --ignore-not-found \
+        >/dev/null; then
+        ok "removed or already absent: ${kind}/${name}${ns:+ (ns ${ns})}"
     else
-        log "${kind}/${name}${ns:+ (ns ${ns})} not present; skipping"
+        warn "failed to delete ${kind}/${name}${ns:+ (ns ${ns})}"
     fi
 }
 
