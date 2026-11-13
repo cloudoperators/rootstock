@@ -7,9 +7,6 @@
 # below points at a published chart; update repository/version to match your
 # release (e.g. an OCI registry such as oci://ghcr.io/cloudoperators/charts).
 #
-# The Redfish password is modelled as a `secret`-type option. In a Plugin CR it
-# is supplied via optionValues[].valueFrom.secret{name,key}, which Greenhouse
-# projects into the pod as the mounted credentials file the chart expects.
 apiVersion: greenhouse.sap/v1alpha1
 kind: PluginDefinition
 metadata:
@@ -39,13 +36,11 @@ spec:
       type: string
       required: false
       default: IfNotPresent
-    - name: redfish.password
-      displayName: Redfish password
-      description: >-
-        Password for Redfish authentication. Supply via valueFrom.secret so it
-        is mounted into the pod as a file (never set as an environment variable).
-      type: secret
-      required: true
+    - name: rootstock.redfish.existingSecret
+      description: Kubernetes image pull policy for rootstock.
+      type: string
+      required: false
+      default: IfNotPresent
     - name: serviceMonitor.enabled
       displayName: Enable ServiceMonitor
       description: Create a Prometheus Operator ServiceMonitor for /metrics.

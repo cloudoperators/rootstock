@@ -9,7 +9,7 @@ This runbook assumes you have (re)installed Greenhouse on the cluster. The
 rootstock **image is already present** in the node's containerd:
 
 ```
-docker.io/library/rootstock:0.1.0   (linux/arm64, imported via ctr -n k8s.io images import)
+docker.io/library/rootstock:0.2.0   (linux/arm64, imported via ctr -n k8s.io images import)
 ```
 
 Because the image is NOT in a registry, every path below uses
@@ -40,14 +40,14 @@ registry the cluster can reach. If you stand up a registry on the node:
 
 ```bash
 # package the chart locally
-helm package k8s_configuration/chart          # -> rootstock-0.1.0.tgz
+helm package k8s_configuration/chart          # -> rootstock-0.2.0.tgz
 # push to the registry (adjust host/port; use TLS or an insecure-registry allowance)
-helm push rootstock-0.1.0.tgz oci://<registry-host>:<port>/charts
+helm push rootstock-0.2.0.tgz oci://<registry-host>:<port>/charts
 ```
 
 Then set in k8s_configuration/plugindefinition.yaml:
 `helmChart.repository: oci://<registry-host>:<port>/charts`, `name: rootstock`,
-`version: 0.1.0`.
+`version: 0.2.0`.
 
 ## Step 2 — Apply the PluginDefinition
 
@@ -61,9 +61,12 @@ kubectl -n <org-namespace> get plugindefinition rootstock
 
 ## Step 3 — Create the Redfish Secret (Organization namespace)
 
+The Secret must hold a single `redfish_pdus.yaml` key whose value is the per-PDU
+credentials map (this is the file rootstock mounts and watches):
+
 ```bash
-kubectl create secret generic rootstock-redfish \
-  --from-literal=redfish_password='<password>' -n <org-namespace>
+kubectl create secret generic rootstock-redfish -n <org-namespace> \
+  --from-literal=redfish_pdus.yaml='pdu1: {username: redfish, password: <password>}'
 # or edit + apply k8s_configuration/greenhouse-test/redfish-secret.yaml
 ```
 
@@ -77,7 +80,9 @@ kubectl apply -f k8s_configuration/greenhouse-test/plugin.yaml
 ```
 
 Note the `image.pullPolicy: Never` optionValue — this is what makes the local
-containerd image usable without a registry.
+containerd image usable without a registry. The plugin references the Secret
+from Step 3 via `rootstock.redfish.existingSecret: rootstock-redfish`; make sure
+`image.tag` matches the imported image (e.g. `0.2.0`).
 
 ## Step 5 — Verify
 
@@ -106,7 +111,8 @@ Flux/registry:
 export KUBECONFIG=<admin kubeconfig>
 helm install rootstock k8s_configuration/chart -n rootstock --create-namespace \
   --set image.repository=docker.io/library/rootstock \
-  --set image.tag=0.1.0 \
+  --set image.tag=0.2.0 \
   --set image.pullPolicy=Never \
-  --set redfish.password='<password>'
+  --set 'redfish.access.pdu1.username=redfish' \
+  --set 'redfish.access.pdu1.password=<password>'
 ```

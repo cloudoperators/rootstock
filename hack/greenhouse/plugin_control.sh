@@ -15,7 +15,7 @@
 #
 # Environment (all also settable via --flag; see --help):
 #   SNMP_CONFIG_FILE, VERSION, READY_TIMEOUT, POLL_INTERVAL,
-#   REDFISH_PASSWORD, BUILD_PLATFORM, DEBUG
+#   BUILD_PLATFORM, DEBUG
 # Committed plugindefinition.yaml is NEVER mutated; all rewrites happen on temp copies.
 set -euo pipefail
 
@@ -87,7 +87,6 @@ main() {
     VERSION="${VERSION:-0.0.0-dev-${user_lc}}"
     READY_TIMEOUT="${READY_TIMEOUT:-60}"
     POLL_INTERVAL="${POLL_INTERVAL:-5}"
-    REDFISH_PASSWORD="${REDFISH_PASSWORD:-redfish-test-password}"
     BUILD_PLATFORM="${BUILD_PLATFORM:-linux/arm64}"
     DEBUG="${DEBUG:-false}"
     WITH_PLUGIN=false
@@ -184,9 +183,6 @@ Options:
                                 (env: READY_TIMEOUT, default: 60)
   --poll-interval SECONDS       polling interval for Ready checks
                                 (env: POLL_INTERVAL, default: 5)
-  --redfish-password PASSWORD   password for the rootstock-redfish Secret
-                                (env: REDFISH_PASSWORD,
-                                default: redfish-test-password)
   --build-platform PLATFORM     target platform for OCI image re-publishing
                                 (env: BUILD_PLATFORM, default: linux/arm64)
   --debug                       Verbose debug logging (env: DEBUG, default: false)
@@ -205,7 +201,6 @@ parse_args() {
             --version)           VERSION="$2"; shift ;;
             --ready-timeout)     READY_TIMEOUT="$2"; shift ;;
             --poll-interval)     POLL_INTERVAL="$2"; shift ;;
-            --redfish-password)  REDFISH_PASSWORD="$2"; shift ;;
             --build-platform)    BUILD_PLATFORM="$2"; shift ;;
             --debug)             DEBUG=true ;;
             -h|--help)           usage; exit 0 ;;
@@ -472,11 +467,18 @@ run_plugin_e2e() {
     done
 
     # 3. Redfish Secret in the org namespace (Greenhouse resolves valueFrom.secret there).
-    kubectl --context "$admin_context" -n "$demo_org" create secret generic rootstock-redfish \
-        --from-literal=redfish_password="$REDFISH_PASSWORD" \
-        --dry-run=client -o yaml | kubectl --context "$admin_context" apply -f - \
+    # The per-PDU access map is sourced from .redfish.access in the chart values.yaml
+    # and stored under the redfish_pdus.yaml key the chart/pod expects.
+    local redfish_access
+    redfish_access="$(yq -o yaml '.redfish.access' "${chart_dir}/values.yaml")" \
+        || die "failed to read .redfish.access from ${chart_dir}/values.yaml"
+    [[ -n "$redfish_access" && "$redfish_access" != "null" ]] \
+        || die ".redfish.access is empty in ${chart_dir}/values.yaml"
+    kubectl --context "$remote_context" -n "rootstock" create secret generic rootstock-redfish \
+        --from-literal=redfish_pdus.yaml="${redfish_access}" \
+        --dry-run=client -o yaml | kubectl --context "$remote_context" apply -f - \
         || die "failed to create rootstock-redfish secret"
-    log_info "created Secret rootstock-redfish in ns ${demo_org}"
+    log_info "created Secret rootstock-redfish in ns ${demo_org} from .redfish.access"
 
     # 4. Apply the Plugin on a temp copy. Normalize to the pinned Greenhouse CRD schema
     # (spec.pluginDefinitionRef, drop legacy spec.pluginDefinition/disabled), repoint

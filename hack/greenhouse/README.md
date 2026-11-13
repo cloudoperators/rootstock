@@ -154,7 +154,6 @@ port is treated as a plain registry and passes through un-rewritten.
 | `TARGET`                   | bundled DMTF mockup svc               | Redfish endpoint probed under `--with-plugin`; when set, the mockup is not deployed. |
 | `READY_TIMEOUT`            | `60`                                  | Seconds to wait for `READY=True`.                                                    |
 | `POLL_INTERVAL`            | `5`                                   | Seconds between readiness polls.                                                     |
-| `REDFISH_PASSWORD`         | `redfish-test-password`               | Password written to the Redfish `Secret` (`--with-plugin`).                          |
 
 ## Caveats
 

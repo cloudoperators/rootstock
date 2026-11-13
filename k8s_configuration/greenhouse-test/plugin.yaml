@@ -33,19 +33,18 @@ spec:
       value: docker.io/library/rootstock
     - name: image.tag
       # Container image tag (the app version from VERSION.yaml) -- NOT a Helm
-      # chart version. The start_plugin.sh script (with --with-plugin)
-      # overrides this and image.repository at runtime from ROOTSTOCK_IMAGE
-      # (default rootstock:<VERSION.yaml .version>). For a manual apply, set it
-      # to match the image you built/imported.
-      value: "0.1.0"
+      # chart version. The plugin_control.sh script (with --with-plugin)
+      # overrides this (and image.repository) at runtime from ${VERSION}
+      # (default 0.0.0-dev-<user>). This committed value is only a placeholder
+      # for a manual apply; set it to match the image you built/imported.
+      value: "0.0.0-dev"
     # CRITICAL: the image only exists in the node's containerd, not a registry.
     - name: image.pullPolicy
       value: Never
-    - name: redfish.password
-      valueFrom:
-        secret:
-          name: rootstock-redfish
-          key: redfish_password
+    # The Redfish credentials are supplied via a pre-created Secret
+    # in the remote cluster. The vault replication mechanism is responsible for that
+    - name: rootstock.redfish.existingSecret
+      value: rootstock-redfish
     - name: serviceMonitor.enabled
       value: false
     # Uncomment to enable SNMP exporter sidecar for network device monitoring
