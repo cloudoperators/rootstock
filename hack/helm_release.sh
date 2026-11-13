@@ -13,11 +13,13 @@ set -euo pipefail
 HC="\033[1m"
 FMAG="\033[35m"
 GREEN="\033[1;32m"
+RED="\033[1;31m"
 NC="\033[0m"
 
 log_debug() { if [ "${DEBUG:-false}" = "true" ]; then printf "${HC}${FMAG}[.]${NC} %s\n" "$*" >&2; fi; }
 log_info()  { printf "${GREEN}[+]${NC} %s\n" "$*" >&2; }
-die()       { printf "\033[1;31m[!]${NC} %s\n" "$*" >&2; exit 1; }
+log_error() { printf "${RED}[error]${NC} %s\n" "$*" >&2; }
+die()       { log_error "$*"; exit 1; }
 
 # --- Static configuration -----------------------------------------------------
 repository="cloudoperators/rootstock"
