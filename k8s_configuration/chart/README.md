@@ -84,12 +84,13 @@ See [`values.yaml`](./values.yaml) for the full list. Key options:
 ## Endpoints
 
 rootstock serves `/healthz`, `/ready`, `/metrics`, and the multi-target
-`/probe?target=<redfish-url>&labels=<pdu_id>` on `rootstock.port` (default 9220).
+`/probe?target=<redfish-url>&labels=<pdu_id>` on `rootstock.port` (default
+9220).
 
 ## SNMP exporter sidecar (optional)
 
-When `snmpExporter.enabled=true`, a Prometheus SNMP exporter runs as a sidecar on
-port `9116`, serving `/snmp?target=<device>&module=<module>`. It is **not**
+When `snmpExporter.enabled=true`, a Prometheus SNMP exporter runs as a sidecar
+on port `9116`, serving `/snmp?target=<device>&module=<module>`. It is **not**
 exposed via the Service — reach it via pod IP or `kubectl port-forward`:
 
 ```bash
