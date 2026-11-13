@@ -126,6 +126,10 @@ and this project adheres to
   [#132](https://github.com/cloudoperators/rootstock/pull/132)
   ([diff](https://github.com/cloudoperators/rootstock/compare/v0.1.0...v0.2.0))
   by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.2.0 - 🐛) action: Vulnerability scan for prs and releases only
+  [#133](https://github.com/cloudoperators/rootstock/pull/133)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.1.0...v0.2.0))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
 
 ## 2026-10-20
 
