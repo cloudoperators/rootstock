@@ -35,8 +35,8 @@ die()       { log_error "$*"; exit 1; }
 
 # --- Variables ------------------------------------------------------------
 rootstock_image="ghcr.io/cloudoperators/rootstock"   # fixed repo; tag is ${VERSION}
-curl_image="curlimages/curl:8.11.1"
-snmp_exp_image="quay.io/prometheus/snmp-exporter:v0.26.0"
+# curl_image / snmp_exp_image are sourced from the chart values.yaml (see below,
+# after the chart path is resolved) so this script stays in sync with the chart.
 
 
 # --- Greenhouse setup ------------------------------------------------------------
@@ -58,19 +58,26 @@ registry_chart_repo="cloudoperators/rootstock/charts"
 
 oci_builder="rootstock-ghverify-oci"  # buildx builder name used to push OCI images (thowaway)
 
+# --- Paths --------------------------------------------------------------------
+rootstock_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+chart_dir="${rootstock_root}/k8s_configuration/chart"
+chart_values="${chart_dir}/values.yaml"
+plugin_def="${rootstock_root}/k8s_configuration/plugindefinition.yaml"
+greenhouse_test_dir="${rootstock_root}/k8s_configuration/greenhouse-test"
+workdir="${rootstock_root}/tmp/greenhouse/verify"
+
+
+# --- Images sourced from the chart values.yaml --------------------------------
+# curl_image / snmp_exp_image are looked up from the chart's testConnection.image
+# and snmpExporter.image blocks so this script tracks whatever the chart ships.
+curl_image="$(yq -r '.testConnection.image.repository + ":" + .testConnection.image.tag' "${chart_values}")"
+snmp_exp_image="$(yq -r '.snmpExporter.image.repository + ":" + .snmpExporter.image.tag' "${chart_values}")"
+
 # zot image refs (quay.io and local docker images don't work in the in-cluster registry).
 # images are overwritten in Plugin helm values as well.
 # zot_reg_rootstock_image is computed in main() after VERSION is resolved.
 zot_reg_curl_image="${registry_in_cluster}/${curl_image}"
 zot_reg_snmp_exp_image="${registry_in_cluster}/${snmp_exp_image#*/}"
-
-
-# --- Paths --------------------------------------------------------------------
-rootstock_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-chart_dir="${rootstock_root}/k8s_configuration/chart"
-plugin_def="${rootstock_root}/k8s_configuration/plugindefinition.yaml"
-greenhouse_test_dir="${rootstock_root}/k8s_configuration/greenhouse-test"
-workdir="${rootstock_root}/tmp/greenhouse/verify"
 
 
 
@@ -83,9 +90,9 @@ main() {
     # Lowercase ${USER} so a mixed-case login (e.g. "I503834") is still valid.
     local user_lc
     user_lc="$(printf '%s' "${USER}" | tr '[:upper:]' '[:lower:]')"
-    SNMP_CONFIG_FILE="${SNMP_CONFIG_FILE:-files/snmp.yml}"
+    SNMP_CONFIG_FILE="${SNMP_CONFIG_FILE:-tmp/files/snmp.yml}"
     VERSION="${VERSION:-0.0.0-dev-${user_lc}}"
-    READY_TIMEOUT="${READY_TIMEOUT:-60}"
+    READY_TIMEOUT="${READY_TIMEOUT:-30}"
     POLL_INTERVAL="${POLL_INTERVAL:-5}"
     BUILD_PLATFORM="${BUILD_PLATFORM:-linux/arm64}"
     DEBUG="${DEBUG:-false}"
@@ -173,14 +180,14 @@ Commands:
 Options:
   --with-plugin                 (create only) Run the full E2E described above.
   --snmp-config-file FILE       SNMP config file path relative to chart dir
-                                (env: SNMP_CONFIG_FILE, default: files/snmp.yml)
+                                (env: SNMP_CONFIG_FILE, default: tmp/files/snmp.yml)
   --version VERSION             version used for both the rootstock image tag
                                 (ghcr.io/cloudoperators/rootstock:VERSION) and
                                 the deployed Helm chart version; must be valid
                                 SemVer (Helm requirement)
                                 (env: VERSION, default: 0.0.0-dev-\$USER)
   --ready-timeout SECONDS       timeout waiting for resources to become Ready
-                                (env: READY_TIMEOUT, default: 60)
+                                (env: READY_TIMEOUT, default: 30)
   --poll-interval SECONDS       polling interval for Ready checks
                                 (env: POLL_INTERVAL, default: 5)
   --build-platform PLATFORM     target platform for OCI image re-publishing
