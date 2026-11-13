@@ -10,8 +10,10 @@
 #   create   preflight → helm package+push → apply PluginDefinition and assert
 #            READY=True. --with-plugin also loads the image, creates the Redfish
 #            Secret, applies the Plugin, and starts the deployment.
-#   delete   remove all resources that `create` added/updated (Plugin, Redfish
-#            Secret, PluginDefinition, and the Flux HelmChart cache).
+#   delete   remove all resources that `create` added/updated (Plugin,
+#            PluginDefinition, and the Flux HelmChart cache on the admin cluster,
+#            plus the Redfish Secret on the greenhouse-remote cluster's rootstock
+#            namespace).
 #
 # Environment (all also settable via --flag; see --help):
 #   SNMP_CONFIG_FILE, VERSION, READY_TIMEOUT, POLL_INTERVAL,
@@ -142,21 +144,23 @@ delete() {
     log_info "deleting rootstock resources from ns ${demo_org}"
 
     # Reverse order of creation: Plugin → Secret → PluginDefinition → HelmChart cache.
-    delete_resource plugin rootstock "$demo_org"
-    delete_resource secret rootstock-redfish "$demo_org"
-    delete_resource plugindefinition rootstock "$demo_org"
-    delete_resource helmchart "rootstock-${chart_version}" "$demo_org"
+    # The Redfish Secret lives on the remote cluster (rootstock ns); everything
+    # else lives on the admin cluster in the org namespace.
+    delete_resource "$admin_context" plugin rootstock "$demo_org"
+    delete_resource "$remote_context" secret rootstock-redfish rootstock
+    delete_resource "$admin_context" plugindefinition rootstock "$demo_org"
+    delete_resource "$admin_context" helmchart "rootstock-${chart_version}" "$demo_org"
 
     log_info "DELETE COMPLETE"
 }
 
-# delete_resource <kind> <name> <namespace-or-empty>
+# delete_resource <context> <kind> <name> <namespace-or-empty>
 delete_resource() {
-    local kind="$1" name="$2" ns="${3:-}"
+    local context="$1" kind="$2" name="$3" ns="${4:-}"
     local nsargs=()
     [[ -n "$ns" ]] && nsargs=(-n "$ns")
 
-    if kubectl --context "$admin_context" "${nsargs[@]}" delete "$kind" "$name" --ignore-not-found \
+    if kubectl --context "$context" "${nsargs[@]}" delete "$kind" "$name" --ignore-not-found \
         >/dev/null; then
         log_info "removed or already absent: ${kind}/${name}${ns:+ (ns ${ns})}"
     else
@@ -174,8 +178,9 @@ Commands:
                   create the Redfish Secret, apply the Plugin and assert it is
                   Ready, deploy the bundled DMTF Redfish mockup.
   delete          Remove all resources create added/updated: the Plugin, the
-                  Redfish Secret, the PluginDefinition, and the Flux HelmChart
-                  cache (all in the ${demo_org} namespace).
+                  PluginDefinition, and the Flux HelmChart cache (in the
+                  ${demo_org} namespace on the admin cluster), plus the Redfish
+                  Secret (rootstock namespace on the remote cluster).
 
 Options:
   --with-plugin                 (create only) Run the full E2E described above.
