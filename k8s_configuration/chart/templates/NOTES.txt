@@ -9,12 +9,12 @@ Namespace: {{ include "rootstock.namespace" . }}
 Image:     {{ include "rootstock.image" . }}
 
 The Redfish credentials are mounted (never set as an env var) from the Secret
-{{ include "rootstock.redfishSecretName" . }} into:
+{{ include "rootstock.fullname" . }}-redfish into:
   {{ .Values.rootstock.config.folder }}/redfish_pdus.yaml
 {{ if .Values.rootstock.redfish.existingSecret }}
 Using the pre-existing Secret: {{ .Values.rootstock.redfish.existingSecret }}
 {{- else }}
-Using a chart-managed Secret rendered from rootstock.redfish.access.
+Using a chart-managed Secret rendered from redfish.access.
 For an externally-managed Secret, set rootstock.redfish.existingSecret instead.
 {{- end }}
 
