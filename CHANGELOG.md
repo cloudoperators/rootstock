@@ -122,6 +122,10 @@ and this project adheres to
   [#131](https://github.com/cloudoperators/rootstock/pull/131)
   ([diff](https://github.com/cloudoperators/rootstock/compare/v0.1.0...v0.2.0))
   by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.2.0 - 🐛) action: Main build bool vars -> string vars in github actions
+  [#132](https://github.com/cloudoperators/rootstock/pull/132)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.1.0...v0.2.0))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
 
 ## 2026-10-20
 
