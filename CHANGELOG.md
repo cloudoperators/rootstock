@@ -118,6 +118,10 @@ and this project adheres to
   [#130](https://github.com/cloudoperators/rootstock/pull/130)
   ([diff](https://github.com/cloudoperators/rootstock/compare/v0.1.0...v0.2.0))
   by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.2.0 - ⚙️) greenhouse: Use helm release logic
+  [#131](https://github.com/cloudoperators/rootstock/pull/131)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.1.0...v0.2.0))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
 
 ## 2026-10-20
 

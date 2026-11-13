@@ -269,6 +269,8 @@ Rules:
 - The `--help` flag must print a usage block that names every flag and its
   corresponding env var.
 - Default values belong in `main()`, not scattered across helper functions.
+- Lines must not exceed 120 characters. Break long strings by building them in a
+  local variable across multiple lines before use.
 
 ## REUSE / licensing
 
