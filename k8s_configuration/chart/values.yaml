@@ -17,7 +17,7 @@ replicaCount: 1
 image:
   # Container image repository for rootstock.
   repository: ghcr.io/cloudoperators/rootstock
-  # Image tag. Defaults to the chart appVersion when left empty.
+  # Image tag. Defaults to the chart version when left empty.
   tag: ""
   # Image digest. Takes precedence over tag when set (e.g. sha256:...).
   digest: ""

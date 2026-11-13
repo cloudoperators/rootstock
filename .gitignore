@@ -6,6 +6,8 @@ tmp/
 bin/
 .vscode/
 
+opencode.json
+
 go-report.xml
 coverage.summary
 coverage.out
