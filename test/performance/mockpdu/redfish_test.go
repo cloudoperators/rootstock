@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/cloudoperators/rootstock/internal/redfish"
-	"github.com/cloudoperators/rootstock/test/performance"
+	"github.com/cloudoperators/rootstock/test/performance/harness"
 	"github.com/cloudoperators/rootstock/test/performance/mockpdu"
 )
 
@@ -49,11 +49,11 @@ func TestRedfishSources(t *testing.T) {
 		scaled      bool
 		count       int
 		wantIDs     []string
-		wantReading performance.Reading
+		wantReading harness.Reading
 	}{
 		{
 			name: "single PDU", wantIDs: []string{"redfish"},
-			wantReading: performance.Reading{
+			wantReading: harness.Reading{
 				PowerWatts: 100, ApparentVA: 120, ReactiveVAR: 20,
 				PowerFactor: 0.9, EnergykWh: 42, PowerCapacityVA: 500,
 			},
@@ -64,7 +64,7 @@ func TestRedfishSources(t *testing.T) {
 				"redfish-1", "redfish-10", "redfish-11", "redfish-12", "redfish-2", "redfish-3",
 				"redfish-4", "redfish-5", "redfish-6", "redfish-7", "redfish-8", "redfish-9",
 			},
-			wantReading: performance.Reading{
+			wantReading: harness.Reading{
 				PowerWatts: 100, ApparentVA: 120, ReactiveVAR: 20,
 				PowerFactor: 0.9, EnergykWh: 42, PowerCapacityVA: 500,
 			},
@@ -75,7 +75,7 @@ func TestRedfishSources(t *testing.T) {
 			directory := createFixtures(t, pduJSON, metricsJSON)
 
 			var (
-				source performance.Source
+				source harness.Source
 				err    error
 			)
 			if tc.scaled {

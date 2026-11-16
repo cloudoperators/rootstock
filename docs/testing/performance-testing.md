@@ -19,9 +19,10 @@ rather than waiting for a guaranteed timeout. They produce no performance
 measurements yet.
 
 Connect `startProductionProcessor` in
-`test/performance/redfish_pipeline_test.go` to a production adapter implementing
-`performance.StartProcessor` when the processor becomes available. The adapter
-must preserve submission identity through processing and cache publication.
+`test/performance/scenarios/redfish_pipeline_test.go` to a production adapter
+implementing `harness.StartProcessor` when the processor becomes available. The
+adapter must preserve submission identity through processing and cache
+publication.
 
 Harness unit tests run today using an asynchronous test-only processor. These
 verify queueing, repeated cycles, concurrent producers, submission matching,
@@ -30,14 +31,21 @@ as a performance benchmark substitute.
 
 ## Structure and shared modules
 
+Start in `test/performance/scenarios/redfish_pipeline_test.go` to see the
+Redfish workloads, correctness checks, and benchmarks. The `harness` package
+runs those workloads; `mockpdu` provides their inputs. Unit tests alongside the
+helpers verify the supporting infrastructure.
+
 ```text
 test/performance/
-  scenario_types.go           Data types, source/processor contracts, configuration
-  harness.go                  Queue/cache ownership, startup, cycles, teardown
-  harness_test.go             Performance harness unit tests
-  result_wait.go              Wait for the current submissions' cache results
-  result_wait_test.go         Submission-aware waiting tests
-  redfish_pipeline_test.go    Redfish correctness scenarios and benchmarks
+  scenarios/
+    redfish_pipeline_test.go  Redfish pipeline scenarios and benchmarks
+  harness/
+    scenario_types.go         Data types, source/processor contracts, configuration
+    harness.go                Queue/cache ownership, startup, cycles, teardown
+    harness_test.go           Harness unit tests
+    result_wait.go            Wait for matching cache results
+    result_wait_test.go       Result-waiting unit tests
   mockpdu/
     mockpdu.go                Redfish fixture paths and JSON loading
     redfish.go                Fixture-backed RedfishSource
@@ -45,9 +53,12 @@ test/performance/
     snmp.go                   Future SNMP source entry point
 ```
 
-The harness is protocol-neutral. A future SNMP scenario can reuse it by
-providing a `Source` implementation. `NewSNMP` currently returns an error
-because SNMP fixtures are not implemented.
+The dependency direction is `scenarios -> harness` and
+`scenarios -> mockpdu -> harness`. The harness owns the protocol-neutral
+`Source` interface and reading/result types, independently of concrete mock
+implementations. A future SNMP scenario can reuse it by providing a
+`harness.Source` implementation. `NewSNMP` currently returns an error because
+SNMP fixtures are not implemented.
 
 Redfish fixtures come from `testdata/pdu-mockup`, shared with integration tests.
 They are decoded during mock construction. Scaled mock sources expose stable,
@@ -57,12 +68,12 @@ fixture document's metrics-resource ID.
 The fixture location is explicit:
 
 ```go
-source, err := mockpdu.NewRedfishScaled("../../testdata/pdu-mockup", pduCount)
+source, err := mockpdu.NewRedfishScaled("../../../testdata/pdu-mockup", pduCount)
 ```
 
 Go runs tests from their package directory, so the performance suite supplies a
-path relative to `test/performance`. The constructors also accept absolute
-paths. The supplied directory must contain
+path relative to `test/performance/scenarios`. The constructors also accept
+absolute paths. The supplied directory must contain
 `redfish/v1/PowerEquipment/RackPDUs/1/index.json` and
 `redfish/v1/PowerEquipment/RackPDUs/1/Metrics/index.json`. The mock package does
 not search for the repository root or inspect Go source-file locations.
@@ -143,11 +154,11 @@ without reporting performance metrics.
 ## Running
 
 ```sh
-# Performance harness unit tests, including race detection.
-go test -race ./test/performance/...
+# Supporting infrastructure unit tests, including race detection.
+go test -race ./test/performance/harness/... ./test/performance/mockpdu/...
 
 # Include the full-pipeline correctness scenarios (currently skipped).
-go test -race -tags=performance ./test/performance/...
+go test -race -tags=performance ./test/performance/scenarios/...
 
 # Benchmarks only; output is also written to performance.txt.
 make test-performance

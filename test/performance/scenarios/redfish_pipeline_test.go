@@ -3,7 +3,7 @@
 
 //go:build performance
 
-package performance_test
+package scenarios_test
 
 import (
 	"context"
@@ -13,12 +13,12 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/cloudoperators/rootstock/test/performance"
+	"github.com/cloudoperators/rootstock/test/performance/harness"
 	"github.com/cloudoperators/rootstock/test/performance/mockpdu"
 )
 
 // Connect the production processor adapter here when it becomes available.
-var startProductionProcessor performance.StartProcessor
+var startProductionProcessor harness.StartProcessor
 
 var redfishScenarios = []struct {
 	name          string
@@ -32,13 +32,13 @@ var redfishScenarios = []struct {
 	{name: "batch/pdus=1000", pdus: 1000, workers: 4, queueCapacity: 100},
 }
 
-func scrapeInputs(tb testing.TB, n int) []performance.Reading {
+func scrapeInputs(tb testing.TB, n int) []harness.Reading {
 	tb.Helper()
 
-	source, err := mockpdu.NewRedfishScaled("../../testdata/pdu-mockup", n)
+	source, err := mockpdu.NewRedfishScaled("../../../testdata/pdu-mockup", n)
 	require.NoError(tb, err)
 
-	inputs := make([]performance.Reading, 0, n)
+	inputs := make([]harness.Reading, 0, n)
 
 	for _, id := range source.IDs() {
 		reading, err := source.Read(tb.Context(), id)
@@ -50,20 +50,20 @@ func scrapeInputs(tb testing.TB, n int) []performance.Reading {
 	return inputs
 }
 
-func verifyResults(tb testing.TB, inputs []performance.Reading, results []performance.Result) {
+func verifyResults(tb testing.TB, inputs []harness.Reading, results []harness.Result) {
 	tb.Helper()
 	require.Len(tb, results, len(inputs))
 
 	for i, input := range inputs {
 		// Update expected values here if production processing transforms fields.
-		require.Equal(tb, performance.Result(input), results[i])
+		require.Equal(tb, harness.Result(input), results[i])
 	}
 }
 
 func TestRedfishPipeline(t *testing.T) {
 	for _, tc := range redfishScenarios {
 		t.Run(tc.name, func(t *testing.T) {
-			h := performance.NewHarness(t, performance.ScenarioConfig{
+			h := harness.NewHarness(t, harness.ScenarioConfig{
 				WorkerCount: tc.workers, QueueCapacity: tc.queueCapacity,
 				StartProcessor: startProductionProcessor,
 			})
@@ -83,7 +83,7 @@ func TestRedfishPipeline(t *testing.T) {
 func BenchmarkRedfishProcessing(b *testing.B) {
 	for _, tc := range redfishScenarios {
 		b.Run(tc.name, func(b *testing.B) {
-			h := performance.NewHarness(b, performance.ScenarioConfig{
+			h := harness.NewHarness(b, harness.ScenarioConfig{
 				WorkerCount: tc.workers, QueueCapacity: tc.queueCapacity,
 				StartProcessor: startProductionProcessor,
 			})
@@ -121,7 +121,7 @@ func BenchmarkRedfishProcessingConcurrent(b *testing.B) {
 	}
 	for _, tc := range cases {
 		b.Run(tc.name, func(b *testing.B) {
-			h := performance.NewHarness(b, performance.ScenarioConfig{
+			h := harness.NewHarness(b, harness.ScenarioConfig{
 				WorkerCount: tc.workers, QueueCapacity: tc.producers,
 				StartProcessor: startProductionProcessor,
 			})
@@ -149,7 +149,7 @@ func BenchmarkRedfishProcessingConcurrent(b *testing.B) {
 					defer wg.Done()
 
 					for next.Add(1) <= int64(b.N) {
-						if _, err := h.SubmitAndWait(ctx, []performance.Reading{input}); err != nil {
+						if _, err := h.SubmitAndWait(ctx, []harness.Reading{input}); err != nil {
 							errors <- err
 
 							cancel()

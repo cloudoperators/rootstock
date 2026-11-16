@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Greenhouse contributors
 // SPDX-License-Identifier: Apache-2.0
 
-package performance_test
+package harness_test
 
 import (
 	"context"
@@ -15,22 +15,22 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/cloudoperators/rootstock/internal/collectors/cache"
-	"github.com/cloudoperators/rootstock/test/performance"
+	"github.com/cloudoperators/rootstock/test/performance/harness"
 	"github.com/cloudoperators/rootstock/test/performance/mockpdu"
 )
 
 // testProcessor exercises harness mechanics only; it is never a benchmark
 // substitute for the missing production processor.
 func testProcessor(
-	process func(performance.Submission, cache.Cache[performance.CachedResult]),
-) performance.StartProcessor {
+	process func(harness.Submission, cache.Cache[harness.CachedResult]),
+) harness.StartProcessor {
 	// Build an independently running worker group for harness verification.
 	return func(
 		ctx context.Context,
-		queue <-chan performance.Submission,
-		results cache.Cache[performance.CachedResult],
+		queue <-chan harness.Submission,
+		results cache.Cache[harness.CachedResult],
 		workers int,
-	) (performance.ProcessorRuntime, error) {
+	) (harness.ProcessorRuntime, error) {
 		// Readiness and shutdown are reported independently of submissions.
 		ready := make(chan struct{})
 		done := make(chan error, 1)
@@ -66,22 +66,22 @@ func testProcessor(
 			close(done)
 		}()
 
-		return performance.ProcessorRuntime{Ready: ready, Done: done}, nil
+		return harness.ProcessorRuntime{Ready: ready, Done: done}, nil
 	}
 }
 
 type cycleOutcome struct {
-	inputs  []performance.Reading
-	results []performance.Result
+	inputs  []harness.Reading
+	results []harness.Result
 	err     error
 }
 
 func runProducerCycles(
-	ctx context.Context, h *performance.Harness, inputs []performance.Reading, cycles int,
+	ctx context.Context, h *harness.Harness, inputs []harness.Reading, cycles int,
 ) cycleOutcome {
 	// Each cycle must observe freshly processed values for the same PDU inputs.
 	var (
-		results  []performance.Result
+		results  []harness.Result
 		previous float64
 	)
 
@@ -124,18 +124,18 @@ func TestHarnessCycles(t *testing.T) {
 				runtimeDone <-chan error
 			)
 
-			start := testProcessor(func(s performance.Submission, c cache.Cache[performance.CachedResult]) {
+			start := testProcessor(func(s harness.Submission, c cache.Cache[harness.CachedResult]) {
 				processed.Add(1)
 				// Deliberately transform data so returning scraped inputs or stale
 				// results would fail the expectations across repeated cycles.
-				result := performance.Result(s.Reading)
+				result := harness.Result(s.Reading)
 
 				result.PowerWatts += float64(s.ID)
 				if _, err := c.Get(result.PDUID); err != nil {
 					cacheSize.Add(1)
 				}
 
-				c.Set(result.PDUID, performance.CachedResult{SubmissionID: s.ID, Result: result})
+				c.Set(result.PDUID, harness.CachedResult{SubmissionID: s.ID, Result: result})
 			})
 			// This cleanup runs after the harness cleanup, verifying workers exited.
 			t.Cleanup(func() {
@@ -145,12 +145,12 @@ func TestHarnessCycles(t *testing.T) {
 					t.Error("processor workers still running after harness cleanup")
 				}
 			})
-			h := performance.NewHarness(t, performance.ScenarioConfig{
+			h := harness.NewHarness(t, harness.ScenarioConfig{
 				WorkerCount: tc.workers, QueueCapacity: tc.queueCapacity,
 				StartProcessor: func(
-					ctx context.Context, q <-chan performance.Submission,
-					c cache.Cache[performance.CachedResult], workers int,
-				) (performance.ProcessorRuntime, error) {
+					ctx context.Context, q <-chan harness.Submission,
+					c cache.Cache[harness.CachedResult], workers int,
+				) (harness.ProcessorRuntime, error) {
 					// Retain the shutdown signal for the post-cleanup assertion.
 					runtime, err := start(ctx, q, c, workers)
 					runtimeDone = runtime.Done
@@ -158,10 +158,10 @@ func TestHarnessCycles(t *testing.T) {
 					return runtime, err
 				},
 			})
-			source, err := mockpdu.NewRedfishScaled("../../testdata/pdu-mockup", tc.pdus)
+			source, err := mockpdu.NewRedfishScaled("../../../testdata/pdu-mockup", tc.pdus)
 			require.NoError(t, err)
 
-			inputs := make([]performance.Reading, 0, tc.pdus)
+			inputs := make([]harness.Reading, 0, tc.pdus)
 
 			for _, id := range source.IDs() {
 				reading, err := source.Read(t.Context(), id)
@@ -204,7 +204,7 @@ func TestHarnessCycles(t *testing.T) {
 func TestHarnessCycleFailures(t *testing.T) {
 	cases := []struct {
 		name               string
-		inputs             []performance.Reading
+		inputs             []harness.Reading
 		cancel             bool
 		noConsumer         bool
 		wantErr            error
@@ -212,30 +212,30 @@ func TestHarnessCycleFailures(t *testing.T) {
 		wantRuntimeStopped bool
 	}{
 		{name: "empty cycle", wantMessage: "at least one reading"},
-		{name: "empty PDU ID", inputs: []performance.Reading{{}}, wantMessage: "empty, duplicated"},
-		{name: "duplicate PDU IDs", inputs: []performance.Reading{{PDUID: "a"}, {PDUID: "a"}}, wantMessage: "duplicated"},
+		{name: "empty PDU ID", inputs: []harness.Reading{{}}, wantMessage: "empty, duplicated"},
+		{name: "duplicate PDU IDs", inputs: []harness.Reading{{PDUID: "a"}, {PDUID: "a"}}, wantMessage: "duplicated"},
 		{
-			name: "missing result times out", inputs: []performance.Reading{{PDUID: "a"}},
+			name: "missing result times out", inputs: []harness.Reading{{PDUID: "a"}},
 			wantErr: context.DeadlineExceeded, wantMessage: "a#1", wantRuntimeStopped: true,
 		},
 		{
-			name: "canceled submission", inputs: []performance.Reading{{PDUID: "a"}}, cancel: true,
+			name: "canceled submission", inputs: []harness.Reading{{PDUID: "a"}}, cancel: true,
 			wantErr: context.Canceled, wantMessage: "enqueue", wantRuntimeStopped: true,
 		},
 		{
-			name: "queue backpressure times out", inputs: []performance.Reading{{PDUID: "a"}, {PDUID: "b"}},
+			name: "queue backpressure times out", inputs: []harness.Reading{{PDUID: "a"}, {PDUID: "b"}},
 			noConsumer: true, wantErr: context.DeadlineExceeded,
 			wantMessage: "enqueue PDU \"b\"", wantRuntimeStopped: true,
 		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			start := testProcessor(func(performance.Submission, cache.Cache[performance.CachedResult]) {})
+			start := testProcessor(func(harness.Submission, cache.Cache[harness.CachedResult]) {})
 			if tc.noConsumer {
 				start = func(
-					ctx context.Context, _ <-chan performance.Submission,
-					_ cache.Cache[performance.CachedResult], _ int,
-				) (performance.ProcessorRuntime, error) {
+					ctx context.Context, _ <-chan harness.Submission,
+					_ cache.Cache[harness.CachedResult], _ int,
+				) (harness.ProcessorRuntime, error) {
 					// Keep the runtime alive without consuming queued submissions.
 					ready := make(chan struct{})
 					done := make(chan error, 1)
@@ -244,11 +244,11 @@ func TestHarnessCycleFailures(t *testing.T) {
 
 					go func() { <-ctx.Done(); done <- nil; close(done) }()
 
-					return performance.ProcessorRuntime{Ready: ready, Done: done}, nil
+					return harness.ProcessorRuntime{Ready: ready, Done: done}, nil
 				}
 			}
 
-			h := performance.NewHarness(t, performance.ScenarioConfig{
+			h := harness.NewHarness(t, harness.ScenarioConfig{
 				WorkerCount: 1, QueueCapacity: 1, CycleTimeout: 20 * time.Millisecond,
 				StartProcessor: start,
 			})
@@ -271,7 +271,7 @@ func TestHarnessCycleFailures(t *testing.T) {
 			assert.Nil(t, got)
 
 			if tc.wantRuntimeStopped {
-				_, err := h.SubmitAndWait(t.Context(), []performance.Reading{{PDUID: "next"}})
+				_, err := h.SubmitAndWait(t.Context(), []harness.Reading{{PDUID: "next"}})
 				require.ErrorContains(t, err, "runtime stopped")
 				assert.ErrorIs(t, err, context.Canceled)
 			}
@@ -282,17 +282,17 @@ func TestHarnessCycleFailures(t *testing.T) {
 func TestHarnessRejectsOverlappingPDUs(t *testing.T) {
 	cases := []struct {
 		name         string
-		inputs       []performance.Reading
-		secondInputs []performance.Reading
+		inputs       []harness.Reading
+		secondInputs []harness.Reading
 		wantMessage  string
 	}{
 		{
-			name: "single PDU", inputs: []performance.Reading{{PDUID: "a"}},
-			secondInputs: []performance.Reading{{PDUID: "a"}}, wantMessage: "already in flight",
+			name: "single PDU", inputs: []harness.Reading{{PDUID: "a"}},
+			secondInputs: []harness.Reading{{PDUID: "a"}}, wantMessage: "already in flight",
 		},
 		{
-			name: "partial batch overlap", inputs: []performance.Reading{{PDUID: "a"}, {PDUID: "b"}},
-			secondInputs: []performance.Reading{{PDUID: "c"}, {PDUID: "b"}}, wantMessage: "already in flight",
+			name: "partial batch overlap", inputs: []harness.Reading{{PDUID: "a"}, {PDUID: "b"}},
+			secondInputs: []harness.Reading{{PDUID: "c"}, {PDUID: "b"}}, wantMessage: "already in flight",
 		},
 	}
 	for _, tc := range cases {
@@ -302,12 +302,12 @@ func TestHarnessRejectsOverlappingPDUs(t *testing.T) {
 
 			var signalOnce sync.Once
 
-			h := performance.NewHarness(t, performance.ScenarioConfig{
+			h := harness.NewHarness(t, harness.ScenarioConfig{
 				WorkerCount: 1, QueueCapacity: len(tc.inputs),
-				StartProcessor: testProcessor(func(s performance.Submission, c cache.Cache[performance.CachedResult]) {
+				StartProcessor: testProcessor(func(s harness.Submission, c cache.Cache[harness.CachedResult]) {
 					signalOnce.Do(func() { received <- struct{}{} })
 					<-release
-					c.Set(s.Reading.PDUID, performance.CachedResult{SubmissionID: s.ID, Result: performance.Result(s.Reading)})
+					c.Set(s.Reading.PDUID, harness.CachedResult{SubmissionID: s.ID, Result: harness.Result(s.Reading)})
 				}),
 			})
 

@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Greenhouse contributors
 // SPDX-License-Identifier: Apache-2.0
 
-// Package performance supplies protocol-neutral fixtures and a submit-and-await
-// harness for asynchronous processing benchmarks.
-package performance
+// Package harness manages processor lifecycles and submit-and-wait operations
+// for performance scenarios.
+package harness
 
 import (
 	"context"

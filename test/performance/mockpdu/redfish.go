@@ -10,7 +10,7 @@ import (
 	"strconv"
 
 	"github.com/cloudoperators/rootstock/internal/redfish"
-	"github.com/cloudoperators/rootstock/test/performance"
+	"github.com/cloudoperators/rootstock/test/performance/harness"
 )
 
 // RedfishSource serves Redfish documents and scraped readings from immutable fixtures.
@@ -20,13 +20,13 @@ type RedfishSource struct {
 }
 
 var (
-	_ redfish.Client     = (*RedfishSource)(nil)
-	_ performance.Source = (*RedfishSource)(nil)
+	_ redfish.Client = (*RedfishSource)(nil)
+	_ harness.Source = (*RedfishSource)(nil)
 )
 
 // NewRedfish loads PDU 1 from fixtureDirectory and exposes it as "redfish".
 // fixtureDirectory must contain the redfish/v1 tree (e.g. testdata/pdu-mockup).
-func NewRedfish(fixtureDirectory string) (performance.Source, error) {
+func NewRedfish(fixtureDirectory string) (harness.Source, error) {
 	fixture, err := loadRedfishFixture(fixtureDirectory)
 	if err != nil {
 		return nil, err
@@ -38,7 +38,7 @@ func NewRedfish(fixtureDirectory string) (performance.Source, error) {
 // NewRedfishScaled loads PDU 1 once and copies it into n devices named
 // "redfish-1" through "redfish-n". Measurements are identical for every device.
 // fixtureDirectory must contain the redfish/v1 tree.
-func NewRedfishScaled(fixtureDirectory string, n int) (performance.Source, error) {
+func NewRedfishScaled(fixtureDirectory string, n int) (harness.Source, error) {
 	if n < 1 {
 		return nil, fmt.Errorf("mockpdu: n must be >= 1, got %d", n)
 	}
@@ -75,13 +75,13 @@ func (c *RedfishSource) IDs() []string {
 
 // Read maps the fixture measurements to a reading identified by pduID, not the
 // metrics document's resource ID ("Metrics").
-func (c *RedfishSource) Read(_ context.Context, pduID string) (performance.Reading, error) {
+func (c *RedfishSource) Read(_ context.Context, pduID string) (harness.Reading, error) {
 	fixture, err := c.lookup(pduID)
 	if err != nil {
-		return performance.Reading{}, err
+		return harness.Reading{}, err
 	}
 
-	return performance.Reading{
+	return harness.Reading{
 		PDUID:           pduID,
 		PowerWatts:      fixture.metrics.PowerWatts.Reading,
 		ApparentVA:      fixture.metrics.PowerWatts.ApparentVA,
