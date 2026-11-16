@@ -56,7 +56,7 @@ rootstock:
 
 redfish:
   access: '{{ resolve `vault+kvv2:///secrets/qa-de-1/rootstock/test-pdu-redfish` }}'
-    # pdu1: {username: redfish, password: changeThis}
+  # access: {pdu1: {username: redfish, password: changeThis}}
 
 
 # Image used by the Helm test hook (templates/tests/test-connection.yaml) that
