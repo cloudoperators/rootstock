@@ -16,7 +16,26 @@ import (
 
 const (
 	collectorTimeout = 25 * time.Second
+	rackPDUsBasePath = "/redfish/v1/PowerEquipment/RackPDUs/"
 )
+
+// redfishSensorReading is the subset of a Redfish SensorReading
+// (PowerWatts, EnergykWh) that this collector emits.
+type redfishSensorReading struct {
+	Reading    float64 `json:"Reading"`
+	ApparentVA float64 `json:"ApparentVA"`
+}
+
+// pduMetricsDocument is the subset of a RackPDU /Metrics document we emit.
+type pduMetricsDocument struct {
+	PowerWatts redfishSensorReading `json:"PowerWatts"`
+	EnergykWh  redfishSensorReading `json:"EnergykWh"`
+}
+
+// pduDocument is the subset of a RackPDU document we emit.
+type pduDocument struct {
+	PowerCapacityVA float64 `json:"PowerCapacityVA"`
+}
 
 type Collector struct {
 	mu            sync.Mutex
@@ -122,87 +141,54 @@ func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	// Create a context with timeout for the API call
-	// Note: prometheus.Collector interface doesn't accept context as parameter,
-	// so we create one here with a reasonable timeout. The HTTP client's timeout
-	// (configured in NewClient) provides the ultimate backstop.
+	// prometheus.Collector.Collect has no context parameter, so we bound the
+	// Redfish calls here. The HTTP client timeout (set in NewClient) is the
+	// ultimate backstop.
 	ctx, cancel := context.WithTimeout(context.Background(), collectorTimeout)
 	defer cancel()
 
-	// Fetch PDU metrics from Redfish API
-	rackPDUEnergetics, err := c.redfishClient.GetRackPDUEnergetics(ctx, c.pduID)
-	if err != nil {
+	if err := c.redfishClient.Login(ctx); err != nil {
+		c.logger.Error("failed to log in to PDU", log.KeyError, err, "pdu_id", c.pduID)
+		return
+	}
+	defer func() {
+		if err := c.redfishClient.Close(ctx); err != nil {
+			c.logger.Warn("failed to close redfish session", "pdu_id", c.pduID, log.KeyError, err)
+		}
+	}()
+
+	var pduMetrics pduMetricsDocument
+	if err := c.redfishClient.Get(ctx, rackPDUsBasePath+c.pduID+"/Metrics", &pduMetrics); err != nil {
 		c.logger.Error("failed to fetch PDU metrics", log.KeyError, err, "pdu_id", c.pduID)
 		return
 	}
 
 	c.logger.Info("successfully scraped PDU metrics", "pdu_id", c.pduID)
 
-	// Extract metrics from the response
-	// PowerWatts metric
-	if rackPDUEnergetics.PowerWatts.Power != 0 {
-		metric, err := prometheus.NewConstMetric(
-			c.rackPDU.energetics.power,
-			prometheus.GaugeValue,
-			rackPDUEnergetics.PowerWatts.Power,
-			c.pduID,
-		)
-		if err != nil {
-			c.logger.Error("failed to create PowerWatts metric", log.KeyError, err, "pdu_id", c.pduID)
-		} else {
-			ch <- metric
-		}
-	}
+	c.emit(ch, c.rackPDU.energetics.power, pduMetrics.PowerWatts.Reading)
+	c.emit(ch, c.rackPDU.energetics.apparentPower, pduMetrics.PowerWatts.ApparentVA)
+	c.emit(ch, c.rackPDU.energetics.energy, pduMetrics.EnergykWh.Reading)
 
-	// ApparentPower metric
-	if rackPDUEnergetics.PowerWatts.ApparentPower != 0 {
-		metric, err := prometheus.NewConstMetric(
-			c.rackPDU.energetics.apparentPower,
-			prometheus.GaugeValue,
-			rackPDUEnergetics.PowerWatts.ApparentPower,
-			c.pduID,
-		)
-		if err != nil {
-			c.logger.Error("failed to create ApparentVA metric", log.KeyError, err, "pdu_id", c.pduID)
-		} else {
-			ch <- metric
-		}
-	}
-
-	// EnergykWh metric
-	if rackPDUEnergetics.EnergykWh.EnergykWh != 0 {
-		metric, err := prometheus.NewConstMetric(
-			c.rackPDU.energetics.energy,
-			prometheus.GaugeValue,
-			rackPDUEnergetics.EnergykWh.EnergykWh,
-			c.pduID,
-		)
-		if err != nil {
-			c.logger.Error("failed to create EnergykWh metric", log.KeyError, err, "pdu_id", c.pduID)
-		} else {
-			ch <- metric
-		}
-	}
-
-	rackPDU, err := c.redfishClient.GetRackPDUPowerRating(ctx, c.pduID)
-	if err != nil {
-		c.logger.Error("failed to fetch PDU metrics", log.KeyError, err, "pdu_id", c.pduID)
+	var pdu pduDocument
+	if err := c.redfishClient.Get(ctx, rackPDUsBasePath+c.pduID, &pdu); err != nil {
+		c.logger.Error("failed to fetch PDU power rating", log.KeyError, err, "pdu_id", c.pduID)
 		return
 	}
 
-	if rackPDU.PowerCapacityVA == 0 {
+	c.emit(ch, c.rackPDU.powerRating.powerCapacity, pdu.PowerCapacityVA)
+}
+
+// emit sends one gauge sample, skipping zero values (treated as absent).
+func (c *Collector) emit(ch chan<- prometheus.Metric, desc *prometheus.Desc, value float64) {
+	if value == 0 {
 		return
 	}
 
-	metric, err := prometheus.NewConstMetric(
-		c.rackPDU.powerRating.powerCapacity,
-		prometheus.GaugeValue,
-		rackPDU.PowerCapacityVA,
-		c.pduID,
-	)
+	metric, err := prometheus.NewConstMetric(desc, prometheus.GaugeValue, value, c.pduID)
 	if err != nil {
-		c.logger.Error("failed to create PowerCapacityVA metric", log.KeyError, err, "pdu_id", c.pduID)
-	} else {
-		ch <- metric
+		c.logger.Error("failed to create metric", log.KeyError, err, "pdu_id", c.pduID)
+		return
 	}
+
+	ch <- metric
 }
