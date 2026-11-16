@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/cloudoperators/rootstock/internal/manager"
@@ -16,8 +17,10 @@ import (
 	"github.com/cloudoperators/rootstock/pkg/log"
 )
 
-// NewScraper returns a scraper function that fetches Redfish metrics and sends them to out.
-// The returned function satisfies the manager scraper signature.
+const rackPDUsPath = "/redfish/v1/PowerEquipment/RackPDUs"
+
+// NewScraper returns a function that logs in to one PDU, reads all of its
+// metrics, and sends them to out. The returned function is what the manager calls.
 func NewScraper(
 	out chan<- []rawdata.RawMetric,
 	logger log.MinInterface,
@@ -41,7 +44,7 @@ func NewScraper(
 			}
 		}()
 
-		metrics, err := scrapeAll(ctx, client, job.IP)
+		metrics, err := scrapeAll(ctx, client, logger, job)
 		if err != nil {
 			return 0, err
 		}
@@ -52,312 +55,176 @@ func NewScraper(
 	}
 }
 
-// scrapeAll fetches metrics from all PDUs on the device.
-func scrapeAll(ctx context.Context, client Client, deviceIP string) ([]rawdata.RawMetric, error) {
-	rackPDUs, err := client.GetRackPDUs(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("get rack PDUs: %w", err)
+// scrapeAll reads the list of PDUs on the device and scrapes each one.
+func scrapeAll(
+	ctx context.Context,
+	client Client,
+	logger log.MinInterface,
+	job manager.ScrapeJob,
+) ([]rawdata.RawMetric, error) {
+	var root map[string]any
+	if err := client.Get(ctx, rackPDUsPath, &root); err != nil {
+		return nil, fmt.Errorf("list rack PDUs: %w", err)
 	}
 
 	now := time.Now()
 
-	var result []rawdata.RawMetric
-
-	for _, member := range rackPDUs.Members {
-		pduID := path.Base(member.ODataID)
-
-		pduMetrics, err := scrapeDevice(ctx, client, deviceIP, pduID, now)
-		if err != nil {
-			return nil, fmt.Errorf("scrape PDU %s: %w", pduID, err)
-		}
-
-		result = append(result, pduMetrics...)
+	var metrics []rawdata.RawMetric
+	for _, pduURL := range childURLs(root) {
+		metrics = append(metrics, scrapePDU(ctx, client, logger, job, pduURL, now)...)
 	}
 
-	return result, nil
+	return metrics, nil
 }
 
-// scrapeDevice fetches all metrics for a single PDU by calling one helper per endpoint.
-func scrapeDevice(
+// scrapePDU reads every metric for a single PDU: the PDU document itself, its
+// Metrics document, and its Mains, Outlets and Branches collections.
+func scrapePDU(
 	ctx context.Context,
 	client Client,
-	deviceIP string,
-	pduID string,
+	logger log.MinInterface,
+	job manager.ScrapeJob,
+	pduURL string,
 	now time.Time,
-) ([]rawdata.RawMetric, error) {
-	var result []rawdata.RawMetric
-
-	powerRating, err := scrapePowerRating(ctx, client, deviceIP, pduID, now)
-	if err != nil {
-		return nil, err
-	}
-
-	result = append(result, powerRating...)
-
-	energetics, err := scrapeEnergetics(ctx, client, deviceIP, pduID, now)
-	if err != nil {
-		return nil, err
-	}
-
-	result = append(result, energetics...)
-
-	mainCurrent, err := scrapeMainCurrent(ctx, client, deviceIP, pduID, now)
-	if err != nil {
-		return nil, err
-	}
-
-	result = append(result, mainCurrent...)
-
-	outlets, err := scrapeOutlets(ctx, client, deviceIP, pduID, now)
-	if err != nil {
-		return nil, err
-	}
-
-	result = append(result, outlets...)
-
-	branches, err := scrapeBranches(ctx, client, deviceIP, pduID, now)
-	if err != nil {
-		return nil, err
-	}
-
-	result = append(result, branches...)
-
-	return result, nil
-}
-
-// scrapeOutlets fetches voltage, current and power for every outlet on the PDU.
-func scrapeOutlets(
-	ctx context.Context,
-	client Client,
-	deviceIP, pduID string,
-	now time.Time,
-) ([]rawdata.RawMetric, error) {
-	outletIDs, err := client.GetRackPDUOutletsIDs(ctx, pduID)
-	if err != nil {
-		return nil, fmt.Errorf("get outlet IDs: %w", err)
-	}
-
-	var result []rawdata.RawMetric
-
-	for _, outletID := range outletIDs {
-		outlet, err := client.GetRackPDUOutletElectricals(ctx, pduID, outletID)
-		if err != nil {
-			return nil, fmt.Errorf("get outlet %s: %w", outletID, err)
-		}
-
-		labels := map[string]string{"pdu_id": pduID, "outlet_id": outletID}
-
-		result = append(result,
-			rawdata.RawMetric{
-				DeviceIP: deviceIP, Protocol: "redfish", Name: "RatedCurrentAmps",
-				Value: outlet.RatedCurrent, Labels: labels, Timestamp: now,
-			},
-			rawdata.RawMetric{
-				DeviceIP: deviceIP, Protocol: "redfish", Name: "Voltage.Voltage",
-				Value: outlet.Voltage.Voltage, Labels: labels, Timestamp: now,
-			},
-			rawdata.RawMetric{
-				DeviceIP: deviceIP, Protocol: "redfish", Name: "CurrentAmps.Current",
-				Value: outlet.Current.Current, Labels: labels, Timestamp: now,
-			},
-			rawdata.RawMetric{
-				DeviceIP: deviceIP, Protocol: "redfish", Name: "PowerWatts.Power",
-				Value: outlet.ApparentPower.Power, Labels: labels, Timestamp: now,
-			},
-		)
-	}
-
-	return result, nil
-}
-
-// scrapeBranches fetches rated current, current and poly-phase metrics for every branch on the PDU.
-func scrapeBranches(
-	ctx context.Context,
-	client Client,
-	deviceIP, pduID string,
-	now time.Time,
-) ([]rawdata.RawMetric, error) {
-	branchIDs, err := client.GetRackPDUBranchIDs(ctx, pduID)
-	if err != nil {
-		return nil, fmt.Errorf("get branch IDs: %w", err)
-	}
-
-	var result []rawdata.RawMetric
-
-	for _, branchID := range branchIDs {
-		branch, err := client.GetRackPDUBranchCurrent(ctx, pduID, branchID)
-		if err != nil {
-			return nil, fmt.Errorf("get branch %s: %w", branchID, err)
-		}
-
-		labels := map[string]string{"pdu_id": pduID, "branch_id": branchID}
-
-		result = append(result,
-			rawdata.RawMetric{
-				DeviceIP: deviceIP, Protocol: "redfish", Name: "RatedCurrentAmps",
-				Value: branch.RatedCurrent, Labels: labels, Timestamp: now,
-			},
-			rawdata.RawMetric{
-				DeviceIP: deviceIP, Protocol: "redfish", Name: "CurrentAmps.Current",
-				Value: branch.Current.Current, Labels: labels, Timestamp: now,
-			},
-		)
-
-		for phase, reading := range branch.PolyPhaseVoltage {
-			phaseLabels := map[string]string{"pdu_id": pduID, "branch_id": branchID, "phase": phase}
-
-			result = append(result, rawdata.RawMetric{
-				DeviceIP:  deviceIP,
-				Protocol:  "redfish",
-				Name:      "PolyPhaseVoltage.Reading",
-				Value:     reading.Reading,
-				Labels:    phaseLabels,
-				Timestamp: now,
-			})
-		}
-
-		for phase, pw := range branch.PolyPhasePowerWatts {
-			phaseLabels := map[string]string{"pdu_id": pduID, "branch_id": branchID, "phase": phase}
-
-			result = append(result,
-				rawdata.RawMetric{
-					DeviceIP: deviceIP, Protocol: "redfish", Name: "PolyPhasePowerWatts.Power",
-					Value: pw.Power, Labels: phaseLabels, Timestamp: now,
-				},
-				rawdata.RawMetric{
-					DeviceIP: deviceIP, Protocol: "redfish", Name: "PolyPhasePowerWatts.ApparentPower",
-					Value: pw.ApparentPower, Labels: phaseLabels, Timestamp: now,
-				},
-			)
-		}
-	}
-
-	return result, nil
-}
-
-func scrapePowerRating(
-	ctx context.Context,
-	client Client,
-	deviceIP, pduID string,
-	now time.Time,
-) ([]rawdata.RawMetric, error) {
-	powerRating, err := client.GetRackPDUPowerRating(ctx, pduID)
-	if err != nil {
-		return nil, fmt.Errorf("get power rating: %w", err)
-	}
-
+) []rawdata.RawMetric {
+	pduID := path.Base(pduURL)
 	pduLabels := map[string]string{"pdu_id": pduID}
 
-	return []rawdata.RawMetric{
-		{
-			DeviceIP: deviceIP, Protocol: "redfish", Name: "PowerCapacityVA",
-			Value: powerRating.PowerCapacityVA, Labels: pduLabels, Timestamp: now,
-		},
-	}, nil
+	var metrics []rawdata.RawMetric
+
+	metrics = append(metrics, readDocument(
+		ctx, client, logger, job, pduURL, "", pduLabels, now,
+	)...)
+	metrics = append(metrics, readDocument(
+		ctx, client, logger, job, pduURL+"/Metrics", "Metrics", pduLabels, now,
+	)...)
+	metrics = append(metrics, readCollection(
+		ctx, client, logger, job, pduURL+"/Mains", "Mains", "main_id", pduID, now,
+	)...)
+	metrics = append(metrics, readCollection(
+		ctx, client, logger, job, pduURL+"/Outlets", "Outlets", "outlet_id", pduID, now,
+	)...)
+	metrics = append(metrics, readCollection(
+		ctx, client, logger, job, pduURL+"/Branches", "Branches", "branch_id", pduID, now,
+	)...)
+
+	return metrics
 }
 
-// scrapeEnergetics fetches live power and cumulative energy consumption for the PDU.
-func scrapeEnergetics(
+// readCollection reads a Redfish collection (a table of contents, like Outlets)
+// and scrapes every document it links to, tagging each with the member's ID.
+func readCollection(
 	ctx context.Context,
 	client Client,
-	deviceIP, pduID string,
+	logger log.MinInterface,
+	job manager.ScrapeJob,
+	urlPath, prefix, idLabel, pduID string,
 	now time.Time,
-) ([]rawdata.RawMetric, error) {
-	energetics, err := client.GetRackPDUEnergetics(ctx, pduID)
-	if err != nil {
-		return nil, fmt.Errorf("get energetics: %w", err)
+) []rawdata.RawMetric {
+	var collection map[string]any
+	if err := client.Get(ctx, urlPath, &collection); err != nil {
+		logger.Warn("skipping redfish collection", "path", urlPath, log.KeyError, err)
+		return nil
 	}
 
-	pduLabels := map[string]string{"pdu_id": pduID}
+	var metrics []rawdata.RawMetric
 
-	return []rawdata.RawMetric{
-		{
-			DeviceIP: deviceIP, Protocol: "redfish", Name: "PowerWatts.Power",
-			Value: energetics.PowerWatts.Power, Labels: pduLabels, Timestamp: now,
-		},
-		{
-			DeviceIP: deviceIP, Protocol: "redfish", Name: "PowerWatts.ApparentPower",
-			Value: energetics.PowerWatts.ApparentPower, Labels: pduLabels, Timestamp: now,
-		},
-		{
-			DeviceIP: deviceIP, Protocol: "redfish", Name: "PowerWatts.ReactivePower",
-			Value: energetics.PowerWatts.ReactivePower, Labels: pduLabels, Timestamp: now,
-		},
-		{
-			DeviceIP: deviceIP, Protocol: "redfish", Name: "PowerWatts.PowerFactor",
-			Value: energetics.PowerWatts.PowerFactor, Labels: pduLabels, Timestamp: now,
-		},
-		{
-			DeviceIP: deviceIP, Protocol: "redfish", Name: "EnergykWh.EnergykWh",
-			Value: energetics.EnergykWh.EnergykWh, Labels: pduLabels, Timestamp: now,
-		},
-	}, nil
+	for _, memberURL := range childURLs(collection) {
+		labels := map[string]string{"pdu_id": pduID, idLabel: path.Base(memberURL)}
+		metrics = append(metrics, readDocument(
+			ctx, client, logger, job, memberURL, prefix, labels, now,
+		)...)
+	}
+
+	return metrics
 }
 
-// scrapeMainCurrent fetches poly-phase voltage, current and power for the PDU main feed.
-func scrapeMainCurrent(
+// readDocument reads one Redfish document and turns every number inside it into
+// a RawMetric, named by its position in the JSON (e.g. "PowerWatts/Reading").
+func readDocument(
 	ctx context.Context,
 	client Client,
-	deviceIP, pduID string,
+	logger log.MinInterface,
+	job manager.ScrapeJob,
+	urlPath, prefix string,
+	labels map[string]string,
 	now time.Time,
-) ([]rawdata.RawMetric, error) {
-	mainCurrent, err := client.GetRackPDUMainCurrent(ctx, pduID)
-	if err != nil {
-		return nil, fmt.Errorf("get main current: %w", err)
+) []rawdata.RawMetric {
+	var doc map[string]any
+	if err := client.Get(ctx, urlPath, &doc); err != nil {
+		logger.Warn("skipping redfish document", "path", urlPath, log.KeyError, err)
+		return nil
 	}
 
-	var result []rawdata.RawMetric
+	var metrics []rawdata.RawMetric
 
-	for _, phaseMap := range mainCurrent.PolyPhaseVoltage {
-		for phase, reading := range phaseMap {
-			result = append(result, rawdata.RawMetric{
-				DeviceIP:  deviceIP,
-				Protocol:  "redfish",
-				Name:      "PolyPhaseVoltage.Reading",
-				Value:     reading.Reading,
-				Labels:    map[string]string{"pdu_id": pduID, "phase": phase},
-				Timestamp: now,
-			})
+	findNumbers(prefix, doc, func(name string, value float64) {
+		metrics = append(metrics, rawdata.RawMetric{
+			DeviceIP:  job.IP,
+			Protocol:  job.Protocol,
+			Name:      name,
+			Value:     value,
+			Labels:    labels,
+			Timestamp: now,
+		})
+	})
+
+	return metrics
+}
+
+// childURLs returns the list of URLs a Redfish collection links to. A collection
+// stores them in an array of objects that each have an "@odata.id"; the array's
+// key name varies (Members, Outlets, Branch), so we match on that shape.
+func childURLs(doc map[string]any) []string {
+	var urls []string
+
+	for _, value := range doc {
+		items, ok := value.([]any)
+		if !ok {
+			continue
+		}
+
+		for _, item := range items {
+			obj, ok := item.(map[string]any)
+			if !ok {
+				continue
+			}
+
+			if id, ok := obj["@odata.id"].(string); ok {
+				urls = append(urls, id)
+			}
+		}
+
+		if len(urls) > 0 {
+			return urls
 		}
 	}
 
-	for _, phaseMap := range mainCurrent.PolyPhaseCurrentAmps {
-		for phase, reading := range phaseMap {
-			result = append(result, rawdata.RawMetric{
-				DeviceIP:  deviceIP,
-				Protocol:  "redfish",
-				Name:      "PolyPhaseCurrentAmps.Reading",
-				Value:     reading.Reading,
-				Labels:    map[string]string{"pdu_id": pduID, "phase": phase},
-				Timestamp: now,
-			})
+	return urls
+}
+
+// findNumbers walks a decoded JSON value and calls emit for every number it
+// finds, passing the "/"-joined path of keys that lead to that number.
+func findNumbers(prefix string, node any, emit func(name string, value float64)) {
+	switch value := node.(type) {
+	case map[string]any:
+		for key, child := range value {
+			if strings.Contains(key, "@odata") {
+				continue
+			}
+
+			name := key
+			if prefix != "" {
+				name = prefix + "/" + key
+			}
+
+			findNumbers(name, child, emit)
 		}
-	}
-
-	for _, phaseMap := range mainCurrent.PolyPhasePowerWatts {
-		for phase, pw := range phaseMap {
-			phaseLabels := map[string]string{"pdu_id": pduID, "phase": phase}
-
-			result = append(result,
-				rawdata.RawMetric{
-					DeviceIP: deviceIP, Protocol: "redfish", Name: "PolyPhasePowerWatts.Power",
-					Value: pw.Power, Labels: phaseLabels, Timestamp: now,
-				},
-				rawdata.RawMetric{
-					DeviceIP: deviceIP, Protocol: "redfish", Name: "PolyPhasePowerWatts.ApparentPower",
-					Value: pw.ApparentPower, Labels: phaseLabels, Timestamp: now,
-				},
-				rawdata.RawMetric{
-					DeviceIP: deviceIP, Protocol: "redfish", Name: "PolyPhasePowerWatts.ReactivePower",
-					Value: pw.ReactivePower, Labels: phaseLabels, Timestamp: now,
-				},
-				rawdata.RawMetric{
-					DeviceIP: deviceIP, Protocol: "redfish", Name: "PolyPhasePowerWatts.PowerFactor",
-					Value: pw.PowerFactor, Labels: phaseLabels, Timestamp: now,
-				},
-			)
+	case []any:
+		for _, child := range value {
+			findNumbers(prefix, child, emit)
 		}
+	case float64:
+		emit(prefix, value)
 	}
-
-	return result, nil
 }
