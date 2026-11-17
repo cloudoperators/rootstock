@@ -17,7 +17,7 @@
 #
 # Environment (all also settable via --flag; see --help):
 #   SNMP_CONFIG_FILE, VERSION, READY_TIMEOUT, POLL_INTERVAL,
-#   BUILD_PLATFORM, DEBUG
+#   BUILD_PLATFORM, VALUES_FILE, DEBUG
 # Committed plugindefinition.yaml is NEVER mutated; all rewrites happen on temp copies.
 set -euo pipefail
 
@@ -61,6 +61,8 @@ chart_values="${chart_dir}/values.yaml"
 plugin_def="${rootstock_root}/k8s_configuration/plugindefinition.yaml"
 greenhouse_test_dir="${rootstock_root}/k8s_configuration/greenhouse-test"
 workdir="${rootstock_root}/tmp/greenhouse/verify"
+# Local values file supplying the per-PDU Redfish access map (.redfish.access).
+VALUES_FILE="${VALUES_FILE:-${rootstock_root}/tmp/local_values.yaml}"
 
 
 # --- Images sourced from the chart values.yaml --------------------------------
@@ -191,6 +193,9 @@ Options:
                                 (env: POLL_INTERVAL, default: 5)
   --build-platform PLATFORM     target platform for OCI image re-publishing
                                 (env: BUILD_PLATFORM, default: linux/arm64)
+  --values FILE                 values file supplying the per-PDU Redfish access
+                                map (.redfish.access) used for the Redfish Secret
+                                (env: VALUES_FILE, default: tmp/local_values.yaml)
   --debug                       Verbose debug logging (env: DEBUG, default: false)
   -h, --help                    Show this help.
 EOF
@@ -208,6 +213,7 @@ parse_args() {
             --ready-timeout)     READY_TIMEOUT="$2"; shift ;;
             --poll-interval)     POLL_INTERVAL="$2"; shift ;;
             --build-platform)    BUILD_PLATFORM="$2"; shift ;;
+            --values)            VALUES_FILE="$2"; shift ;;
             --debug)             DEBUG=true ;;
             -h|--help)           usage; exit 0 ;;
             *)                   usage; die "unknown argument: $1" ;;
@@ -471,12 +477,13 @@ run_plugin_e2e() {
     done
 
     # 3. Redfish Secret in the org namespace (Greenhouse resolves valueFrom.secret there).
-    # The per-PDU access map is sourced from .redfish.access in the chart values.yaml
+    # The per-PDU access map is sourced from .redfish.access in the local values file
     # and stored under the redfish_pdus.yaml key the chart/pod expects.
+    [[ -f "${VALUES_FILE}" ]] || die "values file not found: ${VALUES_FILE}"
     local redfish_access
-    _exec_output redfish_access yq -o yaml '.redfish.access' "${chart_dir}/values.yaml"
+    _exec_output redfish_access yq -o yaml '.redfish.access' "${VALUES_FILE}"
     [[ -n "$redfish_access" && "$redfish_access" != "null" ]] \
-        || die ".redfish.access is empty in ${chart_dir}/values.yaml"
+        || die ".redfish.access is empty in ${VALUES_FILE}"
     # Ensure the target namespace exists before creating the Secret.
     log_info "ensuring namespace 'rootstock' on ${remote_context}"
     _exec "kubectl --context '$remote_context' create namespace 'rootstock' \
@@ -488,7 +495,7 @@ run_plugin_e2e() {
         _exec "kubectl --context '$remote_context' -n 'rootstock' create secret generic rootstock-redfish \
         --from-literal=redfish_pdus.yaml=\"\$REDFISH_ACCESS\" \
         --dry-run=client -o yaml | kubectl --context '$remote_context' apply -f -"
-    log_info "created Secret rootstock-redfish in ns ${demo_org} from .redfish.access"
+    log_info "created Secret rootstock-redfish in ns ${demo_org} from .redfish.access (${VALUES_FILE})"
 
     # 4. Apply the Plugin on a temp copy. Normalize to the pinned Greenhouse CRD schema
     # (spec.pluginDefinitionRef, drop legacy spec.pluginDefinition/disabled), repoint
