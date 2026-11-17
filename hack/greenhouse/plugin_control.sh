@@ -21,18 +21,12 @@
 # Committed plugindefinition.yaml is NEVER mutated; all rewrites happen on temp copies.
 set -euo pipefail
 
-HC="\033[1m"
-FMAG="\033[35m"
-GREEN="\033[1;32m"
-YELLOW="\033[1;33m"
-RED="\033[1;31m"
-NC="\033[0m"
+# shellcheck source=../_helper.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../_helper.sh"
 
-log_debug() { if [ "${DEBUG:-false}" = "true" ]; then printf "${HC}${FMAG}[.]${NC} %s\n" "$*" >&2; fi; }
-log_info()  { printf "${GREEN}[+]${NC} %s\n" "$*" >&2; }
-log_warn()  { printf "${YELLOW}[!]${NC} %s\n" "$*" >&2; }
-log_error() { printf "${RED}[error]${NC} %s\n" "$*" >&2; }
-die()       { log_error "$*"; exit 1; }
+# DEBUG toggles log_debug (defined in _helper.sh); exported so the --debug flag
+# assignment below is recognized as used.
+export DEBUG="${DEBUG:-false}"
 
 
 # --- Variables ------------------------------------------------------------
@@ -236,10 +230,10 @@ preflight() {
     if ((${#missing[@]})); then
         die "missing required tools: ${missing[*]}"
     fi
-    docker info >/dev/null 2>&1 || die "docker daemon is not reachable (is Docker running?)"
+    _exec "docker info >/dev/null 2>&1"
     [[ -d "$chart_dir" ]] || die "rootstock chart not found at ${chart_dir}"
     [[ -f "$plugin_def" ]] || die "plugindefinition.yaml not found at ${plugin_def}"
-    docker inspect registry >/dev/null 2>&1 \
+    _exec "docker inspect registry >/dev/null 2>&1" \
         || die "local registry container not running; run setup_greenhouse.sh first"
     log_info "all tools present and docker daemon reachable"
 }
@@ -252,11 +246,11 @@ publish_chart() {
     log_info "Phase 1: package + push rootstock chart via 'make helm-release' to ${oci_target}"
 
     # Confirm the registry container exists (started by setup_greenhouse.sh).
-    docker inspect registry >/dev/null 2>&1 \
+    _exec "docker inspect registry >/dev/null 2>&1" \
         || die "local registry container not running; run setup_greenhouse.sh first"
 
     local pkgdir="${workdir}/chart"
-    mkdir -p "$pkgdir"
+    _exec mkdir -p "$pkgdir"
 
     # --plain-http targets the insecure local zot; --force re-pushes the pinned
     # dev chart version that the Greenhouse verify flow reuses on every run.
@@ -330,8 +324,8 @@ apply_plugindefinition() {
     # (${demo_org}) or the reconciler won't find the org and will never become Ready.
     local pd="${workdir}/plugindefinition.yaml"
     local repo="oci://${registry_in_cluster}/${registry_chart_repo}"
-    cp "$plugin_def" "$pd"
-    yq -i "
+    _exec cp "$plugin_def" "$pd"
+    _exec yq -i "
       .metadata.namespace = \"${demo_org}\" |
       .spec.version = \"${chart_version}\" |
       .spec.helmChart.repository = \"${repo}\" |
@@ -339,8 +333,7 @@ apply_plugindefinition() {
     " "$pd"
     log_info "temp PluginDefinition: namespace=${demo_org}, version=${chart_version}, repository=${repo}"
 
-    kubectl --context "$admin_context" -n "$demo_org" apply -f "$pd" \
-        || die "kubectl apply of PluginDefinition failed"
+    _exec kubectl --context "$admin_context" -n "$demo_org" apply -f "$pd"
     log_info "applied PluginDefinition 'rootstock' in ns ${demo_org}"
 
     if wait_ready plugindefinition rootstock "$demo_org"; then
@@ -364,12 +357,11 @@ ensure_oci_builder() {
     if docker buildx inspect "${oci_builder}" >/dev/null 2>&1; then
         return
     fi
-    docker buildx create --name "${oci_builder}" \
+    _exec "docker buildx create --name '${oci_builder}' \
         --driver docker-container \
         --driver-opt network=host \
         --buildkitd-flags '--allow-insecure-entitlement network.host' \
-        >/dev/null 2>&1 \
-        || die "failed to create buildx builder ${oci_builder}"
+        >/dev/null 2>&1"
     docker buildx inspect --bootstrap "${oci_builder}" >/dev/null 2>&1 \
         || { docker buildx rm "${oci_builder}" >/dev/null 2>&1 || true; \
              die "failed to bootstrap buildx builder ${oci_builder}"; }
@@ -391,7 +383,7 @@ push_local_image_oci() {
     [[ -n "$local_image" ]] || die "push_local_image_oci: local_image is required"
     if ! docker image inspect "$local_image" >/dev/null 2>&1; then
         log_info "image ${local_image} not present locally; pulling"
-        docker pull "$local_image" >/dev/null 2>&1 \
+        _exec "docker pull '$local_image' >/dev/null 2>&1" \
             || die "image ${local_image} not found locally and could not be pulled;" \
                    "build it first (e.g. 'make docker-build')"
     fi
@@ -482,22 +474,28 @@ run_plugin_e2e() {
     # The per-PDU access map is sourced from .redfish.access in the chart values.yaml
     # and stored under the redfish_pdus.yaml key the chart/pod expects.
     local redfish_access
-    redfish_access="$(yq -o yaml '.redfish.access' "${chart_dir}/values.yaml")" \
-        || die "failed to read .redfish.access from ${chart_dir}/values.yaml"
+    _exec_output redfish_access yq -o yaml '.redfish.access' "${chart_dir}/values.yaml"
     [[ -n "$redfish_access" && "$redfish_access" != "null" ]] \
         || die ".redfish.access is empty in ${chart_dir}/values.yaml"
-    kubectl --context "$remote_context" -n "rootstock" create secret generic rootstock-redfish \
-        --from-literal=redfish_pdus.yaml="${redfish_access}" \
-        --dry-run=client -o yaml | kubectl --context "$remote_context" apply -f - \
-        || die "failed to create rootstock-redfish secret"
+    # Ensure the target namespace exists before creating the Secret.
+    log_info "ensuring namespace 'rootstock' on ${remote_context}"
+    _exec "kubectl --context '$remote_context' create namespace 'rootstock' \
+        --dry-run=client -o yaml | kubectl --context '$remote_context' apply -f -"
+    # Export the (multi-line, possibly quote-containing) value so the bash -c
+    # command inherits it from the environment rather than interpolating it into
+    # the command string.
+    REDFISH_ACCESS="$redfish_access" \
+        _exec "kubectl --context '$remote_context' -n 'rootstock' create secret generic rootstock-redfish \
+        --from-literal=redfish_pdus.yaml=\"\$REDFISH_ACCESS\" \
+        --dry-run=client -o yaml | kubectl --context '$remote_context' apply -f -"
     log_info "created Secret rootstock-redfish in ns ${demo_org} from .redfish.access"
 
     # 4. Apply the Plugin on a temp copy. Normalize to the pinned Greenhouse CRD schema
     # (spec.pluginDefinitionRef, drop legacy spec.pluginDefinition/disabled), repoint
     # image.repository/tag at the local registry, and flip pullPolicy to IfNotPresent.
     local plugin="${workdir}/plugin.yaml"
-    cp "${greenhouse_test_dir}/plugin.yaml" "$plugin"
-    yq -i "
+    _exec cp "${greenhouse_test_dir}/plugin.yaml" "$plugin"
+    _exec yq -i "
       .metadata.namespace = \"${demo_org}\" |
       .spec.clusterName = \"${remote_context}\" |
       .spec.pluginDefinitionRef = {\"kind\": \"PluginDefinition\", \"name\": \"rootstock\"} |
@@ -515,8 +513,7 @@ run_plugin_e2e() {
         {\"name\": \"testConnection.image.tag\", \"value\": \"${zot_reg_curl_image##*:}\"}
       ]
     " "$plugin"
-    kubectl --context "$admin_context" apply -f "$plugin" \
-        || die "kubectl apply of Plugin failed"
+    _exec kubectl --context "$admin_context" apply -f "$plugin"
     log_info "applied Plugin 'rootstock' (cluster=${remote_context}, ns=${demo_org})"
 
     if wait_ready plugin rootstock "$demo_org"; then

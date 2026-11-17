@@ -10,16 +10,12 @@
 # to happen in helm-release.yaml.
 set -euo pipefail
 
-HC="\033[1m"
-FMAG="\033[35m"
-GREEN="\033[1;32m"
-RED="\033[1;31m"
-NC="\033[0m"
+# shellcheck source=_helper.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/_helper.sh"
 
-log_debug() { if [ "${DEBUG:-false}" = "true" ]; then printf "${HC}${FMAG}[.]${NC} %s\n" "$*" >&2; fi; }
-log_info()  { printf "${GREEN}[+]${NC} %s\n" "$*" >&2; }
-log_error() { printf "${RED}[error]${NC} %s\n" "$*" >&2; }
-die()       { log_error "$*"; exit 1; }
+# DEBUG toggles log_debug (defined in _helper.sh); exported so the --debug flag
+# assignment below is recognized as used.
+export DEBUG="${DEBUG:-false}"
 
 # --- Static configuration -----------------------------------------------------
 repository="cloudoperators/rootstock"

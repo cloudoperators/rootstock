@@ -3,13 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0
 set -euo pipefail
 
-HC="\033[1m"
-FMAG="\033[35m"
-GREEN="\033[1;32m"
-NC="\033[0m"
-
-log_debug() { if [ "${DEBUG:-false}" = "true" ]; then printf "${HC}${FMAG}[.]${NC} %s\n" "$*" >&2; fi; }
-log_info()  { printf "${GREEN}[+]${NC} %s\n" "$*" >&2; }
+# shellcheck source=_helper.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/_helper.sh"
 
 usage() {
   cat <<'EOF'
