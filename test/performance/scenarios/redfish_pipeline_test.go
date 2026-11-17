@@ -32,6 +32,7 @@ var redfishScenarios = []struct {
 	{name: "batch/pdus=1000", pdus: 1000, workers: 4, queueCapacity: 100},
 }
 
+// setup to pull input data for the processing queue from the mock pdus
 func scrapeInputs(tb testing.TB, n int) []harness.Reading {
 	tb.Helper()
 
@@ -60,6 +61,7 @@ func verifyResults(tb testing.TB, inputs []harness.Reading, results []harness.Re
 	}
 }
 
+// set up test harness, pull inputs and plug them into the processing input queue, then wait for the processor to finish
 func TestRedfishPipeline(t *testing.T) {
 	for _, scenario := range redfishScenarios {
 		t.Run(scenario.name, func(t *testing.T) {
@@ -82,6 +84,7 @@ func TestRedfishPipeline(t *testing.T) {
 
 // BenchmarkRedfishProcessing measures enqueue-to-result completion, excluding mock
 // construction, scraping, readiness, validation, and shutdown.
+// note: if we start measuring after enqueuing, we would miss work, since the processor already started working
 func BenchmarkRedfishProcessing(b *testing.B) {
 	for _, scenario := range redfishScenarios {
 		b.Run(scenario.name, func(b *testing.B) {
@@ -103,9 +106,10 @@ func BenchmarkRedfishProcessing(b *testing.B) {
 			}
 
 			verifyResults(b, inputs, results)
-			// Each of b.N cycles completes scenario.pdus results. Divide elapsed time by
-			// that total for average time per result (amortized), or divide the total by elapsed
-			// seconds for throughput. ns/result is not individual result latency.
+			// Each of b.N cycles completes scenario.pdus results.
+			// Divide elapsed time by that total for average time per result (amortized),
+			// or divide the total by elapsed seconds for throughput.
+			// ns/result is the total measured time divided by the number of completed results, in nanoseconds.
 			b.ReportMetric(float64(b.Elapsed().Nanoseconds())/float64(b.N)/float64(scenario.pdus), "ns/result")
 			b.ReportMetric(float64(b.N)*float64(scenario.pdus)/b.Elapsed().Seconds(), "results/s")
 		})
@@ -135,6 +139,9 @@ func BenchmarkRedfishProcessingConcurrent(b *testing.B) {
 			require.NoError(b, err)
 			verifyResults(b, inputs, results)
 
+			// The WaitGroup tracks the producer goroutines. Each calls Done when it
+			// exits, and Wait blocks until all producers have finished, so the timer
+			// can stop and the error channel can close after their work is complete.
 			var (
 				next atomic.Int64
 				wg   sync.WaitGroup

@@ -59,7 +59,9 @@ func (c Config) valid() bool {
 // Concurrent cycles must use disjoint PDU IDs: the production-style cache holds
 // only the latest result per PDU. This keeps cache size bounded by device count.
 type Harness struct {
-	ctx     context.Context //nolint:containedctx // Owns the runtime lifetime across multiple cycle contexts.
+	// ctx owns the runtime lifetime across multiple cycle contexts.
+	// using a shutdown signal instead, means more harness complexity.
+	ctx     context.Context //nolint:containedctx
 	cancel  context.CancelFunc
 	queue   chan Submission
 	results cache.Cache[CachedResult]
