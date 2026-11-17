@@ -1,0 +1,11 @@
+# SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Greenhouse contributors
+# SPDX-License-Identifier: Apache-2.0
+
+# Follow `# shellcheck source=...` directives so sourced helper libraries
+# (e.g. hack/_helper.sh) are analyzed instead of reported as SC1091.
+external-sources=true
+
+# Resolve `# shellcheck source=...` directives relative to each script's own
+# directory, so sourcing works regardless of the directory shellcheck runs from
+# (e.g. the repo root, as `make lint-shell` does).
+source-path=SCRIPTDIR
