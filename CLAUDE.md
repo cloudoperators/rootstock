@@ -165,19 +165,36 @@ See [cmd/mountfile_test.go](cmd/mountfile_test.go) for a canonical example.
 
 ## Shell script conventions
 
-### Logging
+### Shared helpers (`hack/_helper.sh`)
 
-Every shell script must define these color constants and log helpers near the
-top (after `set -euo pipefail`):
+All scripts under `hack/` must **source** [hack/_helper.sh](hack/_helper.sh)
+rather than redefining the shared logging, `die`, and command-runner helpers
+inline. Source it near the top, right after `set -euo pipefail`:
 
 ```sh
-HC="\033[1m"
-FMAG="\033[35m"
-GREEN="\033[1;32m"
-YELLOW="\033[1;33m"
-RED="\033[1;31m"
-NC="\033[0m"
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../_helper.sh"
+```
 
+Adjust the relative path to reach `hack/_helper.sh` from the script's location
+(e.g. `../_helper.sh` for scripts one level deep like `hack/kind/`). The file is
+meant to be sourced, not executed, and guards against repeated sourcing, so
+scripts that source each other will not redefine anything.
+
+Sourcing `_helper.sh` provides:
+
+- The color constants (`HC`, `FMAG`, `GREEN`, `YELLOW`, `RED`, `NC`).
+- The logging helpers `log_debug` / `log_info` / `log_warn` / `log_error`.
+- `die` — logs an error via `log_error` and exits non-zero.
+- The command runners `_exec` and `_exec_output` (see below).
+
+Do **not** re-declare any of these in individual scripts; rely on the sourced
+versions so behavior stays consistent.
+
+### Logging
+
+The log helpers provided by `_helper.sh` are:
+
+```sh
 log_debug() { if [ "${DEBUG:-false}" = "true" ]; then printf "${HC}${FMAG}[.]${NC} %s\n" "$*" >&2; fi; }
 log_info()  { printf "${GREEN}[+]${NC} %s\n" "$*" >&2; }
 log_warn()  { printf "${YELLOW}[!]${NC} %s\n" "$*" >&2; }
@@ -191,11 +208,49 @@ log_error() { printf "${RED}[error]${NC} %s\n" "$*" >&2; }
 - `log_error` — bold-red `[error]` prefix; always prints; always writes to
   stderr.
 
-Define `log_warn`/`log_error` (and their `YELLOW`/`RED` constants) only in
-scripts that use them; `log_debug` and `log_info` are always required.
-
 Never use bare `echo` for diagnostic or status output; use these helpers
 exclusively.
+
+### Command runners
+
+Use `_exec` / `_exec_output` from `_helper.sh` to run external commands so
+failures are reported consistently (the failed command is printed in red and its
+exit status propagated). When `DEBUG=true`, `_exec` also logs the command before
+running it.
+
+#### `_exec cmd [args...]`
+
+Runs a command, reporting failures consistently.
+
+- **Arguments:** the command and its arguments. With **multiple** arguments the
+  command is executed directly (no shell, verbatim args — no word-splitting or
+  glob expansion). With a **single** argument the string is run through
+  `bash -c`, enabling pipes, redirects, and command substitution.
+- **Behavior:** logs `exec: <cmd>` via `log_debug` when `DEBUG=true`. On a
+  non-zero exit, logs the failed command in red via `log_error`.
+- **Returns:** the command's exit status (non-zero on failure).
+
+```sh
+_exec kubectl apply -f "$file"                      # direct, verbatim args
+_exec "kubectl get pods | grep rootstock >/dev/null"  # single string → bash -c
+```
+
+#### `_exec_output VAR cmd [args...]`
+
+Runs a command via `_exec` and captures its stdout.
+
+- **Arguments:** `VAR` — the name of the variable to assign stdout to; followed
+  by the command and its arguments. The single-argument `bash -c` form applies
+  to the command portion too.
+- **Behavior:** on success, assigns the command's stdout to `VAR` (via
+  `printf -v`). On failure, `VAR` is left unset and the error is reported by
+  `_exec`.
+- **Returns:** the command's exit status (non-zero on failure).
+
+```sh
+_exec_output NS "echo '$doc' | yq -r '.metadata.namespace'"
+echo "namespace is $NS"
+```
 
 ### Structure
 
@@ -213,13 +268,7 @@ Scripts must follow this structure:
 # SPDX-License-Identifier: Apache-2.0
 set -euo pipefail
 
-HC="\033[1m"
-FMAG="\033[35m"
-GREEN="\033[1;32m"
-NC="\033[0m"
-
-log_debug() { if [ "${DEBUG:-false}" = "true" ]; then printf "${HC}${FMAG}[.]${NC} %s\n" "$*" >&2; fi; }
-log_info()  { printf "${GREEN}[+]${NC} %s\n" "$*" >&2; }
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../_helper.sh"
 
 usage() {
   cat <<EOF
