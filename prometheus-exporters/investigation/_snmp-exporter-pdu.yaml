@@ -1,0 +1,4577 @@
+# WARNING: This file was auto-generated using snmp_exporter generator, manual changes will be lost.
+  public_v2:
+    community: public
+    security_level: noAuthNoPriv
+    auth_protocol: MD5
+    priv_protocol: DES
+    version: 2
+modules:
+  akcp-sensorprobe2pro:
+    walk:
+    - 1.3.6.1.4.1.3854.3.5.2
+    - 1.3.6.1.4.1.3854.3.5.3
+    get:
+    - 1.3.6.1.2.1.1.3.0
+    - 1.3.6.1.2.1.1.5.0
+    - 1.3.6.1.2.1.1.6.0
+    - 1.3.6.1.4.1.3854.3.2.1.8.0
+    metrics:
+    - name: snmp_pdu_system_uptime
+      oid: 1.3.6.1.2.1.1.3
+      type: gauge
+      help: The time (in hundredths of a second) since the network management portion
+        of the system was last re-initialized. - 1.3.6.1.2.1.1.3
+    - name: snmp_pdu_sysName
+      oid: 1.3.6.1.2.1.1.5
+      type: DisplayString
+      help: An administratively-assigned name for this managed node - 1.3.6.1.2.1.1.5
+    - name: snmp_pdu_sysLocation
+      oid: 1.3.6.1.2.1.1.6
+      type: DisplayString
+      help: The physical location of this node (e.g., 'telephone closet, 3rd floor')
+        - 1.3.6.1.2.1.1.6
+    - name: snmp_pdu_model
+      oid: 1.3.6.1.4.1.3854.3.2.1.8
+      type: DisplayString
+      help: The system's description of the device. - 1.3.6.1.4.1.3854.3.2.1.8
+    - name: snmp_pdu_temperatureId
+      oid: 1.3.6.1.4.1.3854.3.5.2.1.1
+      type: gauge
+      help: The Sensor ID of this sensor, used to identify which sensor it is in the
+        system configuration. - 1.3.6.1.4.1.3854.3.5.2.1.1
+      indexes:
+      - labelname: temperatureId
+        type: gauge
+    - name: snmp_pdu_hw_name
+      oid: 1.3.6.1.4.1.3854.3.5.2.1.2
+      type: DisplayString
+      help: The user specified description of this sensor - 1.3.6.1.4.1.3854.3.5.2.1.2
+      indexes:
+      - labelname: temperatureId
+        type: gauge
+    - name: snmp_pdu_hw_type
+      oid: 1.3.6.1.4.1.3854.3.5.2.1.3
+      type: EnumAsInfo
+      help: The type of the sensor; it represents the sensor's functionality - 1.3.6.1.4.1.3854.3.5.2.1.3
+      indexes:
+      - labelname: temperatureId
+        type: gauge
+      enum_values:
+        1: temperature
+        3: temperature-dual
+        20: thermocouple
+        23: temperature-array
+    - name: snmp_pdu_temperatureDegree
+      oid: 1.3.6.1.4.1.3854.3.5.2.1.4
+      type: gauge
+      help: The temperature degree value in numerical reading. - 1.3.6.1.4.1.3854.3.5.2.1.4
+      indexes:
+      - labelname: temperatureId
+        type: gauge
+    - name: snmp_pdu_temperatureUnit
+      oid: 1.3.6.1.4.1.3854.3.5.2.1.5
+      type: DisplayString
+      help: The sensor's value unit string, in what the sensor's value is read in
+        - 1.3.6.1.4.1.3854.3.5.2.1.5
+      indexes:
+      - labelname: temperatureId
+        type: gauge
+    - name: snmp_pdu_hw_status
+      oid: 1.3.6.1.4.1.3854.3.5.2.1.6
+      type: EnumAsInfo
+      help: The current status of this sensor. - 1.3.6.1.4.1.3854.3.5.2.1.6
+      indexes:
+      - labelname: temperatureId
+        type: gauge
+      enum_values:
+        1: noStatus
+        2: normal
+        3: highWarning
+        4: highCritical
+        5: lowWarning
+        6: lowCritical
+        7: sensorError
+    - name: snmp_pdu_temperatureGoOffline
+      oid: 1.3.6.1.4.1.3854.3.5.2.1.8
+      type: gauge
+      help: 'Command to offline this sensor: use value ''2'' to set the sensor offline.
+        - 1.3.6.1.4.1.3854.3.5.2.1.8'
+      indexes:
+      - labelname: temperatureId
+        type: gauge
+      enum_values:
+        1: online
+        2: goOffline
+    - name: snmp_pdu_temperatureLowCritical
+      oid: 1.3.6.1.4.1.3854.3.5.2.1.9
+      type: gauge
+      help: The user specified 'Low Critical' value of this sensor - 1.3.6.1.4.1.3854.3.5.2.1.9
+      indexes:
+      - labelname: temperatureId
+        type: gauge
+    - name: snmp_pdu_temperatureLowWarning
+      oid: 1.3.6.1.4.1.3854.3.5.2.1.10
+      type: gauge
+      help: The user specified 'Low Warning' value of this sensor - 1.3.6.1.4.1.3854.3.5.2.1.10
+      indexes:
+      - labelname: temperatureId
+        type: gauge
+    - name: snmp_pdu_temperatureHighWarning
+      oid: 1.3.6.1.4.1.3854.3.5.2.1.11
+      type: gauge
+      help: The user specified 'High Warning' value of this sensor - 1.3.6.1.4.1.3854.3.5.2.1.11
+      indexes:
+      - labelname: temperatureId
+        type: gauge
+    - name: snmp_pdu_temperatureHighCritical
+      oid: 1.3.6.1.4.1.3854.3.5.2.1.12
+      type: gauge
+      help: The user specified 'High Critical' value of this sensor - 1.3.6.1.4.1.3854.3.5.2.1.12
+      indexes:
+      - labelname: temperatureId
+        type: gauge
+    - name: snmp_pdu_temperatureRearm
+      oid: 1.3.6.1.4.1.3854.3.5.2.1.13
+      type: gauge
+      help: This value tells how many degrees the sensor has to reach beyond the threshold
+        value, before changing to a new status - 1.3.6.1.4.1.3854.3.5.2.1.13
+      indexes:
+      - labelname: temperatureId
+        type: gauge
+    - name: snmp_pdu_temperatureDelayError
+      oid: 1.3.6.1.4.1.3854.3.5.2.1.14
+      type: gauge
+      help: The time in seconds (continuous time) that the sensor has to be in 'Error'
+        status before its status is changed. - 1.3.6.1.4.1.3854.3.5.2.1.14
+      indexes:
+      - labelname: temperatureId
+        type: gauge
+    - name: snmp_pdu_temperatureDelayNormal
+      oid: 1.3.6.1.4.1.3854.3.5.2.1.15
+      type: gauge
+      help: The time in seconds (continuous time) that the sensor has to be in 'Normal'
+        status before its status is changed. - 1.3.6.1.4.1.3854.3.5.2.1.15
+      indexes:
+      - labelname: temperatureId
+        type: gauge
+    - name: snmp_pdu_temperatureDelayLowCritical
+      oid: 1.3.6.1.4.1.3854.3.5.2.1.16
+      type: gauge
+      help: The time in seconds (continuous time) that the sensor has to be in 'Low
+        Critical' status before its status is changed. - 1.3.6.1.4.1.3854.3.5.2.1.16
+      indexes:
+      - labelname: temperatureId
+        type: gauge
+    - name: snmp_pdu_temperatureDelayLowWarning
+      oid: 1.3.6.1.4.1.3854.3.5.2.1.17
+      type: gauge
+      help: The time in seconds (continuous time) that the sensor has to be in 'Low
+        Warning' status before its status is changed. - 1.3.6.1.4.1.3854.3.5.2.1.17
+      indexes:
+      - labelname: temperatureId
+        type: gauge
+    - name: snmp_pdu_temperatureDelayHighWarning
+      oid: 1.3.6.1.4.1.3854.3.5.2.1.18
+      type: gauge
+      help: The time in seconds (continuous time) that the sensor has to be in 'High
+        Warning' status before its status is changed. - 1.3.6.1.4.1.3854.3.5.2.1.18
+      indexes:
+      - labelname: temperatureId
+        type: gauge
+    - name: snmp_pdu_temperatureDelayHighCritical
+      oid: 1.3.6.1.4.1.3854.3.5.2.1.19
+      type: gauge
+      help: The time in seconds (continuous time) that the sensor has to be in 'High
+        Critical' status before its status is changed. - 1.3.6.1.4.1.3854.3.5.2.1.19
+      indexes:
+      - labelname: temperatureId
+        type: gauge
+    - name: snmp_pdu_temperatureRaw
+      oid: 1.3.6.1.4.1.3854.3.5.2.1.20
+      type: gauge
+      help: The sensor's unformatted (raw) value that is being read directly from
+        sensor, before it is converted to the preferred value. - 1.3.6.1.4.1.3854.3.5.2.1.20
+      indexes:
+      - labelname: temperatureId
+        type: gauge
+    - name: snmp_pdu_temperatureOffset
+      oid: 1.3.6.1.4.1.3854.3.5.2.1.21
+      type: gauge
+      help: The offset value for this sensor - 1.3.6.1.4.1.3854.3.5.2.1.21
+      indexes:
+      - labelname: temperatureId
+        type: gauge
+    - name: snmp_pdu_temperaturePort
+      oid: 1.3.6.1.4.1.3854.3.5.2.1.35
+      type: gauge
+      help: The device's sensor port number, where this sensor is plugged in to. -
+        1.3.6.1.4.1.3854.3.5.2.1.35
+      indexes:
+      - labelname: temperatureId
+        type: gauge
+    - name: snmp_pdu_temperatureSubPort
+      oid: 1.3.6.1.4.1.3854.3.5.2.1.36
+      type: gauge
+      help: The logical port number of this sensor in the array, or in a set of sensors
+        - 1.3.6.1.4.1.3854.3.5.2.1.36
+      indexes:
+      - labelname: temperatureId
+        type: gauge
+    - name: snmp_pdu_temperatureDisplayStyle
+      oid: 1.3.6.1.4.1.3854.3.5.2.1.45
+      type: gauge
+      help: The sensor's Display Style for the Web UI, to display the reading as a
+        gauge or bar - 1.3.6.1.4.1.3854.3.5.2.1.45
+      indexes:
+      - labelname: temperatureId
+        type: gauge
+      enum_values:
+        0: basic
+        1: gauge
+    - name: snmp_pdu_temperatureHighCriticalDescription
+      oid: 1.3.6.1.4.1.3854.3.5.2.1.46
+      type: DisplayString
+      help: The user specified 'High Critical' status description of this sensor -
+        1.3.6.1.4.1.3854.3.5.2.1.46
+      indexes:
+      - labelname: temperatureId
+        type: gauge
+    - name: snmp_pdu_temperatureLowCriticalDescription
+      oid: 1.3.6.1.4.1.3854.3.5.2.1.47
+      type: DisplayString
+      help: The user specified 'Low Critical' status description of this sensor -
+        1.3.6.1.4.1.3854.3.5.2.1.47
+      indexes:
+      - labelname: temperatureId
+        type: gauge
+    - name: snmp_pdu_temperatureSensorNormalDescription
+      oid: 1.3.6.1.4.1.3854.3.5.2.1.48
+      type: DisplayString
+      help: The user specified 'Normal' status description of this sensor - 1.3.6.1.4.1.3854.3.5.2.1.48
+      indexes:
+      - labelname: temperatureId
+        type: gauge
+    - name: snmp_pdu_temperatureLowWarningDescription
+      oid: 1.3.6.1.4.1.3854.3.5.2.1.49
+      type: DisplayString
+      help: The user specified 'Low Warning' status description of this sensor - 1.3.6.1.4.1.3854.3.5.2.1.49
+      indexes:
+      - labelname: temperatureId
+        type: gauge
+    - name: snmp_pdu_temperatureHighWarningDescription
+      oid: 1.3.6.1.4.1.3854.3.5.2.1.50
+      type: DisplayString
+      help: The user specified 'High Warning' status description of this sensor -
+        1.3.6.1.4.1.3854.3.5.2.1.50
+      indexes:
+      - labelname: temperatureId
+        type: gauge
+    - name: snmp_pdu_temperatureSensorErrorDescription
+      oid: 1.3.6.1.4.1.3854.3.5.2.1.51
+      type: DisplayString
+      help: The user specified 'Sensor Error' status description of this sensor -
+        1.3.6.1.4.1.3854.3.5.2.1.51
+      indexes:
+      - labelname: temperatureId
+        type: gauge
+    - name: snmp_pdu_temperatureHighCriticalColor
+      oid: 1.3.6.1.4.1.3854.3.5.2.1.54
+      type: gauge
+      help: The user specified 'High Critical' status field color - 1.3.6.1.4.1.3854.3.5.2.1.54
+      indexes:
+      - labelname: temperatureId
+        type: gauge
+    - name: snmp_pdu_temperatureLowCriticalColor
+      oid: 1.3.6.1.4.1.3854.3.5.2.1.55
+      type: gauge
+      help: The user specified 'Low Critical' status field color - 1.3.6.1.4.1.3854.3.5.2.1.55
+      indexes:
+      - labelname: temperatureId
+        type: gauge
+    - name: snmp_pdu_temperatureSensorNormalColor
+      oid: 1.3.6.1.4.1.3854.3.5.2.1.56
+      type: gauge
+      help: The user specified 'Normal' status field color - 1.3.6.1.4.1.3854.3.5.2.1.56
+      indexes:
+      - labelname: temperatureId
+        type: gauge
+    - name: snmp_pdu_temperatureLowWarningColor
+      oid: 1.3.6.1.4.1.3854.3.5.2.1.57
+      type: gauge
+      help: The user specified 'Low Warning' status field color - 1.3.6.1.4.1.3854.3.5.2.1.57
+      indexes:
+      - labelname: temperatureId
+        type: gauge
+    - name: snmp_pdu_temperatureHighWarningColor
+      oid: 1.3.6.1.4.1.3854.3.5.2.1.58
+      type: gauge
+      help: The user specified 'High Warning' status field color - 1.3.6.1.4.1.3854.3.5.2.1.58
+      indexes:
+      - labelname: temperatureId
+        type: gauge
+    - name: snmp_pdu_temperatureSensorErrorColor
+      oid: 1.3.6.1.4.1.3854.3.5.2.1.59
+      type: gauge
+      help: The user specified 'Sensor Error' status field color - 1.3.6.1.4.1.3854.3.5.2.1.59
+      indexes:
+      - labelname: temperatureId
+        type: gauge
+    - name: snmp_pdu_temperatureAcknowledge
+      oid: 1.3.6.1.4.1.3854.3.5.2.1.70
+      type: gauge
+      help: 'The acknowledge status for the current status of the sensor: 0 = the
+        status has been changed and waiting to be acknowledged, 1 = status is normal
+        or have been already acknowledged, 2 = acknowledge the current status (this
+        status is write-only) - 1.3.6.1.4.1.3854.3.5.2.1.70'
+      indexes:
+      - labelname: temperatureId
+        type: gauge
+      enum_values:
+        0: not-acked
+        1: acked
+        2: ack
+    - name: snmp_pdu_temperatureSerialNumber
+      oid: 1.3.6.1.4.1.3854.3.5.2.1.71
+      type: DisplayString
+      help: The serial number of temperature sensor, used to indicate which sensor
+        it is in an array - 1.3.6.1.4.1.3854.3.5.2.1.71
+      indexes:
+      - labelname: temperatureId
+        type: gauge
+    - name: snmp_pdu_humidityId
+      oid: 1.3.6.1.4.1.3854.3.5.3.1.1
+      type: gauge
+      help: The Sensor ID of this sensor, used to identify which sensor it is in the
+        system configuration. - 1.3.6.1.4.1.3854.3.5.3.1.1
+      indexes:
+      - labelname: humidityId
+        type: gauge
+    - name: snmp_pdu_hw_name
+      oid: 1.3.6.1.4.1.3854.3.5.3.1.2
+      type: DisplayString
+      help: The user specified description of this sensor - 1.3.6.1.4.1.3854.3.5.3.1.2
+      indexes:
+      - labelname: humidityId
+        type: gauge
+    - name: snmp_pdu_humidityPercent
+      oid: 1.3.6.1.4.1.3854.3.5.3.1.4
+      type: gauge
+      help: The relative humidity percentage measured by this sensor - 1.3.6.1.4.1.3854.3.5.3.1.4
+      indexes:
+      - labelname: humidityId
+        type: gauge
+    - name: snmp_pdu_humidityUnit
+      oid: 1.3.6.1.4.1.3854.3.5.3.1.5
+      type: DisplayString
+      help: The sensor's value unit string, in what the sensor's value is read in.
+        - 1.3.6.1.4.1.3854.3.5.3.1.5
+      indexes:
+      - labelname: humidityId
+        type: gauge
+    - name: snmp_pdu_hw_status
+      oid: 1.3.6.1.4.1.3854.3.5.3.1.6
+      type: EnumAsInfo
+      help: The current status of this sensor. - 1.3.6.1.4.1.3854.3.5.3.1.6
+      indexes:
+      - labelname: humidityId
+        type: gauge
+      enum_values:
+        1: noStatus
+        2: normal
+        3: highWarning
+        4: highCritical
+        5: lowWarning
+        6: lowCritical
+        7: sensorError
+    - name: snmp_pdu_humidityGoOffline
+      oid: 1.3.6.1.4.1.3854.3.5.3.1.8
+      type: gauge
+      help: 'Command to offline this sensor: use value ''2'' to set the sensor offline.
+        - 1.3.6.1.4.1.3854.3.5.3.1.8'
+      indexes:
+      - labelname: humidityId
+        type: gauge
+      enum_values:
+        1: online
+        2: goOffline
+    - name: snmp_pdu_humidityLowCritical
+      oid: 1.3.6.1.4.1.3854.3.5.3.1.9
+      type: gauge
+      help: The user specified 'Low Critical' value of this sensor - 1.3.6.1.4.1.3854.3.5.3.1.9
+      indexes:
+      - labelname: humidityId
+        type: gauge
+    - name: snmp_pdu_humidityLowWarning
+      oid: 1.3.6.1.4.1.3854.3.5.3.1.10
+      type: gauge
+      help: The user specified 'Low Warning' value of this sensor - 1.3.6.1.4.1.3854.3.5.3.1.10
+      indexes:
+      - labelname: humidityId
+        type: gauge
+    - name: snmp_pdu_humidityHighWarning
+      oid: 1.3.6.1.4.1.3854.3.5.3.1.11
+      type: gauge
+      help: The user specified 'High Warning' value of this sensor - 1.3.6.1.4.1.3854.3.5.3.1.11
+      indexes:
+      - labelname: humidityId
+        type: gauge
+    - name: snmp_pdu_humidityHighCritical
+      oid: 1.3.6.1.4.1.3854.3.5.3.1.12
+      type: gauge
+      help: The user specified 'High Critical' value of this sensor - 1.3.6.1.4.1.3854.3.5.3.1.12
+      indexes:
+      - labelname: humidityId
+        type: gauge
+    - name: snmp_pdu_humidityRearm
+      oid: 1.3.6.1.4.1.3854.3.5.3.1.13
+      type: gauge
+      help: This value tells how many percentage the sensor has to reach beyond the
+        threshold value, before changing to a new status - 1.3.6.1.4.1.3854.3.5.3.1.13
+      indexes:
+      - labelname: humidityId
+        type: gauge
+    - name: snmp_pdu_humidityDelayError
+      oid: 1.3.6.1.4.1.3854.3.5.3.1.14
+      type: gauge
+      help: The time in seconds (continuous time) that the sensor has to be in 'Error'
+        status before its status is changed. - 1.3.6.1.4.1.3854.3.5.3.1.14
+      indexes:
+      - labelname: humidityId
+        type: gauge
+    - name: snmp_pdu_humidityDelayNormal
+      oid: 1.3.6.1.4.1.3854.3.5.3.1.15
+      type: gauge
+      help: The time in seconds (continuous time) that the sensor has to be in 'Normal'
+        status before its status is changed. - 1.3.6.1.4.1.3854.3.5.3.1.15
+      indexes:
+      - labelname: humidityId
+        type: gauge
+    - name: snmp_pdu_humidityDelayLowCritical
+      oid: 1.3.6.1.4.1.3854.3.5.3.1.16
+      type: gauge
+      help: The time in seconds (continuous time) that the sensor has to be in 'Low
+        Critical' status before its status is changed. - 1.3.6.1.4.1.3854.3.5.3.1.16
+      indexes:
+      - labelname: humidityId
+        type: gauge
+    - name: snmp_pdu_humidityDelayLowWarning
+      oid: 1.3.6.1.4.1.3854.3.5.3.1.17
+      type: gauge
+      help: The time in seconds (continuous time) that the sensor has to be in 'Low
+        Warning' status before its status is changed. - 1.3.6.1.4.1.3854.3.5.3.1.17
+      indexes:
+      - labelname: humidityId
+        type: gauge
+    - name: snmp_pdu_humidityDelayHighWarning
+      oid: 1.3.6.1.4.1.3854.3.5.3.1.18
+      type: gauge
+      help: The time in seconds (continuous time) that the sensor has to be in 'High
+        Warning' status before its status is changed. - 1.3.6.1.4.1.3854.3.5.3.1.18
+      indexes:
+      - labelname: humidityId
+        type: gauge
+    - name: snmp_pdu_humidityDelayHighCritical
+      oid: 1.3.6.1.4.1.3854.3.5.3.1.19
+      type: gauge
+      help: The time in seconds (continuous time) that the sensor has to be in 'High
+        Critical' status before its status is changed. - 1.3.6.1.4.1.3854.3.5.3.1.19
+      indexes:
+      - labelname: humidityId
+        type: gauge
+    - name: snmp_pdu_humidityRaw
+      oid: 1.3.6.1.4.1.3854.3.5.3.1.20
+      type: gauge
+      help: The sensor's unformatted (raw) value that is being read directly from
+        sensor, before it is converted to the preferred value. - 1.3.6.1.4.1.3854.3.5.3.1.20
+      indexes:
+      - labelname: humidityId
+        type: gauge
+    - name: snmp_pdu_humidityOffset
+      oid: 1.3.6.1.4.1.3854.3.5.3.1.21
+      type: gauge
+      help: The offset value for this sensor - 1.3.6.1.4.1.3854.3.5.3.1.21
+      indexes:
+      - labelname: humidityId
+        type: gauge
+    - name: snmp_pdu_humidityPort
+      oid: 1.3.6.1.4.1.3854.3.5.3.1.35
+      type: gauge
+      help: The device's sensor port number, where this sensor is plugged in to. -
+        1.3.6.1.4.1.3854.3.5.3.1.35
+      indexes:
+      - labelname: humidityId
+        type: gauge
+    - name: snmp_pdu_humiditySubPort
+      oid: 1.3.6.1.4.1.3854.3.5.3.1.36
+      type: gauge
+      help: The logical port number of this sensor in the array, or in a set of sensors
+        - 1.3.6.1.4.1.3854.3.5.3.1.36
+      indexes:
+      - labelname: humidityId
+        type: gauge
+    - name: snmp_pdu_humidityDisplayStyle
+      oid: 1.3.6.1.4.1.3854.3.5.3.1.45
+      type: gauge
+      help: The sensor's Display Style for the Web UI, to display the reading as a
+        gauge or bar - 1.3.6.1.4.1.3854.3.5.3.1.45
+      indexes:
+      - labelname: humidityId
+        type: gauge
+      enum_values:
+        0: basic
+        1: gauge
+    - name: snmp_pdu_humidityHighCriticalDescription
+      oid: 1.3.6.1.4.1.3854.3.5.3.1.46
+      type: DisplayString
+      help: The user specified 'High Critical' status description of this sensor -
+        1.3.6.1.4.1.3854.3.5.3.1.46
+      indexes:
+      - labelname: humidityId
+        type: gauge
+    - name: snmp_pdu_humidityLowCriticalDescription
+      oid: 1.3.6.1.4.1.3854.3.5.3.1.47
+      type: DisplayString
+      help: The user specified 'Low Critical' status description of this sensor -
+        1.3.6.1.4.1.3854.3.5.3.1.47
+      indexes:
+      - labelname: humidityId
+        type: gauge
+    - name: snmp_pdu_humiditySensorNormalDescription
+      oid: 1.3.6.1.4.1.3854.3.5.3.1.48
+      type: DisplayString
+      help: The user specified 'Normal' status description of this sensor - 1.3.6.1.4.1.3854.3.5.3.1.48
+      indexes:
+      - labelname: humidityId
+        type: gauge
+    - name: snmp_pdu_humidityLowWarningDescription
+      oid: 1.3.6.1.4.1.3854.3.5.3.1.49
+      type: DisplayString
+      help: The user specified 'Low Warning' status description of this sensor - 1.3.6.1.4.1.3854.3.5.3.1.49
+      indexes:
+      - labelname: humidityId
+        type: gauge
+    - name: snmp_pdu_humidityHighWarningDescription
+      oid: 1.3.6.1.4.1.3854.3.5.3.1.50
+      type: DisplayString
+      help: The user specified 'High Warning' status description of this sensor -
+        1.3.6.1.4.1.3854.3.5.3.1.50
+      indexes:
+      - labelname: humidityId
+        type: gauge
+    - name: snmp_pdu_humiditySensorErrorDescription
+      oid: 1.3.6.1.4.1.3854.3.5.3.1.51
+      type: DisplayString
+      help: The user specified 'Sensor Error' status description of this sensor -
+        1.3.6.1.4.1.3854.3.5.3.1.51
+      indexes:
+      - labelname: humidityId
+        type: gauge
+    - name: snmp_pdu_humidityHighCriticalColor
+      oid: 1.3.6.1.4.1.3854.3.5.3.1.54
+      type: gauge
+      help: The user specified 'High Critical' status field color - 1.3.6.1.4.1.3854.3.5.3.1.54
+      indexes:
+      - labelname: humidityId
+        type: gauge
+    - name: snmp_pdu_humidityLowCriticalColor
+      oid: 1.3.6.1.4.1.3854.3.5.3.1.55
+      type: gauge
+      help: The user specified 'Low Critical' status field color - 1.3.6.1.4.1.3854.3.5.3.1.55
+      indexes:
+      - labelname: humidityId
+        type: gauge
+    - name: snmp_pdu_humiditySensorNormalColor
+      oid: 1.3.6.1.4.1.3854.3.5.3.1.56
+      type: gauge
+      help: The user specified 'Normal' status field color - 1.3.6.1.4.1.3854.3.5.3.1.56
+      indexes:
+      - labelname: humidityId
+        type: gauge
+    - name: snmp_pdu_humidityLowWarningColor
+      oid: 1.3.6.1.4.1.3854.3.5.3.1.57
+      type: gauge
+      help: The user specified 'Low Warning' status field color - 1.3.6.1.4.1.3854.3.5.3.1.57
+      indexes:
+      - labelname: humidityId
+        type: gauge
+    - name: snmp_pdu_humidityHighWarningColor
+      oid: 1.3.6.1.4.1.3854.3.5.3.1.58
+      type: gauge
+      help: The user specified 'High Warning' status field color - 1.3.6.1.4.1.3854.3.5.3.1.58
+      indexes:
+      - labelname: humidityId
+        type: gauge
+    - name: snmp_pdu_humiditySensorErrorColor
+      oid: 1.3.6.1.4.1.3854.3.5.3.1.59
+      type: gauge
+      help: The user specified 'Sensor Error' status field color - 1.3.6.1.4.1.3854.3.5.3.1.59
+      indexes:
+      - labelname: humidityId
+        type: gauge
+    - name: snmp_pdu_humidityAcknowledge
+      oid: 1.3.6.1.4.1.3854.3.5.3.1.70
+      type: gauge
+      help: 'The acknowledge status for the current status of the sensor: 0 = the
+        status has been changed and waiting to be acknowledged, 1 = status is normal
+        or have been already acknowledged, 2 = acknowledge the current status (this
+        status is write-only) - 1.3.6.1.4.1.3854.3.5.3.1.70'
+      indexes:
+      - labelname: humidityId
+        type: gauge
+      enum_values:
+        0: not-acked
+        1: acked
+        2: ack
+    retries: 1
+    timeout: 5s
+  hwgroup-ste2plus:
+    walk:
+    - 1.3.6.1.4.1.21796.4.9.3
+    get:
+    - 1.3.6.1.2.1.1.1.0
+    - 1.3.6.1.2.1.1.3.0
+    - 1.3.6.1.2.1.1.5.0
+    - 1.3.6.1.2.1.1.6.0
+    metrics:
+    - name: snmp_pdu_model
+      oid: 1.3.6.1.2.1.1.1
+      type: DisplayString
+      help: A textual description of the entity - 1.3.6.1.2.1.1.1
+    - name: snmp_pdu_system_uptime
+      oid: 1.3.6.1.2.1.1.3
+      type: gauge
+      help: The time (in hundredths of a second) since the network management portion
+        of the system was last re-initialized. - 1.3.6.1.2.1.1.3
+    - name: snmp_pdu_sysName
+      oid: 1.3.6.1.2.1.1.5
+      type: DisplayString
+      help: An administratively-assigned name for this managed node - 1.3.6.1.2.1.1.5
+    - name: snmp_pdu_sysLocation
+      oid: 1.3.6.1.2.1.1.6
+      type: DisplayString
+      help: The physical location of this node (e.g., 'telephone closet, 3rd floor')
+        - 1.3.6.1.2.1.1.6
+    - name: snmp_pdu_sensIndex
+      oid: 1.3.6.1.4.1.21796.4.9.3.1.1
+      type: gauge
+      help: The sensor index. - 1.3.6.1.4.1.21796.4.9.3.1.1
+      indexes:
+      - labelname: sensIndex
+        type: gauge
+    - name: snmp_pdu_hw_name
+      oid: 1.3.6.1.4.1.21796.4.9.3.1.2
+      type: DisplayString
+      help: The sensor name. - 1.3.6.1.4.1.21796.4.9.3.1.2
+      indexes:
+      - labelname: sensIndex
+        type: gauge
+    - name: snmp_pdu_hw_status
+      oid: 1.3.6.1.4.1.21796.4.9.3.1.3
+      type: EnumAsInfo
+      help: The sensor state. - 1.3.6.1.4.1.21796.4.9.3.1.3
+      indexes:
+      - labelname: sensIndex
+        type: gauge
+      enum_values:
+        0: invalid
+        1: normal
+        2: outofrangelo
+        3: outofrangehi
+        4: alarmlo
+        5: alarmhi
+    - name: snmp_pdu_sensString
+      oid: 1.3.6.1.4.1.21796.4.9.3.1.4
+      type: OctetString
+      help: The string representation of sensor value. - 1.3.6.1.4.1.21796.4.9.3.1.4
+      indexes:
+      - labelname: sensIndex
+        type: gauge
+    - name: snmp_pdu_sensValue
+      oid: 1.3.6.1.4.1.21796.4.9.3.1.5
+      type: gauge
+      help: The integer (decimal * 10) representation of sensor value. - 1.3.6.1.4.1.21796.4.9.3.1.5
+      indexes:
+      - labelname: sensIndex
+        type: gauge
+    - name: snmp_pdu_sensSN
+      oid: 1.3.6.1.4.1.21796.4.9.3.1.6
+      type: OctetString
+      help: The sensor Serial number. - 1.3.6.1.4.1.21796.4.9.3.1.6
+      indexes:
+      - labelname: sensIndex
+        type: gauge
+    - name: snmp_pdu_hw_type
+      oid: 1.3.6.1.4.1.21796.4.9.3.1.7
+      type: EnumAsInfo
+      help: The sensor unit. - 1.3.6.1.4.1.21796.4.9.3.1.7
+      indexes:
+      - labelname: sensIndex
+        type: gauge
+      enum_values:
+        0: none
+        1: celsius
+        2: fahrenheit
+        3: kelvin
+        4: percent
+    - name: snmp_pdu_sensID
+      oid: 1.3.6.1.4.1.21796.4.9.3.1.8
+      type: gauge
+      help: The sensor ID. - 1.3.6.1.4.1.21796.4.9.3.1.8
+      indexes:
+      - labelname: sensIndex
+        type: gauge
+    retries: 1
+    timeout: 5s
+  panduit-epa126:
+    walk:
+    - 1.3.6.1.4.1.3711.24.1.1.1.2.2
+    - 1.3.6.1.4.1.3711.24.1.1.1.3.1
+    - 1.3.6.1.4.1.3711.24.1.1.10.1
+    - 1.3.6.1.4.1.3711.24.1.1.11.1.1
+    - 1.3.6.1.4.1.3711.24.1.1.7.1.2
+    - 1.3.6.1.4.1.3711.24.1.1.7.2.3
+    - 1.3.6.1.4.1.3711.24.1.1.7.3.1
+    - 1.3.6.1.4.1.3711.24.1.1.7.3.5
+    get:
+    - 1.3.6.1.2.1.1.3.0
+    - 1.3.6.1.2.1.1.5.0
+    - 1.3.6.1.2.1.1.6.0
+    - 1.3.6.1.4.1.3711.24.1.1.98.2.0
+    - 1.3.6.1.4.1.3711.24.1.1.98.4.0
+    - 1.3.6.1.4.1.3711.24.1.1.99.11.0
+    metrics:
+    - name: snmp_pdu_system_uptime
+      oid: 1.3.6.1.2.1.1.3
+      type: gauge
+      help: The time (in hundredths of a second) since the network management portion
+        of the system was last re-initialized. - 1.3.6.1.2.1.1.3
+    - name: snmp_pdu_sysName
+      oid: 1.3.6.1.2.1.1.5
+      type: DisplayString
+      help: An administratively-assigned name for this managed node - 1.3.6.1.2.1.1.5
+    - name: snmp_pdu_sysLocation
+      oid: 1.3.6.1.2.1.1.6
+      type: DisplayString
+      help: The physical location of this node (e.g., 'telephone closet, 3rd floor')
+        - 1.3.6.1.2.1.1.6
+    - name: snmp_pdu_ipTHAChan
+      oid: 1.3.6.1.4.1.3711.24.1.1.1.2.2.1.1
+      type: gauge
+      help: The input number. - 1.3.6.1.4.1.3711.24.1.1.1.2.2.1.1
+      indexes:
+      - labelname: ipTHAChan
+        type: gauge
+    - name: snmp_pdu_ipTHARS
+      oid: 1.3.6.1.4.1.3711.24.1.1.1.2.2.1.2
+      type: gauge
+      help: The analogue-type input table row status. - 1.3.6.1.4.1.3711.24.1.1.1.2.2.1.2
+      indexes:
+      - labelname: ipTHAChan
+        type: gauge
+      enum_values:
+        1: active
+        2: notInService
+        3: notReady
+        4: createAndGo
+        5: createAndWait
+        6: destroy
+    - name: snmp_pdu_hw_name
+      oid: 1.3.6.1.4.1.3711.24.1.1.1.2.2.1.3
+      type: DisplayString
+      help: The name of this input - 1.3.6.1.4.1.3711.24.1.1.1.2.2.1.3
+      indexes:
+      - labelname: ipTHAChan
+        type: gauge
+    - name: snmp_pdu_ipTHALocn
+      oid: 1.3.6.1.4.1.3711.24.1.1.1.2.2.1.4
+      type: DisplayString
+      help: A system-defined name for the physical location of this input, e.g - 1.3.6.1.4.1.3711.24.1.1.1.2.2.1.4
+      indexes:
+      - labelname: ipTHAChan
+        type: gauge
+    - name: snmp_pdu_ipTHAAutoDetect
+      oid: 1.3.6.1.4.1.3711.24.1.1.1.2.2.1.5
+      type: gauge
+      help: Indicates that the type of data this input is monitoring is selected automatically.
+        - 1.3.6.1.4.1.3711.24.1.1.1.2.2.1.5
+      indexes:
+      - labelname: ipTHAChan
+        type: gauge
+      enum_values:
+        1: "true"
+        2: "false"
+    - name: snmp_pdu_ipTHAType
+      oid: 1.3.6.1.4.1.3711.24.1.1.1.2.2.1.6
+      type: gauge
+      help: Indicates the type of data this input is monitoring. - 1.3.6.1.4.1.3711.24.1.1.1.2.2.1.6
+      indexes:
+      - labelname: ipTHAChan
+        type: gauge
+      enum_values:
+        1: autodetect
+        2: temperature
+        3: humidity
+        4: analogue
+        5: contact
+        255: inactive
+    - name: snmp_pdu_ipTHAValue
+      oid: 1.3.6.1.4.1.3711.24.1.1.1.2.2.1.7
+      type: gauge
+      help: The current reading in the relevant measurement units - 1.3.6.1.4.1.3711.24.1.1.1.2.2.1.7
+      indexes:
+      - labelname: ipTHAChan
+        type: gauge
+    - name: snmp_pdu_ipTHAScaling
+      oid: 1.3.6.1.4.1.3711.24.1.1.1.2.2.1.8
+      type: gauge
+      help: Scaling factor for ipTHAValue in units of 0.1 when ipTHAType=analogue.
+        - 1.3.6.1.4.1.3711.24.1.1.1.2.2.1.8
+      indexes:
+      - labelname: ipTHAChan
+        type: gauge
+    - name: snmp_pdu_ipTHAOffset
+      oid: 1.3.6.1.4.1.3711.24.1.1.1.2.2.1.9
+      type: gauge
+      help: Calibration offset in the same units as for ipTHAValue. - 1.3.6.1.4.1.3711.24.1.1.1.2.2.1.9
+      indexes:
+      - labelname: ipTHAChan
+        type: gauge
+    - name: snmp_pdu_ipTHAHysteresis
+      oid: 1.3.6.1.4.1.3711.24.1.1.1.2.2.1.10
+      type: gauge
+      help: Hysteresis on threshold levels in the same units as for ipTHAValue. -
+        1.3.6.1.4.1.3711.24.1.1.1.2.2.1.10
+      indexes:
+      - labelname: ipTHAChan
+        type: gauge
+    - name: snmp_pdu_ipContChan
+      oid: 1.3.6.1.4.1.3711.24.1.1.1.3.1.1.1
+      type: gauge
+      help: The input number. - 1.3.6.1.4.1.3711.24.1.1.1.3.1.1.1
+      indexes:
+      - labelname: ipContChan
+        type: gauge
+    - name: snmp_pdu_ipContRS
+      oid: 1.3.6.1.4.1.3711.24.1.1.1.3.1.1.2
+      type: gauge
+      help: The contact input table row status. - 1.3.6.1.4.1.3711.24.1.1.1.3.1.1.2
+      indexes:
+      - labelname: ipContChan
+        type: gauge
+      enum_values:
+        1: active
+        2: notInService
+        3: notReady
+        4: createAndGo
+        5: createAndWait
+        6: destroy
+    - name: snmp_pdu_hw_name
+      oid: 1.3.6.1.4.1.3711.24.1.1.1.3.1.1.3
+      type: DisplayString
+      help: The name of this input - 1.3.6.1.4.1.3711.24.1.1.1.3.1.1.3
+      indexes:
+      - labelname: ipContChan
+        type: gauge
+    - name: snmp_pdu_ipContLocn
+      oid: 1.3.6.1.4.1.3711.24.1.1.1.3.1.1.4
+      type: DisplayString
+      help: A system-defined name for the physical location of this input, e.g - 1.3.6.1.4.1.3711.24.1.1.1.3.1.1.4
+      indexes:
+      - labelname: ipContChan
+        type: gauge
+    - name: snmp_pdu_ipContAutoDetect
+      oid: 1.3.6.1.4.1.3711.24.1.1.1.3.1.1.5
+      type: gauge
+      help: Indicates that the type of data this input is monitoring is selected automatically.
+        - 1.3.6.1.4.1.3711.24.1.1.1.3.1.1.5
+      indexes:
+      - labelname: ipContChan
+        type: gauge
+      enum_values:
+        1: "true"
+        2: "false"
+    - name: snmp_pdu_ipContNormState
+      oid: 1.3.6.1.4.1.3711.24.1.1.1.3.1.1.6
+      type: gauge
+      help: The normal state for this contact. - 1.3.6.1.4.1.3711.24.1.1.1.3.1.1.6
+      indexes:
+      - labelname: ipContChan
+        type: gauge
+      enum_values:
+        1: open
+        2: closed
+    - name: snmp_pdu_ipContCurrState
+      oid: 1.3.6.1.4.1.3711.24.1.1.1.3.1.1.7
+      type: gauge
+      help: The current state of this contact. - 1.3.6.1.4.1.3711.24.1.1.1.3.1.1.7
+      indexes:
+      - labelname: ipContChan
+        type: gauge
+      enum_values:
+        1: open
+        2: closed
+        3: armed
+        4: triggered
+        255: unknown
+    - name: snmp_pdu_ipContTrigMode
+      oid: 1.3.6.1.4.1.3711.24.1.1.1.3.1.1.8
+      type: gauge
+      help: The contact trigger mode, level, +ve edge, -ve edge. - 1.3.6.1.4.1.3711.24.1.1.1.3.1.1.8
+      indexes:
+      - labelname: ipContChan
+        type: gauge
+      enum_values:
+        1: positiveEdge
+        2: negativeEdge
+        3: level
+    - name: snmp_pdu_ipContReset
+      oid: 1.3.6.1.4.1.3711.24.1.1.1.3.1.1.9
+      type: gauge
+      help: Resets the contact after triggering in edge mode. - 1.3.6.1.4.1.3711.24.1.1.1.3.1.1.9
+      indexes:
+      - labelname: ipContChan
+        type: gauge
+    - name: snmp_pdu_ipContTrapEn
+      oid: 1.3.6.1.4.1.3711.24.1.1.1.3.1.1.10
+      type: gauge
+      help: Configure contact input traps. - 1.3.6.1.4.1.3711.24.1.1.1.3.1.1.10
+      indexes:
+      - labelname: ipContChan
+        type: gauge
+      enum_values:
+        1: critical
+        2: warning
+        3: information
+        255: disabled
+    - name: snmp_pdu_ipContTrapPeriod
+      oid: 1.3.6.1.4.1.3711.24.1.1.1.3.1.1.11
+      type: gauge
+      help: Set to 0 disables trap repetition, a value of 30 or higher sets the interval
+        between traps in seconds - 1.3.6.1.4.1.3711.24.1.1.1.3.1.1.11
+      indexes:
+      - labelname: ipContChan
+        type: gauge
+    - name: snmp_pdu_idmNumber
+      oid: 1.3.6.1.4.1.3711.24.1.1.10.1.1.1
+      type: gauge
+      help: The IDM number; maps to the specific IDM Port. - 1.3.6.1.4.1.3711.24.1.1.10.1.1.1
+      indexes:
+      - labelname: idmNumber
+        type: gauge
+    - name: snmp_pdu_idmRS
+      oid: 1.3.6.1.4.1.3711.24.1.1.10.1.1.2
+      type: gauge
+      help: The IDM table row status. - 1.3.6.1.4.1.3711.24.1.1.10.1.1.2
+      indexes:
+      - labelname: idmNumber
+        type: gauge
+      enum_values:
+        1: active
+        2: notInService
+        3: notReady
+        4: createAndGo
+        5: createAndWait
+        6: destroy
+    - name: snmp_pdu_idmVersion
+      oid: 1.3.6.1.4.1.3711.24.1.1.10.1.1.3
+      type: DisplayString
+      help: Version information returned by the IDM. - 1.3.6.1.4.1.3711.24.1.1.10.1.1.3
+      indexes:
+      - labelname: idmNumber
+        type: gauge
+    - name: snmp_pdu_idmStatus
+      oid: 1.3.6.1.4.1.3711.24.1.1.10.1.1.4
+      type: gauge
+      help: Indicates status of the IDM. - 1.3.6.1.4.1.3711.24.1.1.10.1.1.4
+      indexes:
+      - labelname: idmNumber
+        type: gauge
+      enum_values:
+        1: enabled
+        2: disabled
+        255: unknown
+    - name: snmp_pdu_pduP2BrCktMonPduNumber
+      oid: 1.3.6.1.4.1.3711.24.1.1.11.1.1.1.1
+      type: gauge
+      help: The PDU index number. - 1.3.6.1.4.1.3711.24.1.1.11.1.1.1.1
+      indexes:
+      - labelname: pduP2BrCktMonPduNumber
+        type: gauge
+      - labelname: pduP2BrCktMonBrCctNumber
+        type: gauge
+    - name: snmp_pdu_pduP2BrCktMonBrCctNumber
+      oid: 1.3.6.1.4.1.3711.24.1.1.11.1.1.1.2
+      type: gauge
+      help: The PDU Branch Circuit Number. - 1.3.6.1.4.1.3711.24.1.1.11.1.1.1.2
+      indexes:
+      - labelname: pduP2BrCktMonPduNumber
+        type: gauge
+      - labelname: pduP2BrCktMonBrCctNumber
+        type: gauge
+    - name: snmp_pdu_pduP2BrCktMonRS
+      oid: 1.3.6.1.4.1.3711.24.1.1.11.1.1.1.3
+      type: gauge
+      help: The branch circuit monitor table row status. - 1.3.6.1.4.1.3711.24.1.1.11.1.1.1.3
+      indexes:
+      - labelname: pduP2BrCktMonPduNumber
+        type: gauge
+      - labelname: pduP2BrCktMonBrCctNumber
+        type: gauge
+      enum_values:
+        1: active
+        2: notInService
+        3: notReady
+        4: createAndGo
+        5: createAndWait
+        6: destroy
+    - name: snmp_pdu_pduP2BrCktMonBrCctID
+      oid: 1.3.6.1.4.1.3711.24.1.1.11.1.1.1.4
+      type: DisplayString
+      help: The PDU Branch Circuit ID. - 1.3.6.1.4.1.3711.24.1.1.11.1.1.1.4
+      indexes:
+      - labelname: pduP2BrCktMonPduNumber
+        type: gauge
+      - labelname: pduP2BrCktMonBrCctNumber
+        type: gauge
+    - name: snmp_pdu_pduP2BrCktMonBrCctPhases
+      oid: 1.3.6.1.4.1.3711.24.1.1.11.1.1.1.5
+      type: DisplayString
+      help: The PDU Branch Circuit Phases. - 1.3.6.1.4.1.3711.24.1.1.11.1.1.1.5
+      indexes:
+      - labelname: pduP2BrCktMonPduNumber
+        type: gauge
+      - labelname: pduP2BrCktMonBrCctNumber
+        type: gauge
+    - name: snmp_pdu_pduP2BrCktMonBrCctCurrent
+      oid: 1.3.6.1.4.1.3711.24.1.1.11.1.1.1.6
+      type: gauge
+      help: The PDU Branch Circuit Current - 1.3.6.1.4.1.3711.24.1.1.11.1.1.1.6
+      indexes:
+      - labelname: pduP2BrCktMonPduNumber
+        type: gauge
+      - labelname: pduP2BrCktMonBrCctNumber
+        type: gauge
+    - name: snmp_pdu_pduP2BrCktMonBrCctPeakCurrent
+      oid: 1.3.6.1.4.1.3711.24.1.1.11.1.1.1.7
+      type: gauge
+      help: The PDU Branch Circuit Peak Current - 1.3.6.1.4.1.3711.24.1.1.11.1.1.1.7
+      indexes:
+      - labelname: pduP2BrCktMonPduNumber
+        type: gauge
+      - labelname: pduP2BrCktMonBrCctNumber
+        type: gauge
+    - name: snmp_pdu_pduP2BrCktMonBrCctBreakerContinuousLoadRatingAmps
+      oid: 1.3.6.1.4.1.3711.24.1.1.11.1.1.1.12
+      type: gauge
+      help: The PDU Branch Circuit Breaker Continuous Load Rating Amps.The value precision
+        is thousandths e.g - 1.3.6.1.4.1.3711.24.1.1.11.1.1.1.12
+      indexes:
+      - labelname: pduP2BrCktMonPduNumber
+        type: gauge
+      - labelname: pduP2BrCktMonBrCctNumber
+        type: gauge
+    - name: snmp_pdu_pduP2BrCktMonBrCctBreakerTripRatingAmps
+      oid: 1.3.6.1.4.1.3711.24.1.1.11.1.1.1.13
+      type: gauge
+      help: The PDU Branch Circuit Breaker Trip Rating Amps - 1.3.6.1.4.1.3711.24.1.1.11.1.1.1.13
+      indexes:
+      - labelname: pduP2BrCktMonPduNumber
+        type: gauge
+      - labelname: pduP2BrCktMonBrCctNumber
+        type: gauge
+    - name: snmp_pdu_pduP2BrCktMonBrCctBreakerOutletMap
+      oid: 1.3.6.1.4.1.3711.24.1.1.11.1.1.1.14
+      type: DisplayString
+      help: A string representing the outlets of a branch circuit - 1.3.6.1.4.1.3711.24.1.1.11.1.1.1.14
+      indexes:
+      - labelname: pduP2BrCktMonPduNumber
+        type: gauge
+      - labelname: pduP2BrCktMonBrCctNumber
+        type: gauge
+    - name: snmp_pdu_pduP2BrCktCircuitCurrentUCL
+      oid: 1.3.6.1.4.1.3711.24.1.1.11.1.1.1.15
+      type: gauge
+      help: Circuit Current UCL - 1.3.6.1.4.1.3711.24.1.1.11.1.1.1.15
+      indexes:
+      - labelname: pduP2BrCktMonPduNumber
+        type: gauge
+      - labelname: pduP2BrCktMonBrCctNumber
+        type: gauge
+    - name: snmp_pdu_pduP2BrCktCircuitCurrentUWL
+      oid: 1.3.6.1.4.1.3711.24.1.1.11.1.1.1.16
+      type: gauge
+      help: Circuit Current UWL - 1.3.6.1.4.1.3711.24.1.1.11.1.1.1.16
+      indexes:
+      - labelname: pduP2BrCktMonPduNumber
+        type: gauge
+      - labelname: pduP2BrCktMonBrCctNumber
+        type: gauge
+    - name: snmp_pdu_pduP2BrCktCircuitCurrentLWL
+      oid: 1.3.6.1.4.1.3711.24.1.1.11.1.1.1.17
+      type: gauge
+      help: Circuit Current LWL - 1.3.6.1.4.1.3711.24.1.1.11.1.1.1.17
+      indexes:
+      - labelname: pduP2BrCktMonPduNumber
+        type: gauge
+      - labelname: pduP2BrCktMonBrCctNumber
+        type: gauge
+    - name: snmp_pdu_pduP2BrCktCircuitCurrentLCL
+      oid: 1.3.6.1.4.1.3711.24.1.1.11.1.1.1.18
+      type: gauge
+      help: Circuit Current LCL - 1.3.6.1.4.1.3711.24.1.1.11.1.1.1.18
+      indexes:
+      - labelname: pduP2BrCktMonPduNumber
+        type: gauge
+      - labelname: pduP2BrCktMonBrCctNumber
+        type: gauge
+    - name: snmp_pdu_pduP2BrCktCircuitCurrentUCLTrapEn
+      oid: 1.3.6.1.4.1.3711.24.1.1.11.1.1.1.19
+      type: gauge
+      help: Trap enable flag for pduP2BrCktCircuitCurrentUCL. - 1.3.6.1.4.1.3711.24.1.1.11.1.1.1.19
+      indexes:
+      - labelname: pduP2BrCktMonPduNumber
+        type: gauge
+      - labelname: pduP2BrCktMonBrCctNumber
+        type: gauge
+      enum_values:
+        1: "true"
+        2: "false"
+    - name: snmp_pdu_pduP2BrCktCircuitCurrentUWLTrapEn
+      oid: 1.3.6.1.4.1.3711.24.1.1.11.1.1.1.20
+      type: gauge
+      help: Trap enable flag for pduP2BrCktCircuitCurrentUWL. - 1.3.6.1.4.1.3711.24.1.1.11.1.1.1.20
+      indexes:
+      - labelname: pduP2BrCktMonPduNumber
+        type: gauge
+      - labelname: pduP2BrCktMonBrCctNumber
+        type: gauge
+      enum_values:
+        1: "true"
+        2: "false"
+    - name: snmp_pdu_pduP2BrCktCircuitCurrentLWLTrapEn
+      oid: 1.3.6.1.4.1.3711.24.1.1.11.1.1.1.21
+      type: gauge
+      help: Trap enable flag for pduP2BrCktCircuitCurrentLWL. - 1.3.6.1.4.1.3711.24.1.1.11.1.1.1.21
+      indexes:
+      - labelname: pduP2BrCktMonPduNumber
+        type: gauge
+      - labelname: pduP2BrCktMonBrCctNumber
+        type: gauge
+      enum_values:
+        1: "true"
+        2: "false"
+    - name: snmp_pdu_pduP2BrCktCircuitCurrentLCLTrapEn
+      oid: 1.3.6.1.4.1.3711.24.1.1.11.1.1.1.22
+      type: gauge
+      help: Trap enable flag for pduP2BrCktCircuitCurrentLCL. - 1.3.6.1.4.1.3711.24.1.1.11.1.1.1.22
+      indexes:
+      - labelname: pduP2BrCktMonPduNumber
+        type: gauge
+      - labelname: pduP2BrCktMonBrCctNumber
+        type: gauge
+      enum_values:
+        1: "true"
+        2: "false"
+    - name: snmp_pdu_pduP2BrCktCircuitCurrentUCLTrapPer
+      oid: 1.3.6.1.4.1.3711.24.1.1.11.1.1.1.23
+      type: gauge
+      help: Trap repetition period for pduP2BrCktCircuitCurrentUCL. - 1.3.6.1.4.1.3711.24.1.1.11.1.1.1.23
+      indexes:
+      - labelname: pduP2BrCktMonPduNumber
+        type: gauge
+      - labelname: pduP2BrCktMonBrCctNumber
+        type: gauge
+    - name: snmp_pdu_pduP2BrCktCircuitCurrentUWLTrapPer
+      oid: 1.3.6.1.4.1.3711.24.1.1.11.1.1.1.24
+      type: gauge
+      help: Trap repetition period for pduP2BrCktCircuitCurrentUWL. - 1.3.6.1.4.1.3711.24.1.1.11.1.1.1.24
+      indexes:
+      - labelname: pduP2BrCktMonPduNumber
+        type: gauge
+      - labelname: pduP2BrCktMonBrCctNumber
+        type: gauge
+    - name: snmp_pdu_pduP2BrCktCircuitCurrentLWLTrapPer
+      oid: 1.3.6.1.4.1.3711.24.1.1.11.1.1.1.25
+      type: gauge
+      help: Trap repetition period for pduP2BrCktCircuitCurrentLWL. - 1.3.6.1.4.1.3711.24.1.1.11.1.1.1.25
+      indexes:
+      - labelname: pduP2BrCktMonPduNumber
+        type: gauge
+      - labelname: pduP2BrCktMonBrCctNumber
+        type: gauge
+    - name: snmp_pdu_pduP2BrCktCircuitCurrentLCLTrapPer
+      oid: 1.3.6.1.4.1.3711.24.1.1.11.1.1.1.26
+      type: gauge
+      help: Trap repetition period for pduP2BrCktCircuitCurrentLCL. - 1.3.6.1.4.1.3711.24.1.1.11.1.1.1.26
+      indexes:
+      - labelname: pduP2BrCktMonPduNumber
+        type: gauge
+      - labelname: pduP2BrCktMonBrCctNumber
+        type: gauge
+    - name: snmp_pdu_pduNumber
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.1.2.1.1
+      type: gauge
+      help: The PDU number. - 1.3.6.1.4.1.3711.24.1.1.7.1.2.1.1
+      indexes:
+      - labelname: pduNumber
+        type: gauge
+    - name: snmp_pdu_pduRS
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.1.2.1.2
+      type: gauge
+      help: The PDU table row status. - 1.3.6.1.4.1.3711.24.1.1.7.1.2.1.2
+      indexes:
+      - labelname: pduNumber
+        type: gauge
+      enum_values:
+        1: active
+        2: notInService
+        3: notReady
+        4: createAndGo
+        5: createAndWait
+        6: destroy
+    - name: snmp_pdu_hw_name
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.1.2.1.3
+      type: DisplayString
+      help: A string identifying the PDU. - 1.3.6.1.4.1.3711.24.1.1.7.1.2.1.3
+      indexes:
+      - labelname: pduNumber
+        type: gauge
+    - name: snmp_pdu_pduOutEn
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.1.2.1.4
+      type: gauge
+      help: Enables/disables PDU power outlet control - causes an entry for outlets
+        to be created in each relevant PDU table. - 1.3.6.1.4.1.3711.24.1.1.7.1.2.1.4
+      indexes:
+      - labelname: pduNumber
+        type: gauge
+      enum_values:
+        1: "true"
+        2: "false"
+    - name: snmp_pdu_pduMonEn
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.1.2.1.5
+      type: gauge
+      help: Enables/disables PDU power monitoring - causes an entry for monitoring
+        to be created in each relevant PDU table. - 1.3.6.1.4.1.3711.24.1.1.7.1.2.1.5
+      indexes:
+      - labelname: pduNumber
+        type: gauge
+      enum_values:
+        1: "true"
+        2: "false"
+    - name: snmp_pdu_pduCommsFail
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.1.2.1.6
+      type: gauge
+      help: Indicates comms - 1.3.6.1.4.1.3711.24.1.1.7.1.2.1.6
+      indexes:
+      - labelname: pduNumber
+        type: gauge
+      enum_values:
+        1: commsGood
+        2: commsFailed
+        3: commsBadData
+    - name: snmp_pdu_pduType
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.1.2.1.7
+      type: gauge
+      help: Indicates the type of device connected. - 1.3.6.1.4.1.3711.24.1.1.7.1.2.1.7
+      indexes:
+      - labelname: pduNumber
+        type: gauge
+      enum_values:
+        1: rs232PduMk1
+        2: rs232PduTpt
+        3: rs485PduTpt
+        4: rs232CLAmp
+        5: rs485CLAmp
+        6: rs232PduMk2
+        7: rs485PduMk2
+        8: rs485PduMk3
+        9: rs232G5
+        253: virtual
+        254: none
+        255: unknown
+    - name: snmp_pdu_pduMode
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.1.2.1.8
+      type: gauge
+      help: Indicates the phase circuit topology. - 1.3.6.1.4.1.3711.24.1.1.7.1.2.1.8
+      indexes:
+      - labelname: pduNumber
+        type: gauge
+      enum_values:
+        1: singlePhase
+        2: twoPhase
+        3: threePhaseStar
+        4: threePhaseDelta
+        253: aggregate
+        254: none
+        255: unknown
+    - name: snmp_pdu_pduNumControl
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.1.2.1.9
+      type: gauge
+      help: Indicates the number of controlled outlets. - 1.3.6.1.4.1.3711.24.1.1.7.1.2.1.9
+      indexes:
+      - labelname: pduNumber
+        type: gauge
+    - name: snmp_pdu_pduOutletMonMode
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.1.2.1.10
+      type: gauge
+      help: Indicates the monitor mode. - 1.3.6.1.4.1.3711.24.1.1.7.1.2.1.10
+      indexes:
+      - labelname: pduNumber
+        type: gauge
+      enum_values:
+        1: currentOnly
+        2: allParameters
+        254: none
+        255: unknown
+    - name: snmp_pdu_pduNumOutlets
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.1.2.1.11
+      type: gauge
+      help: Indicates the number of monitored outlets. - 1.3.6.1.4.1.3711.24.1.1.7.1.2.1.11
+      indexes:
+      - labelname: pduNumber
+        type: gauge
+    - name: snmp_pdu_pduFwVersCPU
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.1.2.1.12
+      type: DisplayString
+      help: A string identifying the PDU processor firmware version. - 1.3.6.1.4.1.3711.24.1.1.7.1.2.1.12
+      indexes:
+      - labelname: pduNumber
+        type: gauge
+    - name: snmp_pdu_pduFwVersMeter
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.1.2.1.13
+      type: DisplayString
+      help: A string identifying the PDU meter firmware version. - 1.3.6.1.4.1.3711.24.1.1.7.1.2.1.13
+      indexes:
+      - labelname: pduNumber
+        type: gauge
+    - name: snmp_pdu_pduNumOfCctBrks
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.1.2.1.14
+      type: gauge
+      help: Indicates the number of monitored branch circuits. - 1.3.6.1.4.1.3711.24.1.1.7.1.2.1.14
+      indexes:
+      - labelname: pduNumber
+        type: gauge
+    - name: snmp_pdu_pduOutPduNumber
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.2.3.1.1
+      type: gauge
+      help: The PDU number on which the outlet resides. - 1.3.6.1.4.1.3711.24.1.1.7.2.3.1.1
+      indexes:
+      - labelname: pduOutPduNumber
+        type: gauge
+      - labelname: pduOutNumber
+        type: gauge
+    - name: snmp_pdu_pduOutNumber
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.2.3.1.2
+      type: gauge
+      help: The outlet number. - 1.3.6.1.4.1.3711.24.1.1.7.2.3.1.2
+      indexes:
+      - labelname: pduOutPduNumber
+        type: gauge
+      - labelname: pduOutNumber
+        type: gauge
+    - name: snmp_pdu_pduOutRS
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.2.3.1.3
+      type: gauge
+      help: The PDU table row status. - 1.3.6.1.4.1.3711.24.1.1.7.2.3.1.3
+      indexes:
+      - labelname: pduOutPduNumber
+        type: gauge
+      - labelname: pduOutNumber
+        type: gauge
+      enum_values:
+        1: active
+        2: notInService
+        3: notReady
+        4: createAndGo
+        5: createAndWait
+        6: destroy
+    - name: snmp_pdu_hw_name
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.2.3.1.4
+      type: DisplayString
+      help: A name identifying the outlet. - 1.3.6.1.4.1.3711.24.1.1.7.2.3.1.4
+      indexes:
+      - labelname: pduOutPduNumber
+        type: gauge
+      - labelname: pduOutNumber
+        type: gauge
+    - name: snmp_pdu_pduOutOn
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.2.3.1.5
+      type: gauge
+      help: The current state for this outlet. - 1.3.6.1.4.1.3711.24.1.1.7.2.3.1.5
+      indexes:
+      - labelname: pduOutPduNumber
+        type: gauge
+      - labelname: pduOutNumber
+        type: gauge
+      enum_values:
+        1: "on"
+        2: "off"
+        3: reboot
+        4: unknown
+        5: failedStuck
+    - name: snmp_pdu_pduOutPwd
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.2.3.1.6
+      type: DisplayString
+      help: The password for this outlet. - 1.3.6.1.4.1.3711.24.1.1.7.2.3.1.6
+      indexes:
+      - labelname: pduOutPduNumber
+        type: gauge
+      - labelname: pduOutNumber
+        type: gauge
+    - name: snmp_pdu_pduOutCycleDelay
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.2.3.1.7
+      type: gauge
+      help: The on/off delay for this outlet in seconds. - 1.3.6.1.4.1.3711.24.1.1.7.2.3.1.7
+      indexes:
+      - labelname: pduOutPduNumber
+        type: gauge
+      - labelname: pduOutNumber
+        type: gauge
+    - name: snmp_pdu_pduOutRebootPeriod
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.2.3.1.8
+      type: gauge
+      help: The pduOutOn reboot off period for this outlet in seconds. - 1.3.6.1.4.1.3711.24.1.1.7.2.3.1.8
+      indexes:
+      - labelname: pduOutPduNumber
+        type: gauge
+      - labelname: pduOutNumber
+        type: gauge
+    - name: snmp_pdu_pduOutRMSAmpsValue
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.2.3.1.9
+      type: gauge
+      help: RMS current value at the outlet in 0.1 Amps - 1.3.6.1.4.1.3711.24.1.1.7.2.3.1.9
+      indexes:
+      - labelname: pduOutPduNumber
+        type: gauge
+      - labelname: pduOutNumber
+        type: gauge
+    - name: snmp_pdu_pduOutRMSAmpsSurge
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.2.3.1.10
+      type: gauge
+      help: Maximum value of pduOutRMSAmpsValue for another outlet to be switched
+        on in 0.1 Amps - 1.3.6.1.4.1.3711.24.1.1.7.2.3.1.10
+      indexes:
+      - labelname: pduOutPduNumber
+        type: gauge
+      - labelname: pduOutNumber
+        type: gauge
+    - name: snmp_pdu_pduOutRMSAmpsPeak
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.2.3.1.11
+      type: gauge
+      help: Maximum value of pduOutRMSAmpsValue since reset in 0.1 Amps - 1.3.6.1.4.1.3711.24.1.1.7.2.3.1.11
+      indexes:
+      - labelname: pduOutPduNumber
+        type: gauge
+      - labelname: pduOutNumber
+        type: gauge
+    - name: snmp_pdu_pduOutRMSAmpsPkRst
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.2.3.1.12
+      type: gauge
+      help: Resets value of pduOutRMSAmpsPeak to current value of pduOutRMSAmpsValue
+        - 1.3.6.1.4.1.3711.24.1.1.7.2.3.1.12
+      indexes:
+      - labelname: pduOutPduNumber
+        type: gauge
+      - labelname: pduOutNumber
+        type: gauge
+    - name: snmp_pdu_pduOutMeanKVAValue
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.2.3.1.13
+      type: gauge
+      help: Mean kVA value at the outlet in 0.1 kVA - 1.3.6.1.4.1.3711.24.1.1.7.2.3.1.13
+      indexes:
+      - labelname: pduOutPduNumber
+        type: gauge
+      - labelname: pduOutNumber
+        type: gauge
+    - name: snmp_pdu_pduOutKWHrValue
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.2.3.1.14
+      type: gauge
+      help: kWhr value at the outlet in 0.1 kWhr - 1.3.6.1.4.1.3711.24.1.1.7.2.3.1.14
+      indexes:
+      - labelname: pduOutPduNumber
+        type: gauge
+      - labelname: pduOutNumber
+        type: gauge
+    - name: snmp_pdu_pduOutPFactorValue
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.2.3.1.15
+      type: gauge
+      help: Power factor value at the outlet in 0.01 units - 1.3.6.1.4.1.3711.24.1.1.7.2.3.1.15
+      indexes:
+      - labelname: pduOutPduNumber
+        type: gauge
+      - labelname: pduOutNumber
+        type: gauge
+    - name: snmp_pdu_pduOutRMSAmpsUTL
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.2.3.1.16
+      type: gauge
+      help: Upper threshold of pduOutRMSAmpsValue in 0.1 Amps - 1.3.6.1.4.1.3711.24.1.1.7.2.3.1.16
+      indexes:
+      - labelname: pduOutPduNumber
+        type: gauge
+      - labelname: pduOutNumber
+        type: gauge
+    - name: snmp_pdu_pduOutRMSAmpsLTL
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.2.3.1.17
+      type: gauge
+      help: Lower threshold of pduOutRMSAmpsValue in 0.1 Amps - 1.3.6.1.4.1.3711.24.1.1.7.2.3.1.17
+      indexes:
+      - labelname: pduOutPduNumber
+        type: gauge
+      - labelname: pduOutNumber
+        type: gauge
+    - name: snmp_pdu_pduOutRMSAmpsUTLTrapEn
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.2.3.1.18
+      type: gauge
+      help: Trap enable flag for pduOutRMSAmpsUTL. - 1.3.6.1.4.1.3711.24.1.1.7.2.3.1.18
+      indexes:
+      - labelname: pduOutPduNumber
+        type: gauge
+      - labelname: pduOutNumber
+        type: gauge
+      enum_values:
+        1: "true"
+        2: "false"
+    - name: snmp_pdu_pduOutRMSAmpsLTLTrapEn
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.2.3.1.19
+      type: gauge
+      help: Trap enable flag for pduOutRMSAmpsLTL. - 1.3.6.1.4.1.3711.24.1.1.7.2.3.1.19
+      indexes:
+      - labelname: pduOutPduNumber
+        type: gauge
+      - labelname: pduOutNumber
+        type: gauge
+      enum_values:
+        1: "true"
+        2: "false"
+    - name: snmp_pdu_pduOutRMSAmpsUTLTrapPer
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.2.3.1.20
+      type: gauge
+      help: Trap repetition period for pduOutRMSAmpsUTL. - 1.3.6.1.4.1.3711.24.1.1.7.2.3.1.20
+      indexes:
+      - labelname: pduOutPduNumber
+        type: gauge
+      - labelname: pduOutNumber
+        type: gauge
+    - name: snmp_pdu_pduOutRMSAmpsLTLTrapPer
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.2.3.1.21
+      type: gauge
+      help: Trap repetition period for pduOutRMSAmpsLTL. - 1.3.6.1.4.1.3711.24.1.1.7.2.3.1.21
+      indexes:
+      - labelname: pduOutPduNumber
+        type: gauge
+      - labelname: pduOutNumber
+        type: gauge
+    - name: snmp_pdu_pduMonPduNumber
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.1
+      type: gauge
+      help: The PDU number. - 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.1
+      indexes:
+      - labelname: pduMonPduNumber
+        type: gauge
+    - name: snmp_pdu_pduMonRS
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.2
+      type: gauge
+      help: The PDU table row status. - 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.2
+      indexes:
+      - labelname: pduMonPduNumber
+        type: gauge
+      enum_values:
+        1: active
+        2: notInService
+        3: notReady
+        4: createAndGo
+        5: createAndWait
+        6: destroy
+    - name: snmp_pdu_pduRMSVoltsValue
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.3
+      type: gauge
+      help: RMS Volts across load in Volts - 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.3
+      indexes:
+      - labelname: pduMonPduNumber
+        type: gauge
+    - name: snmp_pdu_pduRMSAmpsValue
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.4
+      type: gauge
+      help: RMS current through load in 0.1 Amps - 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.4
+      indexes:
+      - labelname: pduMonPduNumber
+        type: gauge
+    - name: snmp_pdu_pduTotalEnergyValue
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.5
+      type: gauge
+      help: Total energy supplied to load in 0.1 kWh - 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.5
+      indexes:
+      - labelname: pduMonPduNumber
+        type: gauge
+    - name: snmp_pdu_pduMeanKVAValue
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.6
+      type: gauge
+      help: Kilo Volt-Amperes supplied to load in 0.1 kVA - 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.6
+      indexes:
+      - labelname: pduMonPduNumber
+        type: gauge
+    - name: snmp_pdu_pduMeanKWattsValue
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.7
+      type: gauge
+      help: Kilo Watts supplied to load in 0.1 kW - 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.7
+      indexes:
+      - labelname: pduMonPduNumber
+        type: gauge
+    - name: snmp_pdu_pduPwrFactorValue
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.8
+      type: gauge
+      help: Power factor of load in 0.01 - 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.8
+      indexes:
+      - labelname: pduMonPduNumber
+        type: gauge
+    - name: snmp_pdu_pduPwrSupplyFreq
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.9
+      type: gauge
+      help: Power supply frequency in 0.1Hz - 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.9
+      indexes:
+      - labelname: pduMonPduNumber
+        type: gauge
+    - name: snmp_pdu_pduPhaseVoltsValue
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.10
+      type: gauge
+      help: RMS Volts across phase in Volts - 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.10
+      indexes:
+      - labelname: pduMonPduNumber
+        type: gauge
+    - name: snmp_pdu_pduPhaseAmpsValue
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.11
+      type: gauge
+      help: RMS current supplied by phase in 0.1 Amps - 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.11
+      indexes:
+      - labelname: pduMonPduNumber
+        type: gauge
+    - name: snmp_pdu_pduPhaseEnergyValue
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.12
+      type: gauge
+      help: Total energy supplied by phase in 0.1 kWh - 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.12
+      indexes:
+      - labelname: pduMonPduNumber
+        type: gauge
+    - name: snmp_pdu_pduPhaseKVAValue
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.13
+      type: gauge
+      help: Apparent power supplied by phase in 0.1 kVA - 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.13
+      indexes:
+      - labelname: pduMonPduNumber
+        type: gauge
+    - name: snmp_pdu_pduPhaseKWattsValue
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.14
+      type: gauge
+      help: True power supplied by phase in 0.1 kW - 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.14
+      indexes:
+      - labelname: pduMonPduNumber
+        type: gauge
+    - name: snmp_pdu_pduPhasePwrFactorValue
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.15
+      type: gauge
+      help: Power factor of phase in 0.01 - 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.15
+      indexes:
+      - labelname: pduMonPduNumber
+        type: gauge
+    - name: snmp_pdu_pduCircuitName
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.16
+      type: DisplayString
+      help: A string identifying the circuit. - 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.16
+      indexes:
+      - labelname: pduMonPduNumber
+        type: gauge
+    - name: snmp_pdu_pduCctKVAMax
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.17
+      type: gauge
+      help: Maximum apparent power in circuit for measurment period in 0.1 kVA - 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.17
+      indexes:
+      - labelname: pduMonPduNumber
+        type: gauge
+    - name: snmp_pdu_pduCctKVAMaxTime
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.18
+      type: DisplayString
+      help: Timestamp for maximum apparent power in circuit - 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.18
+      indexes:
+      - labelname: pduMonPduNumber
+        type: gauge
+    - name: snmp_pdu_pduCctKVAMin
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.19
+      type: gauge
+      help: Minimum apparent power in circuit for measurment period in 0.1 kVA - 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.19
+      indexes:
+      - labelname: pduMonPduNumber
+        type: gauge
+    - name: snmp_pdu_pduCctKVAMinTime
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.20
+      type: DisplayString
+      help: Timestamp for mniimum apparent power in circuit - 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.20
+      indexes:
+      - labelname: pduMonPduNumber
+        type: gauge
+    - name: snmp_pdu_pduCctAmpsMax
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.21
+      type: gauge
+      help: Maximum current in circuit for measurment period in 0.1 kVA - 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.21
+      indexes:
+      - labelname: pduMonPduNumber
+        type: gauge
+    - name: snmp_pdu_pduCctAmpsMaxTime
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.22
+      type: DisplayString
+      help: Timestamp for maximum current in circuit - 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.22
+      indexes:
+      - labelname: pduMonPduNumber
+        type: gauge
+    - name: snmp_pdu_pduCctAmpsMin
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.23
+      type: gauge
+      help: Minimum current in circuit for measurment period in 0.1 kVA - 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.23
+      indexes:
+      - labelname: pduMonPduNumber
+        type: gauge
+    - name: snmp_pdu_pduCctAmpsMinTime
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.24
+      type: DisplayString
+      help: Timestamp for minimum current in circuit - 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.24
+      indexes:
+      - labelname: pduMonPduNumber
+        type: gauge
+    - name: snmp_pdu_pduCctStatSagSet
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.25
+      type: gauge
+      help: Sag status is set in this circuit - 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.25
+      indexes:
+      - labelname: pduMonPduNumber
+        type: gauge
+      enum_values:
+        1: "true"
+        2: "false"
+    - name: snmp_pdu_pduCctStatSagCount
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.26
+      type: gauge
+      help: Sag status count in this circuit - 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.26
+      indexes:
+      - labelname: pduMonPduNumber
+        type: gauge
+    - name: snmp_pdu_pduCctStatSagTime
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.27
+      type: DisplayString
+      help: Timestamp for sag status in this circuit - 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.27
+      indexes:
+      - labelname: pduMonPduNumber
+        type: gauge
+    - name: snmp_pdu_pduCctStatPkVoltsSet
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.28
+      type: gauge
+      help: Peak Volts status is set in this circuit - 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.28
+      indexes:
+      - labelname: pduMonPduNumber
+        type: gauge
+      enum_values:
+        1: "true"
+        2: "false"
+    - name: snmp_pdu_pduCctStatPkVoltsCount
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.29
+      type: gauge
+      help: Peak Volts status count in this circuit - 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.29
+      indexes:
+      - labelname: pduMonPduNumber
+        type: gauge
+    - name: snmp_pdu_pduCctStatPkVoltsTime
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.30
+      type: DisplayString
+      help: Timestamp for Peak Volts status in this circuit - 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.30
+      indexes:
+      - labelname: pduMonPduNumber
+        type: gauge
+    - name: snmp_pdu_pduCctStatPwrLossSet
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.31
+      type: gauge
+      help: Power Loss status is set in this circuit - 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.31
+      indexes:
+      - labelname: pduMonPduNumber
+        type: gauge
+      enum_values:
+        1: "true"
+        2: "false"
+    - name: snmp_pdu_pduCctStatPwrLossCount
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.32
+      type: gauge
+      help: Power Loss status count in this circuit - 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.32
+      indexes:
+      - labelname: pduMonPduNumber
+        type: gauge
+    - name: snmp_pdu_pduCctStatPwrLossTime
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.33
+      type: DisplayString
+      help: Timestamp for Power Loss status in this circuit - 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.33
+      indexes:
+      - labelname: pduMonPduNumber
+        type: gauge
+    - name: snmp_pdu_pduCctPermKVAMax
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.34
+      type: gauge
+      help: Maximum apparent power in circuit since last reset in 0.1 kVA - 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.34
+      indexes:
+      - labelname: pduMonPduNumber
+        type: gauge
+    - name: snmp_pdu_pduCctPermKVAMaxTime
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.35
+      type: DisplayString
+      help: Timestamp for maximum apparent power in circuit since last reset - 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.35
+      indexes:
+      - labelname: pduMonPduNumber
+        type: gauge
+    - name: snmp_pdu_pduCctPermAmpsMax
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.36
+      type: gauge
+      help: Minimum apparent power in circuit since last reset in 0.1 kVA - 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.36
+      indexes:
+      - labelname: pduMonPduNumber
+        type: gauge
+    - name: snmp_pdu_pduCctPermAmpsMaxTime
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.37
+      type: DisplayString
+      help: Timestamp for minimum apparent power in circuit since last reset - 1.3.6.1.4.1.3711.24.1.1.7.3.1.1.37
+      indexes:
+      - labelname: pduMonPduNumber
+        type: gauge
+    - name: snmp_pdu_pdu3PhPduNumber
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.3.5.1.1
+      type: gauge
+      help: The PDU number. - 1.3.6.1.4.1.3711.24.1.1.7.3.5.1.1
+      indexes:
+      - labelname: pdu3PhPduNumber
+        type: gauge
+    - name: snmp_pdu_pdu3PhRS
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.3.5.1.2
+      type: gauge
+      help: The PDU table row status. - 1.3.6.1.4.1.3711.24.1.1.7.3.5.1.2
+      indexes:
+      - labelname: pdu3PhPduNumber
+        type: gauge
+      enum_values:
+        1: active
+        2: notInService
+        3: notReady
+        4: createAndGo
+        5: createAndWait
+        6: destroy
+    - name: snmp_pdu_pdu3PhMode
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.3.5.1.3
+      type: gauge
+      help: Three phase topology - 1.3.6.1.4.1.3711.24.1.1.7.3.5.1.3
+      indexes:
+      - labelname: pdu3PhPduNumber
+        type: gauge
+      enum_values:
+        1: star
+        2: delta
+        253: aggregate
+        254: none
+        255: unknown
+    - name: snmp_pdu_pdu3PhVoltsC1
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.3.5.1.4
+      type: gauge
+      help: Line RMS Volts value in volts - 1.3.6.1.4.1.3711.24.1.1.7.3.5.1.4
+      indexes:
+      - labelname: pdu3PhPduNumber
+        type: gauge
+    - name: snmp_pdu_pdu3PhAmpsL1
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.3.5.1.5
+      type: gauge
+      help: Phase RMS current value in 0.1 Amps - 1.3.6.1.4.1.3711.24.1.1.7.3.5.1.5
+      indexes:
+      - labelname: pdu3PhPduNumber
+        type: gauge
+    - name: snmp_pdu_pdu3PhVoltsC2
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.3.5.1.6
+      type: gauge
+      help: Line RMS Volts value in volts - 1.3.6.1.4.1.3711.24.1.1.7.3.5.1.6
+      indexes:
+      - labelname: pdu3PhPduNumber
+        type: gauge
+    - name: snmp_pdu_pdu3PhAmpsL2
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.3.5.1.7
+      type: gauge
+      help: Phase RMS current value in 0.1 Amps - 1.3.6.1.4.1.3711.24.1.1.7.3.5.1.7
+      indexes:
+      - labelname: pdu3PhPduNumber
+        type: gauge
+    - name: snmp_pdu_pdu3PhVoltsC3
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.3.5.1.8
+      type: gauge
+      help: Line RMS Volts value in volts - 1.3.6.1.4.1.3711.24.1.1.7.3.5.1.8
+      indexes:
+      - labelname: pdu3PhPduNumber
+        type: gauge
+    - name: snmp_pdu_pdu3PhAmpsL3
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.3.5.1.9
+      type: gauge
+      help: Phase RMS current value in 0.1 Amps - 1.3.6.1.4.1.3711.24.1.1.7.3.5.1.9
+      indexes:
+      - labelname: pdu3PhPduNumber
+        type: gauge
+    - name: snmp_pdu_pdu3PhAmpsAgg
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.3.5.1.10
+      type: gauge
+      help: Total RMS current value in 0.1 Amps - 1.3.6.1.4.1.3711.24.1.1.7.3.5.1.10
+      indexes:
+      - labelname: pdu3PhPduNumber
+        type: gauge
+    - name: snmp_pdu_pdu3PhkVAAgg
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.3.5.1.11
+      type: gauge
+      help: Total apparent power value in 0.1 kVA - 1.3.6.1.4.1.3711.24.1.1.7.3.5.1.11
+      indexes:
+      - labelname: pdu3PhPduNumber
+        type: gauge
+    - name: snmp_pdu_pdu3PhkWAgg
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.3.5.1.12
+      type: gauge
+      help: Total true power value in 0.1 kVW - 1.3.6.1.4.1.3711.24.1.1.7.3.5.1.12
+      indexes:
+      - labelname: pdu3PhPduNumber
+        type: gauge
+    - name: snmp_pdu_pdu3PhkVArhAgg
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.3.5.1.13
+      type: gauge
+      help: Total re-active energy value in 0.1 kVArh - 1.3.6.1.4.1.3711.24.1.1.7.3.5.1.13
+      indexes:
+      - labelname: pdu3PhPduNumber
+        type: gauge
+    - name: snmp_pdu_pdu3PhkWhAgg
+      oid: 1.3.6.1.4.1.3711.24.1.1.7.3.5.1.14
+      type: gauge
+      help: Total true energy value in 0.1 kWh - 1.3.6.1.4.1.3711.24.1.1.7.3.5.1.14
+      indexes:
+      - labelname: pdu3PhPduNumber
+        type: gauge
+    - name: snmp_pdu_firmware_revision
+      oid: 1.3.6.1.4.1.3711.24.1.1.98.2
+      type: DisplayString
+      help: Firmware revision number. - 1.3.6.1.4.1.3711.24.1.1.98.2
+    - name: snmp_pdu_model
+      oid: 1.3.6.1.4.1.3711.24.1.1.98.4
+      type: DisplayString
+      help: Model name. - 1.3.6.1.4.1.3711.24.1.1.98.4
+    - name: snmp_pdu_serial_number
+      oid: 1.3.6.1.4.1.3711.24.1.1.99.11
+      type: DisplayString
+      help: Serial number. - 1.3.6.1.4.1.3711.24.1.1.99.11
+    max_repetitions: 100
+    retries: 1
+    timeout: 5s
+  panduit-g5:
+    walk:
+    - 1.3.6.1.4.1.19536.10.1.1.2
+    - 1.3.6.1.4.1.19536.10.1.2.1
+    - 1.3.6.1.4.1.19536.10.1.2.2
+    - 1.3.6.1.4.1.19536.10.1.3.1
+    - 1.3.6.1.4.1.19536.10.1.4.2
+    - 1.3.6.1.4.1.19536.10.1.4.3
+    - 1.3.6.1.4.1.19536.10.1.5.1
+    get:
+    - 1.3.6.1.2.1.1.3.0
+    - 1.3.6.1.2.1.1.5.0
+    - 1.3.6.1.2.1.1.6.0
+    metrics:
+    - name: snmp_pdu_system_uptime
+      oid: 1.3.6.1.2.1.1.3
+      type: gauge
+      help: The time (in hundredths of a second) since the network management portion
+        of the system was last re-initialized. - 1.3.6.1.2.1.1.3
+    - name: snmp_pdu_sysName
+      oid: 1.3.6.1.2.1.1.5
+      type: DisplayString
+      help: An administratively-assigned name for this managed node - 1.3.6.1.2.1.1.5
+    - name: snmp_pdu_sysLocation
+      oid: 1.3.6.1.2.1.1.6
+      type: DisplayString
+      help: The physical location of this node (e.g., 'telephone closet, 3rd floor')
+        - 1.3.6.1.2.1.1.6
+    - name: snmp_pdu_pdug5IdentIndex
+      oid: 1.3.6.1.4.1.19536.10.1.1.2.1.1
+      type: gauge
+      help: Index for the pdug5IdentEntry table. - 1.3.6.1.4.1.19536.10.1.1.2.1.1
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_hw_name
+      oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+      type: DisplayString
+      help: The string identify the device in daisy chain - 1.3.6.1.4.1.19536.10.1.1.2.1.2
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5Model
+      oid: 1.3.6.1.4.1.19536.10.1.1.2.1.3
+      type: DisplayString
+      help: The Device Model. - 1.3.6.1.4.1.19536.10.1.1.2.1.3
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_vendor
+      oid: 1.3.6.1.4.1.19536.10.1.1.2.1.4
+      type: DisplayString
+      help: The Device Manufacturer Name. - 1.3.6.1.4.1.19536.10.1.1.2.1.4
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_firmware_revision
+      oid: 1.3.6.1.4.1.19536.10.1.1.2.1.5
+      type: DisplayString
+      help: The firmware revision level of the device. - 1.3.6.1.4.1.19536.10.1.1.2.1.5
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5FirmwareVersionTimeStamp
+      oid: 1.3.6.1.4.1.19536.10.1.1.2.1.6
+      type: DisplayString
+      help: Timestamp of when the PDU firmware was last updated - 1.3.6.1.4.1.19536.10.1.1.2.1.6
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_model
+      oid: 1.3.6.1.4.1.19536.10.1.1.2.1.7
+      type: DisplayString
+      help: The device part number - 1.3.6.1.4.1.19536.10.1.1.2.1.7
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_serial_number
+      oid: 1.3.6.1.4.1.19536.10.1.1.2.1.8
+      type: DisplayString
+      help: The device serial number, 10-digit. - 1.3.6.1.4.1.19536.10.1.1.2.1.8
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_hw_status
+      oid: 1.3.6.1.4.1.19536.10.1.1.2.1.9
+      type: EnumAsInfo
+      help: The overall status of the device - 1.3.6.1.4.1.19536.10.1.1.2.1.9
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      enum_values:
+        1: other
+        2: ok
+        3: degraded
+        4: failed
+    - name: snmp_pdu_pdug5Controllable
+      oid: 1.3.6.1.4.1.19536.10.1.1.2.1.10
+      type: gauge
+      help: This object indicates whether or not the device is controllable. - 1.3.6.1.4.1.19536.10.1.1.2.1.10
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      enum_values:
+        1: "yes"
+        2: "no"
+    - name: snmp_pdu_pdug5InputPhaseCount
+      oid: 1.3.6.1.4.1.19536.10.1.1.2.1.11
+      type: gauge
+      help: The number of input phase on this pdu 1 or 3. - 1.3.6.1.4.1.19536.10.1.1.2.1.11
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5GroupCount
+      oid: 1.3.6.1.4.1.19536.10.1.1.2.1.12
+      type: gauge
+      help: The number of groups (breakers) on this pdu. - 1.3.6.1.4.1.19536.10.1.1.2.1.12
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5OutletCount
+      oid: 1.3.6.1.4.1.19536.10.1.1.2.1.13
+      type: gauge
+      help: The number of outlets in this PDU. - 1.3.6.1.4.1.19536.10.1.1.2.1.13
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5MACAddress
+      oid: 1.3.6.1.4.1.19536.10.1.1.2.1.14
+      type: DisplayString
+      help: The assigned MAC address for this PDU. - 1.3.6.1.4.1.19536.10.1.1.2.1.14
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5IPv4Address
+      oid: 1.3.6.1.4.1.19536.10.1.1.2.1.15
+      type: InetAddressIPv4
+      help: The current IPv4 Address - 1.3.6.1.4.1.19536.10.1.1.2.1.15
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5IPv6Address
+      oid: 1.3.6.1.4.1.19536.10.1.1.2.1.16
+      type: DisplayString
+      help: The current IPv6 Address - 1.3.6.1.4.1.19536.10.1.1.2.1.16
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5HWVersion
+      oid: 1.3.6.1.4.1.19536.10.1.1.2.1.17
+      type: DisplayString
+      help: The current Hardware Version - 1.3.6.1.4.1.19536.10.1.1.2.1.17
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5InputType
+      oid: 1.3.6.1.4.1.19536.10.1.2.1.1.1
+      type: gauge
+      help: Type of input - single phase, split phase, three phase delta, or three
+        phase wye. - 1.3.6.1.4.1.19536.10.1.2.1.1.1
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      enum_values:
+        1: singlePhase
+        2: splitPhase
+        3: threePhaseDelta
+        4: threePhaseWye
+    - name: snmp_pdu_pdug5InputFrequency
+      oid: 1.3.6.1.4.1.19536.10.1.2.1.1.2
+      type: gauge
+      help: The measured input frequency from the PDU meters in tenths of Hz. - 1.3.6.1.4.1.19536.10.1.2.1.1.2
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5InputFrequencyStatus
+      oid: 1.3.6.1.4.1.19536.10.1.2.1.1.3
+      type: gauge
+      help: Status of the measured input frequency relative to the nominal frequency
+        and the admitted tolerance. - 1.3.6.1.4.1.19536.10.1.2.1.1.3
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      enum_values:
+        1: good
+        2: outOfRange
+    - name: snmp_pdu_pdug5InputPowerVA
+      oid: 1.3.6.1.4.1.19536.10.1.2.1.1.4
+      type: gauge
+      help: A total input VA of all phases - 1.3.6.1.4.1.19536.10.1.2.1.1.4
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5InputPowerWatts
+      oid: 1.3.6.1.4.1.19536.10.1.2.1.1.5
+      type: gauge
+      help: A total input Watts of all phases - 1.3.6.1.4.1.19536.10.1.2.1.1.5
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5InputTotalEnergy
+      oid: 1.3.6.1.4.1.19536.10.1.2.1.1.6
+      type: gauge
+      help: A total input Watt-Hour value for all phases - 1.3.6.1.4.1.19536.10.1.2.1.1.6
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5InputPowerWattHourTimer
+      oid: 1.3.6.1.4.1.19536.10.1.2.1.1.7
+      type: DisplayString
+      help: A Timestamp of when the Total Input WH was last reset. - 1.3.6.1.4.1.19536.10.1.2.1.1.7
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5InputResettableEnergy
+      oid: 1.3.6.1.4.1.19536.10.1.2.1.1.8
+      type: gauge
+      help: A total input Watt-Hour value for all phases - 1.3.6.1.4.1.19536.10.1.2.1.1.8
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5InputPowerFactor
+      oid: 1.3.6.1.4.1.19536.10.1.2.1.1.9
+      type: gauge
+      help: An input PF value - 1.3.6.1.4.1.19536.10.1.2.1.1.9
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5InputPowerVAR
+      oid: 1.3.6.1.4.1.19536.10.1.2.1.1.10
+      type: gauge
+      help: An input VAR value - 1.3.6.1.4.1.19536.10.1.2.1.1.10
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5InputTotalCurrent
+      oid: 1.3.6.1.4.1.19536.10.1.2.1.1.11
+      type: gauge
+      help: All phases total current value - 1.3.6.1.4.1.19536.10.1.2.1.1.11
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5InputPhaseIndex
+      oid: 1.3.6.1.4.1.19536.10.1.2.2.1.1
+      type: gauge
+      help: Index for the pdug5InputEntry table. - 1.3.6.1.4.1.19536.10.1.2.2.1.1
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5InputPhaseIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5InputPhaseVoltageMeasType
+      oid: 1.3.6.1.4.1.19536.10.1.2.2.1.2
+      type: gauge
+      help: Value indicates what input voltage is being measured in this table row
+        - single phase voltage, phase 1 to neutral, phase 2 to neutral, phase 3 to
+        neutral, phase 1 to phase 2, phase 2 to phase 3, or phase 3 to phase 1. -
+        1.3.6.1.4.1.19536.10.1.2.2.1.2
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5InputPhaseIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      enum_values:
+        1: singlePhase
+        2: phase1toN
+        3: phase2toN
+        4: phase3toN
+        5: phase1to2
+        6: phase2to3
+        7: phase3to1
+    - name: snmp_pdu_pdug5InputPhaseVoltage
+      oid: 1.3.6.1.4.1.19536.10.1.2.2.1.3
+      type: gauge
+      help: An input voltage measurement value - 1.3.6.1.4.1.19536.10.1.2.2.1.3
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5InputPhaseIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5InputPhaseVoltageThStatus
+      oid: 1.3.6.1.4.1.19536.10.1.2.2.1.4
+      type: gauge
+      help: Status of the measured input voltage relative to the configured thresholds.
+        - 1.3.6.1.4.1.19536.10.1.2.2.1.4
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5InputPhaseIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      enum_values:
+        1: good
+        2: lowWarning
+        3: lowCritical
+        4: highWarning
+        5: highCritical
+    - name: snmp_pdu_pdug5InputPhaseVoltageThLowerWarning
+      oid: 1.3.6.1.4.1.19536.10.1.2.2.1.5
+      type: gauge
+      help: Lower warning threshold - 1.3.6.1.4.1.19536.10.1.2.2.1.5
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5InputPhaseIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5InputPhaseVoltageThLowerCritical
+      oid: 1.3.6.1.4.1.19536.10.1.2.2.1.6
+      type: gauge
+      help: Lower critical threshold - 1.3.6.1.4.1.19536.10.1.2.2.1.6
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5InputPhaseIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5InputPhaseVoltageThUpperWarning
+      oid: 1.3.6.1.4.1.19536.10.1.2.2.1.7
+      type: gauge
+      help: Upper warning threshold - 1.3.6.1.4.1.19536.10.1.2.2.1.7
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5InputPhaseIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5InputPhaseVoltageThUpperCritical
+      oid: 1.3.6.1.4.1.19536.10.1.2.2.1.8
+      type: gauge
+      help: Upper critical threshold - 1.3.6.1.4.1.19536.10.1.2.2.1.8
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5InputPhaseIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5InputPhaseCurrentMeasType
+      oid: 1.3.6.1.4.1.19536.10.1.2.2.1.9
+      type: gauge
+      help: Which input wire is being measured in this table row - single phase, neutral,
+        phase 1, phase 2, or phase 3. - 1.3.6.1.4.1.19536.10.1.2.2.1.9
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5InputPhaseIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      enum_values:
+        1: singlePhase
+        2: neutral
+        3: phase1
+        4: phase2
+        5: phase3
+    - name: snmp_pdu_pdug5InputPhaseCurrentRating
+      oid: 1.3.6.1.4.1.19536.10.1.2.2.1.10
+      type: gauge
+      help: Rated current capacity of the input - 1.3.6.1.4.1.19536.10.1.2.2.1.10
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5InputPhaseIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5InputPhaseCurrent
+      oid: 1.3.6.1.4.1.19536.10.1.2.2.1.11
+      type: gauge
+      help: An input current measurement value - 1.3.6.1.4.1.19536.10.1.2.2.1.11
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5InputPhaseIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5InputPhaseCurrentThStatus
+      oid: 1.3.6.1.4.1.19536.10.1.2.2.1.12
+      type: gauge
+      help: Status of the measured input current relative to the configured thresholds.
+        - 1.3.6.1.4.1.19536.10.1.2.2.1.12
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5InputPhaseIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      enum_values:
+        1: good
+        2: lowWarning
+        3: lowCritical
+        4: highWarning
+        5: highCritical
+    - name: snmp_pdu_pdug5InputPhaseCurrentThLowerWarning
+      oid: 1.3.6.1.4.1.19536.10.1.2.2.1.13
+      type: gauge
+      help: Lower warning threshold - 1.3.6.1.4.1.19536.10.1.2.2.1.13
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5InputPhaseIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5InputPhaseCurrentThLowerCritical
+      oid: 1.3.6.1.4.1.19536.10.1.2.2.1.14
+      type: gauge
+      help: Lower critical threshold - 1.3.6.1.4.1.19536.10.1.2.2.1.14
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5InputPhaseIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5InputPhaseCurrentThUpperWarning
+      oid: 1.3.6.1.4.1.19536.10.1.2.2.1.15
+      type: gauge
+      help: Upper warning threshold - 1.3.6.1.4.1.19536.10.1.2.2.1.15
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5InputPhaseIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5InputPhaseCurrentThUpperCritical
+      oid: 1.3.6.1.4.1.19536.10.1.2.2.1.16
+      type: gauge
+      help: Upper critical threshold - 1.3.6.1.4.1.19536.10.1.2.2.1.16
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5InputPhaseIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5InputPhaseCurrentPercentLoad
+      oid: 1.3.6.1.4.1.19536.10.1.2.2.1.17
+      type: gauge
+      help: Current percent load, based on the rated current capacity - 1.3.6.1.4.1.19536.10.1.2.2.1.17
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5InputPhaseIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5InputPhasePowerMeasType
+      oid: 1.3.6.1.4.1.19536.10.1.2.2.1.18
+      type: gauge
+      help: Which input wire is being measured in this table row - single phase, neutral,
+        phase 1, phase 2, or phase 3. - 1.3.6.1.4.1.19536.10.1.2.2.1.18
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5InputPhaseIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      enum_values:
+        1: singlePhase
+        2: neutral
+        3: phase1
+        4: phase2
+        5: phase3
+    - name: snmp_pdu_pdug5InputPhasePowerVA
+      oid: 1.3.6.1.4.1.19536.10.1.2.2.1.19
+      type: gauge
+      help: An input VA value - 1.3.6.1.4.1.19536.10.1.2.2.1.19
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5InputPhaseIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5InputPhasePowerWatts
+      oid: 1.3.6.1.4.1.19536.10.1.2.2.1.20
+      type: gauge
+      help: An input Watts value - 1.3.6.1.4.1.19536.10.1.2.2.1.20
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5InputPhaseIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5InputPhasePowerWattHour
+      oid: 1.3.6.1.4.1.19536.10.1.2.2.1.21
+      type: gauge
+      help: A Watt-Hour value for each Input phase - 1.3.6.1.4.1.19536.10.1.2.2.1.21
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5InputPhaseIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5InputPhasePowerWattHourTimer
+      oid: 1.3.6.1.4.1.19536.10.1.2.2.1.22
+      type: DisplayString
+      help: Timestamp of when input Watt-hours (inputWh) was last reset. - 1.3.6.1.4.1.19536.10.1.2.2.1.22
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5InputPhaseIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5InputPhasePowerFactor
+      oid: 1.3.6.1.4.1.19536.10.1.2.2.1.23
+      type: gauge
+      help: An input PF value - 1.3.6.1.4.1.19536.10.1.2.2.1.23
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5InputPhaseIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5InputPhasePowerVAR
+      oid: 1.3.6.1.4.1.19536.10.1.2.2.1.24
+      type: gauge
+      help: An input VAR value - 1.3.6.1.4.1.19536.10.1.2.2.1.24
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5InputPhaseIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5InputPhaseVoltageThResetThld
+      oid: 1.3.6.1.4.1.19536.10.1.2.2.1.25
+      type: gauge
+      help: The Reset threshold is the number of volts the reading needs to fall below
+        the threshold setting for the condition to be cleared - 1.3.6.1.4.1.19536.10.1.2.2.1.25
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5InputPhaseIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5InputPhaseVoltageThChangeDelay
+      oid: 1.3.6.1.4.1.19536.10.1.2.2.1.26
+      type: gauge
+      help: The number of consecutive sample that the condition is present before
+        an alarm is raised. - 1.3.6.1.4.1.19536.10.1.2.2.1.26
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5InputPhaseIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5InputPhaseVoltageThCtrl
+      oid: 1.3.6.1.4.1.19536.10.1.2.2.1.27
+      type: gauge
+      help: 'Input phase voltage alarm threshold control: bit 0: up critical alarm
+        control bit, 0 - enable, 1 - disable bit 1: up warning alarm control bit,
+        0 - enable, 1 - disable bit 2: low warning alarm control bit, 0 - enable,
+        1 - disable bit 3: low critical alarm control bit, 0 - enable, 1 - disable
+        - 1.3.6.1.4.1.19536.10.1.2.2.1.27'
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5InputPhaseIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5InputPhaseCurrentThResetThld
+      oid: 1.3.6.1.4.1.19536.10.1.2.2.1.28
+      type: gauge
+      help: The Reset threshold is the number of amps the reading needs to fall below
+        the threshold setting for the condition to be cleared - 1.3.6.1.4.1.19536.10.1.2.2.1.28
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5InputPhaseIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5InputPhaseCurrentThChangeDelay
+      oid: 1.3.6.1.4.1.19536.10.1.2.2.1.29
+      type: gauge
+      help: The number of consecutive sample that the condition is present before
+        an alarm is raised. - 1.3.6.1.4.1.19536.10.1.2.2.1.29
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5InputPhaseIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5InputPhaseCurrentThCtrl
+      oid: 1.3.6.1.4.1.19536.10.1.2.2.1.30
+      type: gauge
+      help: 'Input phase current alarm threshold control: bit 0: up critical alarm
+        control bit, 0 - enable, 1 - disable bit 1: up warning alarm control bit,
+        0 - enable, 1 - disable bit 2: low warning alarm control bit, 0 - enable,
+        1 - disable bit 3: low critical alarm control bit, 0 - enable, 1 - disable
+        - 1.3.6.1.4.1.19536.10.1.2.2.1.30'
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5InputPhaseIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5InputPowerThresholdThLowerWarning
+      oid: 1.3.6.1.4.1.19536.10.1.2.2.1.31
+      type: gauge
+      help: Lower warning Power threshold - 1.3.6.1.4.1.19536.10.1.2.2.1.31
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5InputPhaseIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5InputPowerThresholdThLowerCritical
+      oid: 1.3.6.1.4.1.19536.10.1.2.2.1.32
+      type: gauge
+      help: Lower critical Power threshold - 1.3.6.1.4.1.19536.10.1.2.2.1.32
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5InputPhaseIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5InputPowerThresholdThUpperWarning
+      oid: 1.3.6.1.4.1.19536.10.1.2.2.1.33
+      type: gauge
+      help: Upper warning Power threshold - 1.3.6.1.4.1.19536.10.1.2.2.1.33
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5InputPhaseIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5InputPowerThresholdThUpperCritical
+      oid: 1.3.6.1.4.1.19536.10.1.2.2.1.34
+      type: gauge
+      help: Upper critical Power threshold - 1.3.6.1.4.1.19536.10.1.2.2.1.34
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5InputPhaseIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5InputPowerThresholdThResetThld
+      oid: 1.3.6.1.4.1.19536.10.1.2.2.1.35
+      type: gauge
+      help: The Reset threshold is the number of watts the reading needs to fall below
+        the threshold setting for the condition to be cleared - 1.3.6.1.4.1.19536.10.1.2.2.1.35
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5InputPhaseIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5InputPowerThresholdThChangeDelay
+      oid: 1.3.6.1.4.1.19536.10.1.2.2.1.36
+      type: gauge
+      help: The number of consecutive sample that the condition is present before
+        an alarm is raised. - 1.3.6.1.4.1.19536.10.1.2.2.1.36
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5InputPhaseIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5InputPowerThresholdThCtrl
+      oid: 1.3.6.1.4.1.19536.10.1.2.2.1.37
+      type: gauge
+      help: 'Power alarm threshold control: bit 0: up critical alarm control bit,
+        0 - enable, 1 - disable bit 1: up warning alarm control bit, 0 - enable, 1
+        - disable bit 2: low warning alarm control bit, 0 - enable, 1 - disable bit
+        3: low critical alarm control bit, 0 - enable, 1 - disable - 1.3.6.1.4.1.19536.10.1.2.2.1.37'
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5InputPhaseIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5InputEnergyThresholdThUpperWarning
+      oid: 1.3.6.1.4.1.19536.10.1.2.2.1.38
+      type: gauge
+      help: Upper warning Energy threshold - 1.3.6.1.4.1.19536.10.1.2.2.1.38
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5InputPhaseIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5InputEnergyThresholdThUpperCritical
+      oid: 1.3.6.1.4.1.19536.10.1.2.2.1.39
+      type: gauge
+      help: Upper critical Energy threshold - 1.3.6.1.4.1.19536.10.1.2.2.1.39
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5InputPhaseIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5InputEnergyThresholdThResetThld
+      oid: 1.3.6.1.4.1.19536.10.1.2.2.1.40
+      type: gauge
+      help: The Reset threshold is the number of watts the reading needs to fall below
+        the threshold setting for the condition to be cleared - 1.3.6.1.4.1.19536.10.1.2.2.1.40
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5InputPhaseIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5InputEnergyThresholdThChangeDelay
+      oid: 1.3.6.1.4.1.19536.10.1.2.2.1.41
+      type: gauge
+      help: The number of consecutive sample that the condition is present before
+        an alarm is raised. - 1.3.6.1.4.1.19536.10.1.2.2.1.41
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5InputPhaseIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5InputEnergyThresholdThCtrl
+      oid: 1.3.6.1.4.1.19536.10.1.2.2.1.42
+      type: gauge
+      help: 'Energy alarm threshold control: bit 0: up critical alarm control bit,
+        0 - enable, 1 - disable bit 1: up warning alarm control bit, 0 - enable, 1
+        - disable bit 2: low warning alarm control bit, 0 - enable, 1 - disable bit
+        3: low critical alarm control bit, 0 - enable, 1 - disable - 1.3.6.1.4.1.19536.10.1.2.2.1.42'
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5InputPhaseIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5InputPhasePowerThStatus
+      oid: 1.3.6.1.4.1.19536.10.1.2.2.1.43
+      type: gauge
+      help: Status of the measured input current relative to the configured thresholds.
+        - 1.3.6.1.4.1.19536.10.1.2.2.1.43
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5InputPhaseIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      enum_values:
+        1: good
+        2: lowWarning
+        3: lowCritical
+        4: highWarning
+        5: highCritical
+    - name: snmp_pdu_pdug5GroupIndex
+      oid: 1.3.6.1.4.1.19536.10.1.3.1.1.1
+      type: gauge
+      help: Index for the pdug5GroupEntry table. - 1.3.6.1.4.1.19536.10.1.3.1.1.1
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5GroupIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5GroupIndex
+        labelname: pdug5GroupName
+        oid: 1.3.6.1.4.1.19536.10.1.3.1.1.2
+        type: DisplayString
+    - name: snmp_pdu_hw_name
+      oid: 1.3.6.1.4.1.19536.10.1.3.1.1.2
+      type: DisplayString
+      help: A descriptive name for the group. - 1.3.6.1.4.1.19536.10.1.3.1.1.2
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5GroupIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5GroupIndex
+        labelname: pdug5GroupName
+        oid: 1.3.6.1.4.1.19536.10.1.3.1.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5GroupType
+      oid: 1.3.6.1.4.1.19536.10.1.3.1.1.3
+      type: gauge
+      help: The type of the group - 1.3.6.1.4.1.19536.10.1.3.1.1.3
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5GroupIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5GroupIndex
+        labelname: pdug5GroupName
+        oid: 1.3.6.1.4.1.19536.10.1.3.1.1.2
+        type: DisplayString
+      enum_values:
+        2: breaker1pole
+        3: breaker2pole
+        4: breaker3pole
+        5: outletSection
+    - name: snmp_pdu_pdug5GroupVoltageMeasType
+      oid: 1.3.6.1.4.1.19536.10.1.3.1.1.4
+      type: gauge
+      help: Value indicates what input voltage is being measured in this table row
+        - single phase voltage, phase 1 to neutral, phase 2 to neutral, phase 3 to
+        neutral, phase 1 to phase 2, phase 2 to phase 3, or phase 3 to phase 1. -
+        1.3.6.1.4.1.19536.10.1.3.1.1.4
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5GroupIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5GroupIndex
+        labelname: pdug5GroupName
+        oid: 1.3.6.1.4.1.19536.10.1.3.1.1.2
+        type: DisplayString
+      enum_values:
+        1: singlePhase
+        2: phase1toN
+        3: phase2toN
+        4: phase3toN
+        5: phase1to2
+        6: phase2to3
+        7: phase3to1
+    - name: snmp_pdu_pdug5GroupVoltage
+      oid: 1.3.6.1.4.1.19536.10.1.3.1.1.5
+      type: gauge
+      help: Units are 0.1 volts. - 1.3.6.1.4.1.19536.10.1.3.1.1.5
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5GroupIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5GroupIndex
+        labelname: pdug5GroupName
+        oid: 1.3.6.1.4.1.19536.10.1.3.1.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5GroupVoltageThStatus
+      oid: 1.3.6.1.4.1.19536.10.1.3.1.1.6
+      type: gauge
+      help: Status of the measured group voltage relative to the configured thresholds.
+        - 1.3.6.1.4.1.19536.10.1.3.1.1.6
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5GroupIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5GroupIndex
+        labelname: pdug5GroupName
+        oid: 1.3.6.1.4.1.19536.10.1.3.1.1.2
+        type: DisplayString
+      enum_values:
+        1: good
+        2: lowWarning
+        3: lowCritical
+        4: highWarning
+        5: highCritical
+    - name: snmp_pdu_pdug5GroupVoltageThLowerWarning
+      oid: 1.3.6.1.4.1.19536.10.1.3.1.1.7
+      type: gauge
+      help: Lower warning threshold - 1.3.6.1.4.1.19536.10.1.3.1.1.7
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5GroupIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5GroupIndex
+        labelname: pdug5GroupName
+        oid: 1.3.6.1.4.1.19536.10.1.3.1.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5GroupVoltageThLowerCritical
+      oid: 1.3.6.1.4.1.19536.10.1.3.1.1.8
+      type: gauge
+      help: Lower critical threshold - 1.3.6.1.4.1.19536.10.1.3.1.1.8
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5GroupIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5GroupIndex
+        labelname: pdug5GroupName
+        oid: 1.3.6.1.4.1.19536.10.1.3.1.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5GroupVoltageThUpperWarning
+      oid: 1.3.6.1.4.1.19536.10.1.3.1.1.9
+      type: gauge
+      help: Upper warning threshold - 1.3.6.1.4.1.19536.10.1.3.1.1.9
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5GroupIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5GroupIndex
+        labelname: pdug5GroupName
+        oid: 1.3.6.1.4.1.19536.10.1.3.1.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5GroupVoltageThUpperCritical
+      oid: 1.3.6.1.4.1.19536.10.1.3.1.1.10
+      type: gauge
+      help: Upper critical threshold - 1.3.6.1.4.1.19536.10.1.3.1.1.10
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5GroupIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5GroupIndex
+        labelname: pdug5GroupName
+        oid: 1.3.6.1.4.1.19536.10.1.3.1.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5groupCurrentRating
+      oid: 1.3.6.1.4.1.19536.10.1.3.1.1.11
+      type: gauge
+      help: Rated current capacity of the group - 1.3.6.1.4.1.19536.10.1.3.1.1.11
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5GroupIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5GroupIndex
+        labelname: pdug5GroupName
+        oid: 1.3.6.1.4.1.19536.10.1.3.1.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5GroupCurrent
+      oid: 1.3.6.1.4.1.19536.10.1.3.1.1.12
+      type: gauge
+      help: A group current measurement value - 1.3.6.1.4.1.19536.10.1.3.1.1.12
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5GroupIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5GroupIndex
+        labelname: pdug5GroupName
+        oid: 1.3.6.1.4.1.19536.10.1.3.1.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5GroupCurrentThStatus
+      oid: 1.3.6.1.4.1.19536.10.1.3.1.1.13
+      type: gauge
+      help: Status of the measured group current relative to the configured thresholds.
+        - 1.3.6.1.4.1.19536.10.1.3.1.1.13
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5GroupIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5GroupIndex
+        labelname: pdug5GroupName
+        oid: 1.3.6.1.4.1.19536.10.1.3.1.1.2
+        type: DisplayString
+      enum_values:
+        1: good
+        2: lowWarning
+        3: lowCritical
+        4: highWarning
+        5: highCritical
+        6: cbOff
+    - name: snmp_pdu_pdug5GroupCurrentThLowerWarning
+      oid: 1.3.6.1.4.1.19536.10.1.3.1.1.14
+      type: gauge
+      help: Lower warning threshold - 1.3.6.1.4.1.19536.10.1.3.1.1.14
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5GroupIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5GroupIndex
+        labelname: pdug5GroupName
+        oid: 1.3.6.1.4.1.19536.10.1.3.1.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5GroupCurrentThLowerCritical
+      oid: 1.3.6.1.4.1.19536.10.1.3.1.1.15
+      type: gauge
+      help: Lower critical threshold - 1.3.6.1.4.1.19536.10.1.3.1.1.15
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5GroupIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5GroupIndex
+        labelname: pdug5GroupName
+        oid: 1.3.6.1.4.1.19536.10.1.3.1.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5GroupCurrentThUpperWarning
+      oid: 1.3.6.1.4.1.19536.10.1.3.1.1.16
+      type: gauge
+      help: Upper warning threshold - 1.3.6.1.4.1.19536.10.1.3.1.1.16
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5GroupIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5GroupIndex
+        labelname: pdug5GroupName
+        oid: 1.3.6.1.4.1.19536.10.1.3.1.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5GroupCurrentThUpperCritical
+      oid: 1.3.6.1.4.1.19536.10.1.3.1.1.17
+      type: gauge
+      help: Upper critical threshold - 1.3.6.1.4.1.19536.10.1.3.1.1.17
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5GroupIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5GroupIndex
+        labelname: pdug5GroupName
+        oid: 1.3.6.1.4.1.19536.10.1.3.1.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5GroupCurrentPercentLoad
+      oid: 1.3.6.1.4.1.19536.10.1.3.1.1.18
+      type: gauge
+      help: Current percent load, based on the rated current capacity - 1.3.6.1.4.1.19536.10.1.3.1.1.18
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5GroupIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5GroupIndex
+        labelname: pdug5GroupName
+        oid: 1.3.6.1.4.1.19536.10.1.3.1.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5GroupPowerVA
+      oid: 1.3.6.1.4.1.19536.10.1.3.1.1.19
+      type: gauge
+      help: A group VA value - 1.3.6.1.4.1.19536.10.1.3.1.1.19
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5GroupIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5GroupIndex
+        labelname: pdug5GroupName
+        oid: 1.3.6.1.4.1.19536.10.1.3.1.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5GroupPowerWatts
+      oid: 1.3.6.1.4.1.19536.10.1.3.1.1.20
+      type: gauge
+      help: A group power value - 1.3.6.1.4.1.19536.10.1.3.1.1.20
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5GroupIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5GroupIndex
+        labelname: pdug5GroupName
+        oid: 1.3.6.1.4.1.19536.10.1.3.1.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5GroupPowerWattHour
+      oid: 1.3.6.1.4.1.19536.10.1.3.1.1.21
+      type: gauge
+      help: A Watt-Hour value for each section - 1.3.6.1.4.1.19536.10.1.3.1.1.21
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5GroupIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5GroupIndex
+        labelname: pdug5GroupName
+        oid: 1.3.6.1.4.1.19536.10.1.3.1.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5GroupPowerWattHourTimer
+      oid: 1.3.6.1.4.1.19536.10.1.3.1.1.22
+      type: DisplayString
+      help: Timestamp of when group Watt-hours (groupWh) was last reset. - 1.3.6.1.4.1.19536.10.1.3.1.1.22
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5GroupIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5GroupIndex
+        labelname: pdug5GroupName
+        oid: 1.3.6.1.4.1.19536.10.1.3.1.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5GroupPowerFactor
+      oid: 1.3.6.1.4.1.19536.10.1.3.1.1.23
+      type: gauge
+      help: A group PF value - 1.3.6.1.4.1.19536.10.1.3.1.1.23
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5GroupIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5GroupIndex
+        labelname: pdug5GroupName
+        oid: 1.3.6.1.4.1.19536.10.1.3.1.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5GroupPowerVAR
+      oid: 1.3.6.1.4.1.19536.10.1.3.1.1.24
+      type: gauge
+      help: A group VAR value - 1.3.6.1.4.1.19536.10.1.3.1.1.24
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5GroupIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5GroupIndex
+        labelname: pdug5GroupName
+        oid: 1.3.6.1.4.1.19536.10.1.3.1.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5GroupOutletCount
+      oid: 1.3.6.1.4.1.19536.10.1.3.1.1.25
+      type: gauge
+      help: The number of outlets in each group (breaker). - 1.3.6.1.4.1.19536.10.1.3.1.1.25
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5GroupIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5GroupIndex
+        labelname: pdug5GroupName
+        oid: 1.3.6.1.4.1.19536.10.1.3.1.1.2
+        type: DisplayString
+    - name: snmp_pdu_hw_status
+      oid: 1.3.6.1.4.1.19536.10.1.3.1.1.26
+      type: EnumAsInfo
+      help: Only applicable to groups with breaker - 1.3.6.1.4.1.19536.10.1.3.1.1.26
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5GroupIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5GroupIndex
+        labelname: pdug5GroupName
+        oid: 1.3.6.1.4.1.19536.10.1.3.1.1.2
+        type: DisplayString
+      enum_values:
+        1: notApplicable
+        2: breakerOn
+        3: breakerOff
+    - name: snmp_pdu_pdug5GroupVoltageThCtrl
+      oid: 1.3.6.1.4.1.19536.10.1.3.1.1.27
+      type: gauge
+      help: 'Circuit Breaker voltage alarm threshold control: bit 0: up critical alarm
+        control bit, 0 - enable, 1 - disable bit 1: up warning alarm control bit,
+        0 - enable, 1 - disable bit 2: low warning alarm control bit, 0 - enable,
+        1 - disable bit 3: low critical alarm control bit, 0 - enable, 1 - disable
+        - 1.3.6.1.4.1.19536.10.1.3.1.1.27'
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5GroupIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5GroupIndex
+        labelname: pdug5GroupName
+        oid: 1.3.6.1.4.1.19536.10.1.3.1.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5GroupCurrentThCtrl
+      oid: 1.3.6.1.4.1.19536.10.1.3.1.1.28
+      type: gauge
+      help: 'Circuit Breaker current alarm threshold control: bit 0: up critical alarm
+        control bit, 0 - enable, 1 - disable bit 1: up warning alarm control bit,
+        0 - enable, 1 - disable bit 2: low warning alarm control bit, 0 - enable,
+        1 - disable bit 3: low critical alarm control bit, 0 - enable, 1 - disable
+        - 1.3.6.1.4.1.19536.10.1.3.1.1.28'
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5GroupIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5GroupIndex
+        labelname: pdug5GroupName
+        oid: 1.3.6.1.4.1.19536.10.1.3.1.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5TemperatureIndex
+      oid: 1.3.6.1.4.1.19536.10.1.4.2.1.1
+      type: gauge
+      help: A unique value for each temperature probe measurement - 1.3.6.1.4.1.19536.10.1.4.2.1.1
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5TemperatureIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5TemperatureIndex
+        labelname: pdug5TemperatureName
+        oid: 1.3.6.1.4.1.19536.10.1.4.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_hw_name
+      oid: 1.3.6.1.4.1.19536.10.1.4.2.1.2
+      type: DisplayString
+      help: A descriptive name for the temperature probe. - 1.3.6.1.4.1.19536.10.1.4.2.1.2
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5TemperatureIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5TemperatureIndex
+        labelname: pdug5TemperatureName
+        oid: 1.3.6.1.4.1.19536.10.1.4.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_hw_status
+      oid: 1.3.6.1.4.1.19536.10.1.4.2.1.3
+      type: EnumAsInfo
+      help: Indicates whether a probe is connected or not. - 1.3.6.1.4.1.19536.10.1.4.2.1.3
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5TemperatureIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5TemperatureIndex
+        labelname: pdug5TemperatureName
+        oid: 1.3.6.1.4.1.19536.10.1.4.2.1.2
+        type: DisplayString
+      enum_values:
+        1: disconnected
+        2: connected
+        3: bad
+    - name: snmp_pdu_pdug5TemperatureValue
+      oid: 1.3.6.1.4.1.19536.10.1.4.2.1.4
+      type: gauge
+      help: Units are degree(either Fahrenheit or Celsius). - 1.3.6.1.4.1.19536.10.1.4.2.1.4
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5TemperatureIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5TemperatureIndex
+        labelname: pdug5TemperatureName
+        oid: 1.3.6.1.4.1.19536.10.1.4.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5TemperatureThStatus
+      oid: 1.3.6.1.4.1.19536.10.1.4.2.1.5
+      type: gauge
+      help: Status of the measured temperature relative to the configured thresholds.
+        - 1.3.6.1.4.1.19536.10.1.4.2.1.5
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5TemperatureIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5TemperatureIndex
+        labelname: pdug5TemperatureName
+        oid: 1.3.6.1.4.1.19536.10.1.4.2.1.2
+        type: DisplayString
+      enum_values:
+        1: good
+        2: lowWarning
+        3: lowCritical
+        4: highWarning
+        5: highCritical
+    - name: snmp_pdu_pdug5TemperatureThLowerWarning
+      oid: 1.3.6.1.4.1.19536.10.1.4.2.1.6
+      type: gauge
+      help: Lower warning threshold - 1.3.6.1.4.1.19536.10.1.4.2.1.6
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5TemperatureIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5TemperatureIndex
+        labelname: pdug5TemperatureName
+        oid: 1.3.6.1.4.1.19536.10.1.4.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5TemperatureThLowerCritical
+      oid: 1.3.6.1.4.1.19536.10.1.4.2.1.7
+      type: gauge
+      help: Lower critical threshold - 1.3.6.1.4.1.19536.10.1.4.2.1.7
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5TemperatureIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5TemperatureIndex
+        labelname: pdug5TemperatureName
+        oid: 1.3.6.1.4.1.19536.10.1.4.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5TemperatureThUpperWarning
+      oid: 1.3.6.1.4.1.19536.10.1.4.2.1.8
+      type: gauge
+      help: Upper warning threshold - 1.3.6.1.4.1.19536.10.1.4.2.1.8
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5TemperatureIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5TemperatureIndex
+        labelname: pdug5TemperatureName
+        oid: 1.3.6.1.4.1.19536.10.1.4.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5TemperatureThUpperCritical
+      oid: 1.3.6.1.4.1.19536.10.1.4.2.1.9
+      type: gauge
+      help: Upper critical threshold - 1.3.6.1.4.1.19536.10.1.4.2.1.9
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5TemperatureIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5TemperatureIndex
+        labelname: pdug5TemperatureName
+        oid: 1.3.6.1.4.1.19536.10.1.4.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5TemperatureThCtrl
+      oid: 1.3.6.1.4.1.19536.10.1.4.2.1.10
+      type: gauge
+      help: 'Temperature alarm threshold control: bit 0: up critical alarm control
+        bit, 0 - enable, 1 - disable bit 1: up warning alarm control bit, 0 - enable,
+        1 - disable bit 2: low warning alarm control bit, 0 - enable, 1 - disable
+        bit 3: low critical alarm control bit, 0 - enable, 1 - disable - 1.3.6.1.4.1.19536.10.1.4.2.1.10'
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5TemperatureIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5TemperatureIndex
+        labelname: pdug5TemperatureName
+        oid: 1.3.6.1.4.1.19536.10.1.4.2.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5HumidityIndex
+      oid: 1.3.6.1.4.1.19536.10.1.4.3.1.1
+      type: gauge
+      help: A unique value for each humidity probe measurement - 1.3.6.1.4.1.19536.10.1.4.3.1.1
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5HumidityIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5HumidityIndex
+        labelname: pdug5HumidityName
+        oid: 1.3.6.1.4.1.19536.10.1.4.3.1.2
+        type: DisplayString
+    - name: snmp_pdu_hw_name
+      oid: 1.3.6.1.4.1.19536.10.1.4.3.1.2
+      type: DisplayString
+      help: A descriptive name for the humidity probe. - 1.3.6.1.4.1.19536.10.1.4.3.1.2
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5HumidityIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5HumidityIndex
+        labelname: pdug5HumidityName
+        oid: 1.3.6.1.4.1.19536.10.1.4.3.1.2
+        type: DisplayString
+    - name: snmp_pdu_hw_status
+      oid: 1.3.6.1.4.1.19536.10.1.4.3.1.3
+      type: EnumAsInfo
+      help: Indicates whether a probe is connected or not. - 1.3.6.1.4.1.19536.10.1.4.3.1.3
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5HumidityIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5HumidityIndex
+        labelname: pdug5HumidityName
+        oid: 1.3.6.1.4.1.19536.10.1.4.3.1.2
+        type: DisplayString
+      enum_values:
+        1: disconnected
+        2: connected
+        3: bad
+    - name: snmp_pdu_pdug5HumidityValue
+      oid: 1.3.6.1.4.1.19536.10.1.4.3.1.4
+      type: gauge
+      help: Units are %RH. - 1.3.6.1.4.1.19536.10.1.4.3.1.4
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5HumidityIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5HumidityIndex
+        labelname: pdug5HumidityName
+        oid: 1.3.6.1.4.1.19536.10.1.4.3.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5HumidityThStatus
+      oid: 1.3.6.1.4.1.19536.10.1.4.3.1.5
+      type: gauge
+      help: Status of the measured humidity relative to the configured thresholds.
+        - 1.3.6.1.4.1.19536.10.1.4.3.1.5
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5HumidityIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5HumidityIndex
+        labelname: pdug5HumidityName
+        oid: 1.3.6.1.4.1.19536.10.1.4.3.1.2
+        type: DisplayString
+      enum_values:
+        1: good
+        2: lowWarning
+        3: lowCritical
+        4: highWarning
+        5: highCritical
+    - name: snmp_pdu_pdug5HumidityThLowerWarning
+      oid: 1.3.6.1.4.1.19536.10.1.4.3.1.6
+      type: gauge
+      help: Lower warning threshold - 1.3.6.1.4.1.19536.10.1.4.3.1.6
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5HumidityIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5HumidityIndex
+        labelname: pdug5HumidityName
+        oid: 1.3.6.1.4.1.19536.10.1.4.3.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5HumidityThLowerCritical
+      oid: 1.3.6.1.4.1.19536.10.1.4.3.1.7
+      type: gauge
+      help: Lower critical threshold - 1.3.6.1.4.1.19536.10.1.4.3.1.7
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5HumidityIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5HumidityIndex
+        labelname: pdug5HumidityName
+        oid: 1.3.6.1.4.1.19536.10.1.4.3.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5HumidityThUpperWarning
+      oid: 1.3.6.1.4.1.19536.10.1.4.3.1.8
+      type: gauge
+      help: Upper warning threshold - 1.3.6.1.4.1.19536.10.1.4.3.1.8
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5HumidityIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5HumidityIndex
+        labelname: pdug5HumidityName
+        oid: 1.3.6.1.4.1.19536.10.1.4.3.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5HumidityThUpperCritical
+      oid: 1.3.6.1.4.1.19536.10.1.4.3.1.9
+      type: gauge
+      help: Upper critical threshold - 1.3.6.1.4.1.19536.10.1.4.3.1.9
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5HumidityIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5HumidityIndex
+        labelname: pdug5HumidityName
+        oid: 1.3.6.1.4.1.19536.10.1.4.3.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5HumidityThCtrl
+      oid: 1.3.6.1.4.1.19536.10.1.4.3.1.10
+      type: gauge
+      help: 'Humidity alarm threshold control: bit 0: up critical alarm control bit,
+        0 - enable, 1 - disable bit 1: up warning alarm control bit, 0 - enable, 1
+        - disable bit 2: low warning alarm control bit, 0 - enable, 1 - disable bit
+        3: low critical alarm control bit, 0 - enable, 1 - disable - 1.3.6.1.4.1.19536.10.1.4.3.1.10'
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5HumidityIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5HumidityIndex
+        labelname: pdug5HumidityName
+        oid: 1.3.6.1.4.1.19536.10.1.4.3.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5OutletIndex
+      oid: 1.3.6.1.4.1.19536.10.1.5.1.1.1
+      type: gauge
+      help: Index for each outlet, value from 1 to the number of outlets per PDU.
+        - 1.3.6.1.4.1.19536.10.1.5.1.1.1
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5OutletIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5OutletIndex
+        labelname: pdug5OutletName
+        oid: 1.3.6.1.4.1.19536.10.1.5.1.1.2
+        type: DisplayString
+    - name: snmp_pdu_hw_name
+      oid: 1.3.6.1.4.1.19536.10.1.5.1.1.2
+      type: DisplayString
+      help: A descriptive name for the outlet. - 1.3.6.1.4.1.19536.10.1.5.1.1.2
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5OutletIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5OutletIndex
+        labelname: pdug5OutletName
+        oid: 1.3.6.1.4.1.19536.10.1.5.1.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5OutletType
+      oid: 1.3.6.1.4.1.19536.10.1.5.1.1.3
+      type: gauge
+      help: Type of this outlet - C13, C19, 5-20R, iecC13/C15 COMBO, iecC13/C15/C19
+        COMBO... - 1.3.6.1.4.1.19536.10.1.5.1.1.3
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5OutletIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5OutletIndex
+        labelname: pdug5OutletName
+        oid: 1.3.6.1.4.1.19536.10.1.5.1.1.2
+        type: DisplayString
+      enum_values:
+        1: iecC13
+        2: iecC19
+        3: nema5-20R
+        4: iecC13iecC15combo
+        5: iecC13iecC15iec19combo
+        10: uk
+        11: french
+        12: schuko
+        20: nema515
+        21: nema51520
+        22: nema520
+        23: nemaL520
+        24: nemaL530
+        25: nema615
+        26: nema620
+        27: nemaL620
+        28: nemaL630
+        29: nemaL715
+        30: rf203p277
+    - name: snmp_pdu_pdug5OutletCurrentRating
+      oid: 1.3.6.1.4.1.19536.10.1.5.1.1.4
+      type: gauge
+      help: Rated current capacity of this outlet - 1.3.6.1.4.1.19536.10.1.5.1.1.4
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5OutletIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5OutletIndex
+        labelname: pdug5OutletName
+        oid: 1.3.6.1.4.1.19536.10.1.5.1.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5OutletCurrent
+      oid: 1.3.6.1.4.1.19536.10.1.5.1.1.5
+      type: gauge
+      help: A outlet current measurement value - 1.3.6.1.4.1.19536.10.1.5.1.1.5
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5OutletIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5OutletIndex
+        labelname: pdug5OutletName
+        oid: 1.3.6.1.4.1.19536.10.1.5.1.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5OutletActivePowerThStatus
+      oid: 1.3.6.1.4.1.19536.10.1.5.1.1.6
+      type: gauge
+      help: Status of the measured outlet active power relative to the configured
+        thresholds. - 1.3.6.1.4.1.19536.10.1.5.1.1.6
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5OutletIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5OutletIndex
+        labelname: pdug5OutletName
+        oid: 1.3.6.1.4.1.19536.10.1.5.1.1.2
+        type: DisplayString
+      enum_values:
+        1: good
+        2: lowWarning
+        3: lowCritical
+        4: highWarning
+        5: highCritical
+    - name: snmp_pdu_pdug5OutletActivePowerThLowerWarning
+      oid: 1.3.6.1.4.1.19536.10.1.5.1.1.7
+      type: gauge
+      help: Lower warning threshold - 1.3.6.1.4.1.19536.10.1.5.1.1.7
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5OutletIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5OutletIndex
+        labelname: pdug5OutletName
+        oid: 1.3.6.1.4.1.19536.10.1.5.1.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5OutletActivePowerThLowerCritical
+      oid: 1.3.6.1.4.1.19536.10.1.5.1.1.8
+      type: gauge
+      help: Lower critical threshold - 1.3.6.1.4.1.19536.10.1.5.1.1.8
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5OutletIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5OutletIndex
+        labelname: pdug5OutletName
+        oid: 1.3.6.1.4.1.19536.10.1.5.1.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5OutletActivePowerThUpperWarning
+      oid: 1.3.6.1.4.1.19536.10.1.5.1.1.9
+      type: gauge
+      help: Upper warning threshold - 1.3.6.1.4.1.19536.10.1.5.1.1.9
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5OutletIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5OutletIndex
+        labelname: pdug5OutletName
+        oid: 1.3.6.1.4.1.19536.10.1.5.1.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5OutletActivePowerThUpperCritical
+      oid: 1.3.6.1.4.1.19536.10.1.5.1.1.10
+      type: gauge
+      help: Upper critical threshold - 1.3.6.1.4.1.19536.10.1.5.1.1.10
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5OutletIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5OutletIndex
+        labelname: pdug5OutletName
+        oid: 1.3.6.1.4.1.19536.10.1.5.1.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5OutletCurrentPercentLoad
+      oid: 1.3.6.1.4.1.19536.10.1.5.1.1.11
+      type: gauge
+      help: Current percent load, based on the rated current capacity - 1.3.6.1.4.1.19536.10.1.5.1.1.11
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5OutletIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5OutletIndex
+        labelname: pdug5OutletName
+        oid: 1.3.6.1.4.1.19536.10.1.5.1.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5OutletVA
+      oid: 1.3.6.1.4.1.19536.10.1.5.1.1.12
+      type: gauge
+      help: A outlet VA value - 1.3.6.1.4.1.19536.10.1.5.1.1.12
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5OutletIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5OutletIndex
+        labelname: pdug5OutletName
+        oid: 1.3.6.1.4.1.19536.10.1.5.1.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5OutletWatts
+      oid: 1.3.6.1.4.1.19536.10.1.5.1.1.13
+      type: gauge
+      help: A outlet Watts value - 1.3.6.1.4.1.19536.10.1.5.1.1.13
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5OutletIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5OutletIndex
+        labelname: pdug5OutletName
+        oid: 1.3.6.1.4.1.19536.10.1.5.1.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5OutletWh
+      oid: 1.3.6.1.4.1.19536.10.1.5.1.1.14
+      type: gauge
+      help: A Watt-Hour value for each outlet - 1.3.6.1.4.1.19536.10.1.5.1.1.14
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5OutletIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5OutletIndex
+        labelname: pdug5OutletName
+        oid: 1.3.6.1.4.1.19536.10.1.5.1.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5OutletWhTimer
+      oid: 1.3.6.1.4.1.19536.10.1.5.1.1.15
+      type: DisplayString
+      help: Timestamp (date and time) of outlet Watt-hours was last reset. - 1.3.6.1.4.1.19536.10.1.5.1.1.15
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5OutletIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5OutletIndex
+        labelname: pdug5OutletName
+        oid: 1.3.6.1.4.1.19536.10.1.5.1.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5OutletPowerFactor
+      oid: 1.3.6.1.4.1.19536.10.1.5.1.1.16
+      type: gauge
+      help: An outlet PF value - 1.3.6.1.4.1.19536.10.1.5.1.1.16
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5OutletIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5OutletIndex
+        labelname: pdug5OutletName
+        oid: 1.3.6.1.4.1.19536.10.1.5.1.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5OutletVAR
+      oid: 1.3.6.1.4.1.19536.10.1.5.1.1.17
+      type: gauge
+      help: An outlet VAR value - 1.3.6.1.4.1.19536.10.1.5.1.1.17
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5OutletIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5OutletIndex
+        labelname: pdug5OutletName
+        oid: 1.3.6.1.4.1.19536.10.1.5.1.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5OutletBranch
+      oid: 1.3.6.1.4.1.19536.10.1.5.1.1.18
+      type: gauge
+      help: The branch number outlet located. - 1.3.6.1.4.1.19536.10.1.5.1.1.18
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5OutletIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5OutletIndex
+        labelname: pdug5OutletName
+        oid: 1.3.6.1.4.1.19536.10.1.5.1.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5OutletActivePowerThResetThld
+      oid: 1.3.6.1.4.1.19536.10.1.5.1.1.19
+      type: gauge
+      help: The Reset threshold is the number of watss the reading needs to fall below
+        the threshold setting for the condition to be cleared - 1.3.6.1.4.1.19536.10.1.5.1.1.19
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5OutletIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5OutletIndex
+        labelname: pdug5OutletName
+        oid: 1.3.6.1.4.1.19536.10.1.5.1.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5OutletActivePowerThChangeDelay
+      oid: 1.3.6.1.4.1.19536.10.1.5.1.1.20
+      type: gauge
+      help: The number of consecutive sample that the condition is present before
+        an alarm is raised. - 1.3.6.1.4.1.19536.10.1.5.1.1.20
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5OutletIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5OutletIndex
+        labelname: pdug5OutletName
+        oid: 1.3.6.1.4.1.19536.10.1.5.1.1.2
+        type: DisplayString
+    - name: snmp_pdu_pdug5OutletActivePowerThCtrl
+      oid: 1.3.6.1.4.1.19536.10.1.5.1.1.21
+      type: gauge
+      help: 'Outlet Active Power alarm threshold control: bit 0: up critical alarm
+        control bit, 0 - enable, 1 - disable bit 1: up warning alarm control bit,
+        0 - enable, 1 - disable bit 2: low warning alarm control bit, 0 - enable,
+        1 - disable bit 3: low critical alarm control bit, 0 - enable, 1 - disable
+        - 1.3.6.1.4.1.19536.10.1.5.1.1.21'
+      indexes:
+      - labelname: pdug5IdentIndex
+        type: gauge
+      - labelname: pdug5OutletIndex
+        type: gauge
+      lookups:
+      - labels:
+        - pdug5IdentIndex
+        labelname: pdug5Name
+        oid: 1.3.6.1.4.1.19536.10.1.1.2.1.2
+        type: DisplayString
+      - labels:
+        - pdug5OutletIndex
+        labelname: pdug5OutletName
+        oid: 1.3.6.1.4.1.19536.10.1.5.1.1.2
+        type: DisplayString
+    max_repetitions: 50
+    retries: 1
+    timeout: 5s
+
