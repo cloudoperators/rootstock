@@ -3,7 +3,12 @@
 # SPDX-License-Identifier: Apache-2.0
 set -euo pipefail
 
-next_version=$(DEBUG=false hack/update_changelog.sh --get-version)
+# Resolve the sibling script relative to THIS script's location, not the current
+# working directory. In privileged CI the cwd is an untrusted fork checkout, so
+# a relative `hack/update_changelog.sh` would execute fork-controlled code.
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+next_version=$(DEBUG=false "${script_dir}/update_changelog.sh" --get-version)
 version="${next_version#v}"
 
 if [[ -z "$version" ]] || ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9][a-zA-Z0-9.]*)?$ ]]; then
