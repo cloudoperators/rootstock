@@ -6,6 +6,7 @@ package redfish
 import (
 	"context"
 	"fmt"
+	"maps"
 	"net/http"
 	"net/url"
 	"path"
@@ -128,23 +129,23 @@ func scrapePDU(
 	pduID := path.Base(pduURL)
 	pduLabels := map[string]string{"pdu_id": pduID}
 
-	var metrics []rawdata.RawMetric
+	groups := [][]rawdata.RawMetric{
+		readDocument(ctx, client, logger, job, filter, pduURL, "", pduLabels, now),
+		readDocument(ctx, client, logger, job, filter, pduURL+"/Metrics", "Metrics", pduLabels, now),
+		readCollection(ctx, client, logger, job, filter, pduURL+"/Mains", "Mains", "main_id", pduID, now),
+		readCollection(ctx, client, logger, job, filter, pduURL+"/Outlets", "Outlets", "outlet_id", pduID, now),
+		readCollection(ctx, client, logger, job, filter, pduURL+"/Branches", "Branches", "branch_id", pduID, now),
+	}
 
-	metrics = append(metrics, readDocument(
-		ctx, client, logger, job, filter, pduURL, "", pduLabels, now,
-	)...)
-	metrics = append(metrics, readDocument(
-		ctx, client, logger, job, filter, pduURL+"/Metrics", "Metrics", pduLabels, now,
-	)...)
-	metrics = append(metrics, readCollection(
-		ctx, client, logger, job, filter, pduURL+"/Mains", "Mains", "main_id", pduID, now,
-	)...)
-	metrics = append(metrics, readCollection(
-		ctx, client, logger, job, filter, pduURL+"/Outlets", "Outlets", "outlet_id", pduID, now,
-	)...)
-	metrics = append(metrics, readCollection(
-		ctx, client, logger, job, filter, pduURL+"/Branches", "Branches", "branch_id", pduID, now,
-	)...)
+	total := 0
+	for _, group := range groups {
+		total += len(group)
+	}
+
+	metrics := make([]rawdata.RawMetric, 0, total)
+	for _, group := range groups {
+		metrics = append(metrics, group...)
+	}
 
 	return metrics
 }
@@ -166,9 +167,10 @@ func readCollection(
 		return nil
 	}
 
-	var metrics []rawdata.RawMetric
+	members := childURLs(collection)
+	metrics := make([]rawdata.RawMetric, 0, len(members))
 
-	for _, memberURL := range childURLs(collection) {
+	for _, memberURL := range members {
 		labels := map[string]string{"pdu_id": pduID, idLabel: path.Base(memberURL)}
 		metrics = append(metrics, readDocument(
 			ctx, client, logger, job, filter, memberURL, prefix, labels, now,
@@ -238,9 +240,7 @@ func metadataMetric(
 	}
 
 	merged := make(map[string]string, len(labels)+len(keep))
-	for k, v := range labels {
-		merged[k] = v
-	}
+	maps.Copy(merged, labels)
 
 	found := false
 	collectMetadata(doc, keep, func(name, value string) {
