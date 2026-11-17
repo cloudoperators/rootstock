@@ -179,9 +179,8 @@ jobs:
           output: "trivy-results.sarif"
           severity: "CRITICAL,HIGH,MEDIUM"
 
-      # # TODO: enable when codeql is enabled (open-source)
-      # - name: Upload Trivy scan results to GitHub Security tab
-      #   uses: github/codeql-action/upload-sarif@9e0d7b8d25671d64c341c19c0152d693099fb5ba # v4.35.5
-      #   if: always()
-      #   with:
-      #     sarif_file: trivy-results.sarif
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@9e0d7b8d25671d64c341c19c0152d693099fb5ba # v4.35.5
+        if: always()
+        with:
+          sarif_file: trivy-results.sarif
