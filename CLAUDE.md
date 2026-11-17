@@ -214,9 +214,9 @@ exclusively.
 ### Command runners
 
 Use `_exec` / `_exec_output` from `_helper.sh` to run external commands so
-failures are reported consistently (the failed command is printed in red and
-its exit status propagated). When `DEBUG=true`, `_exec` also logs the command
-before running it.
+failures are reported consistently (the failed command is printed in red and its
+exit status propagated). When `DEBUG=true`, `_exec` also logs the command before
+running it.
 
 #### `_exec cmd [args...]`
 
