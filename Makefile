@@ -133,10 +133,6 @@ lint-helm: ## Lint the Helm chart
 lint: lint-go lint-md lint-shell lint-helm ## Run all linters (alias)
 	go mod tidy
 
-scan: ## Run security vulnerability scan
-	@echo "TODO: CodeQL scanning runs in CI via GitHub Actions shared-codeql workflow"
-	@echo "TODO: add local scanning tool here?"
-
 # Release
 generate: ## run general all file generation
 	@echo "TODO: add proper generation here"
