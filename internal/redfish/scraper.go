@@ -79,6 +79,7 @@ func scrapeAll(
 
 // scrapePDU reads every metric for a single PDU: the PDU document itself, its
 // Metrics document, and its Mains, Outlets and Branches collections.
+// Collections are a list of links to sub documents.
 func scrapePDU(
 	ctx context.Context,
 	client Client,
@@ -158,7 +159,7 @@ func readDocument(
 
 	var metrics []rawdata.RawMetric
 
-	findNumbers(prefix, doc, func(name string, value float64) {
+	collectReadings(prefix, doc, func(name string, value float64) {
 		metrics = append(metrics, rawdata.RawMetric{
 			DeviceIP:  job.IP,
 			Protocol:  job.Protocol,
@@ -203,10 +204,11 @@ func childURLs(doc map[string]any) []string {
 	return urls
 }
 
-// findNumbers walks a decoded JSON value and calls emit for every number it
-// finds, passing the "/"-joined path of keys that lead to that number.
-func findNumbers(prefix string, node any, emit func(name string, value float64)) {
-	switch value := node.(type) {
+// collectReadings walks a decoded JSON value and calls emit for every number it finds,
+// passing the "/"-joined path of keys that lead to that number. jsonValue is the piece of
+// JSON currently being examined: a map, a list, a number, or something we ignore.
+func collectReadings(prefix string, jsonValue any, emit func(name string, value float64)) {
+	switch value := jsonValue.(type) {
 	case map[string]any:
 		for key, child := range value {
 			if strings.Contains(key, "@odata") {
@@ -218,11 +220,11 @@ func findNumbers(prefix string, node any, emit func(name string, value float64))
 				name = prefix + "/" + key
 			}
 
-			findNumbers(name, child, emit)
+			collectReadings(name, child, emit)
 		}
 	case []any:
 		for _, child := range value {
-			findNumbers(prefix, child, emit)
+			collectReadings(prefix, child, emit)
 		}
 	case float64:
 		emit(prefix, value)
