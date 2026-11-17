@@ -98,9 +98,25 @@ test-integration: mockup-start ## Start mockup server, run integration tests, st
 test-contract: ## Run contract tests (TODO: not yet implemented)
 	@echo "TODO: contract tests not yet implemented"
 
-test-performance: ## Run performance tests (TODO: not yet implemented)
-	@echo "TODO: performance tests not yet implemented"
-	@echo "TODO: will cover queue length and concurrent API request limits"
+# Performance benchmark tunables (override via environment, e.g. PERFTEST_TIME=5s).
+PERFTEST_TIME    ?= 2s
+PERFTEST_COUNT   ?= 1
+PERFTEST_CPU     ?= 1
+PERFTEST_TIMEOUT ?= 10m
+
+test-performance: ## Run asynchronous processing benchmarks (scraped reading -> queue -> result cache)
+	@echo "$(green) performance testing$(reset)"
+	bash -o pipefail -c 'go test \
+		-tags=performance \
+		-run="^$$" \
+		-v \
+		-bench=. \
+		-benchmem \
+		-benchtime=$(PERFTEST_TIME) \
+		-count=$(PERFTEST_COUNT) \
+		-cpu=$(PERFTEST_CPU) \
+		-timeout=$(PERFTEST_TIMEOUT) \
+		./test/performance/... | tee performance.txt'
 
 test-changelog: ## Run the local changelog generation test suite
 	@echo "$(green) testing changelog generation$(reset)"
