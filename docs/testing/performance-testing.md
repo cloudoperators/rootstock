@@ -13,16 +13,15 @@ operation is the complete N-item cycle.
 
 ## Current status
 
-The production processor is not implemented. Full-pipeline tests and benchmarks
-therefore **skip**, with a message identifying the missing connection point,
-rather than waiting for a guaranteed timeout. They produce no performance
-measurements yet.
+`internal/processing/processor.go` implements minimal asynchronous workers: each
+queued reading is copied into a result-cache entry with its submission ID
+preserved. A TODO marks where the required reading-to-result transformations
+will be implemented once defined.
 
-Connect `startProductionProcessor` in
-`test/performance/scenarios/redfish_pipeline_test.go` to a production adapter
-implementing `harness.StartProcessor` when the processor becomes available. The
-adapter must preserve submission identity through processing and cache
-publication.
+The Redfish scenarios connect directly to `processing.Start` and now complete,
+producing benchmark metrics. These measurements are a baseline for queueing,
+value copying, cache publication, and completion observation; they do not yet
+include any additional reading-to-result transformations.
 
 Harness unit tests run today using an asynchronous test-only processor. These
 verify queueing, repeated cycles, concurrent producers, submission matching,
@@ -41,8 +40,8 @@ test/performance/
   scenarios/
     redfish_pipeline_test.go  Redfish pipeline scenarios and benchmarks
   harness/
-    scenario_types.go         Data types, source/processor contracts, configuration
-    harness.go                Queue/cache ownership, startup, cycles, teardown
+    types.go                  Shared data aliases and source/processor contracts
+    harness.go                Runtime configuration, startup, cycles, teardown
     harness_test.go           Harness unit tests
     result_wait.go            Wait for matching cache results
     result_wait_test.go       Result-waiting unit tests
@@ -51,12 +50,18 @@ test/performance/
     redfish.go                Fixture-backed RedfishSource
     redfish_test.go           Fixture loading, device identity, and copy isolation
     snmp.go                   Future SNMP source entry point
+
+internal/processing/
+  processor.go                Asynchronous workers and TODO for data processing
+  types.go                    Reading, result, submission, and runtime types
+  processor_test.go           Processing and worker lifecycle tests
 ```
 
-The dependency direction is `scenarios -> harness` and
-`scenarios -> mockpdu -> harness`. The harness owns the protocol-neutral
-`Source` interface and reading/result types, independently of concrete mock
-implementations. A future SNMP scenario can reuse it by providing a
+Scenarios use `harness` to drive the processor in `internal/processing` and
+`mockpdu` to supply inputs. The harness owns the protocol-neutral `Source`
+interface and scenario configuration; its reading/result types refer to the
+processor's types. Production processing code does not depend on the test
+packages. A future SNMP scenario can reuse the harness by providing a
 `harness.Source` implementation. `NewSNMP` currently returns an error because
 SNMP fixtures are not implemented.
 
@@ -80,9 +85,11 @@ not search for the repository root or inspect Go source-file locations.
 
 ## Benchmark execution
 
-`make test-performance` runs the benchmark scenarios shown below. The diagram
-assumes the production processor is connected and working; its workers process
-queued readings independently of the harness.
+`make test-performance` runs the benchmark scenarios shown below. The
+processor's workers handle queued readings independently of the harness,
+including while it is still enqueueing inputs. Solid arrows show the harness's
+execution flow; dashed arrows show data moving through the asynchronous
+processor path. The harness observes cache results by polling.
 
 ```mermaid
 flowchart TB
@@ -103,15 +110,18 @@ flowchart TB
         direction LR
         Timer[Scenario benchmark:<br/>start timer and<br/>allocation count]
         Timer --> Submit[Harness +<br/>Processing input queue:<br/>SubmitAndWait assigns IDs<br/>and enqueues readings]
-        Submit --> Process[Production processor:<br/>receive queued readings,<br/>process, publish to result cache]
-        Process --> Await[Harness + Result cache:<br/>WaitForResults reads cache,<br/>matches submission/PDU IDs]
+        Submit --> Await[Harness: WaitForResults<br/>wait for all matching results,<br/>collect and return]
         Await --> Repeat{Scenario benchmark:<br/>more iterations?}
         Repeat -->|Yes| Submit
+
+        Submit -.->|Queued readings| Process[Independent processor workers:<br/>copy reading into result<br/>TBC: To be changed]
+        Process -.->|Publish results| Cache[Result cache]
+        Cache -.->|Observed by polling| Await
     end
 
     subgraph Finish[4. Results and teardown]
         direction LR
-        Stop[Scenario benchmark:<br/>stop timer, validate,<br/>record metrics]
+        Stop[Scenario benchmark:<br/>stop timer, check outcome,<br/>record metrics]
         Stop --> Cleanup[Harness + Processor:<br/>b.Cleanup cancels runtime,<br/>awaits Done after worker exit]
         Cleanup --> Output[Benchmark output:<br/>scenario name and<br/>recorded metrics]
         Output --> Tee[tee:<br/>terminal output and<br/>performance.txt]
@@ -157,7 +167,7 @@ without reporting performance metrics.
 # Supporting infrastructure unit tests, including race detection.
 go test -race ./test/performance/harness/... ./test/performance/mockpdu/...
 
-# Include the full-pipeline correctness scenarios (currently skipped).
+# Run the full-pipeline correctness scenarios.
 go test -race -tags=performance ./test/performance/scenarios/...
 
 # Benchmarks only; output is also written to performance.txt.

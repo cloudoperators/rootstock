@@ -13,12 +13,12 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/cloudoperators/rootstock/internal/processing"
 	"github.com/cloudoperators/rootstock/test/performance/harness"
 	"github.com/cloudoperators/rootstock/test/performance/mockpdu"
 )
 
-// Connect the production processor adapter here when it becomes available.
-var startProductionProcessor harness.StartProcessor
+var startProductionProcessor harness.StartProcessor = processing.Start
 
 var redfishScenarios = []struct {
 	name          string
@@ -61,14 +61,16 @@ func verifyResults(tb testing.TB, inputs []harness.Reading, results []harness.Re
 }
 
 func TestRedfishPipeline(t *testing.T) {
-	for _, tc := range redfishScenarios {
-		t.Run(tc.name, func(t *testing.T) {
-			h := harness.NewHarness(t, harness.ScenarioConfig{
-				WorkerCount: tc.workers, QueueCapacity: tc.queueCapacity,
+	for _, scenario := range redfishScenarios {
+		t.Run(scenario.name, func(t *testing.T) {
+			h := harness.NewHarness(t, harness.Config{
+				WorkerCount: scenario.workers, QueueCapacity: scenario.queueCapacity,
 				StartProcessor: startProductionProcessor,
 			})
 
-			inputs := scrapeInputs(t, tc.pdus)
+			inputs := scrapeInputs(t, scenario.pdus)
+			// two cache cycles, empty and pre-filled.
+			// harness must wait for new results, rather than accepting previous results
 			for range 2 {
 				results, err := h.SubmitAndWait(t.Context(), inputs)
 				require.NoError(t, err)
@@ -81,13 +83,13 @@ func TestRedfishPipeline(t *testing.T) {
 // BenchmarkRedfishProcessing measures enqueue-to-result completion, excluding mock
 // construction, scraping, readiness, validation, and shutdown.
 func BenchmarkRedfishProcessing(b *testing.B) {
-	for _, tc := range redfishScenarios {
-		b.Run(tc.name, func(b *testing.B) {
-			h := harness.NewHarness(b, harness.ScenarioConfig{
-				WorkerCount: tc.workers, QueueCapacity: tc.queueCapacity,
+	for _, scenario := range redfishScenarios {
+		b.Run(scenario.name, func(b *testing.B) {
+			h := harness.NewHarness(b, harness.Config{
+				WorkerCount: scenario.workers, QueueCapacity: scenario.queueCapacity,
 				StartProcessor: startProductionProcessor,
 			})
-			inputs := scrapeInputs(b, tc.pdus)
+			inputs := scrapeInputs(b, scenario.pdus)
 			results, err := h.SubmitAndWait(b.Context(), inputs)
 			require.NoError(b, err)
 			verifyResults(b, inputs, results)
@@ -101,8 +103,11 @@ func BenchmarkRedfishProcessing(b *testing.B) {
 			}
 
 			verifyResults(b, inputs, results)
-			b.ReportMetric(float64(b.Elapsed().Nanoseconds())/float64(b.N)/float64(tc.pdus), "ns/result")
-			b.ReportMetric(float64(b.N)*float64(tc.pdus)/b.Elapsed().Seconds(), "results/s")
+			// Each of b.N cycles completes scenario.pdus results. Divide elapsed time by
+			// that total for average time per result (amortized), or divide the total by elapsed
+			// seconds for throughput. ns/result is not individual result latency.
+			b.ReportMetric(float64(b.Elapsed().Nanoseconds())/float64(b.N)/float64(scenario.pdus), "ns/result")
+			b.ReportMetric(float64(b.N)*float64(scenario.pdus)/b.Elapsed().Seconds(), "results/s")
 		})
 	}
 }
@@ -110,7 +115,7 @@ func BenchmarkRedfishProcessing(b *testing.B) {
 // BenchmarkRedfishProcessingConcurrent uses disjoint PDU inputs for each producer, so the
 // latest-per-PDU cache cannot overwrite another producer's pending result.
 func BenchmarkRedfishProcessingConcurrent(b *testing.B) {
-	cases := []struct {
+	scenarios := []struct {
 		name      string
 		producers int
 		workers   int
@@ -119,13 +124,13 @@ func BenchmarkRedfishProcessingConcurrent(b *testing.B) {
 		{name: "producers=4/workers=4", producers: 4, workers: 4},
 		{name: "producers=8/workers=4", producers: 8, workers: 4},
 	}
-	for _, tc := range cases {
-		b.Run(tc.name, func(b *testing.B) {
-			h := harness.NewHarness(b, harness.ScenarioConfig{
-				WorkerCount: tc.workers, QueueCapacity: tc.producers,
+	for _, scenario := range scenarios {
+		b.Run(scenario.name, func(b *testing.B) {
+			h := harness.NewHarness(b, harness.Config{
+				WorkerCount: scenario.workers, QueueCapacity: scenario.producers,
 				StartProcessor: startProductionProcessor,
 			})
-			inputs := scrapeInputs(b, tc.producers)
+			inputs := scrapeInputs(b, scenario.producers)
 			results, err := h.SubmitAndWait(b.Context(), inputs)
 			require.NoError(b, err)
 			verifyResults(b, inputs, results)
@@ -135,20 +140,22 @@ func BenchmarkRedfishProcessingConcurrent(b *testing.B) {
 				wg   sync.WaitGroup
 			)
 
-			errors := make(chan error, tc.producers)
+			errors := make(chan error, scenario.producers)
 
 			ctx, cancel := context.WithCancel(b.Context())
 			defer cancel()
 
-			wg.Add(tc.producers)
+			wg.Add(scenario.producers)
 			b.ReportAllocs()
 			b.ResetTimer()
 
+			// submit scraped inputs for async processing, wait for processor to complete
 			for _, input := range inputs {
 				go func() {
 					defer wg.Done()
 
 					for next.Add(1) <= int64(b.N) {
+						// drop the results with _
 						if _, err := h.SubmitAndWait(ctx, []harness.Reading{input}); err != nil {
 							errors <- err
 
@@ -168,6 +175,7 @@ func BenchmarkRedfishProcessingConcurrent(b *testing.B) {
 				b.Error(err)
 			}
 
+			// Each operation completes one result; divide the total by elapsed seconds for throughput.
 			b.ReportMetric(float64(b.N)/b.Elapsed().Seconds(), "results/s")
 		})
 	}

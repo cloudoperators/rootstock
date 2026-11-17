@@ -15,6 +15,46 @@ import (
 	"github.com/cloudoperators/rootstock/internal/collectors/cache"
 )
 
+// Config controls the harness runtime. Configurability lets scenarios compare
+// the same pipeline under different loads using consistent execution rules,
+// and lets unit tests establish controlled success and failure conditions.
+// Zero durations use defaults; QueueCapacity may be zero for an unbuffered queue.
+type Config struct {
+	WorkerCount        int
+	QueueCapacity      int
+	CycleTimeout       time.Duration
+	StartupTimeout     time.Duration
+	ShutdownTimeout    time.Duration
+	ResultPollInterval time.Duration
+	StartProcessor     StartProcessor
+}
+
+func (c Config) defaults() Config {
+	if c.CycleTimeout == 0 {
+		c.CycleTimeout = 5 * time.Second
+	}
+
+	if c.StartupTimeout == 0 {
+		c.StartupTimeout = 5 * time.Second
+	}
+
+	if c.ShutdownTimeout == 0 {
+		c.ShutdownTimeout = 5 * time.Second
+	}
+
+	if c.ResultPollInterval == 0 {
+		c.ResultPollInterval = time.Millisecond
+	}
+
+	return c
+}
+
+func (c Config) valid() bool {
+	return c.WorkerCount > 0 && c.QueueCapacity >= 0 &&
+		c.CycleTimeout > 0 && c.StartupTimeout > 0 &&
+		c.ShutdownTimeout > 0 && c.ResultPollInterval > 0
+}
+
 // Harness owns a persistent queue, cache, and processor runtime per scenario.
 // Concurrent cycles must use disjoint PDU IDs: the production-style cache holds
 // only the latest result per PDU. This keeps cache size bounded by device count.
@@ -23,24 +63,24 @@ type Harness struct {
 	cancel  context.CancelFunc
 	queue   chan Submission
 	results cache.Cache[CachedResult]
-	cfg     ScenarioConfig
+	cfg     Config
 	nextID  atomic.Uint64
 	mu      sync.Mutex
 	active  map[string]bool
 }
 
 // NewHarness starts the processor and registers bounded shutdown before waiting
-// for readiness. A missing production adapter skips the scenario explicitly.
-func NewHarness(tb testing.TB, cfg ScenarioConfig) *Harness {
+// for readiness. A missing processor configuration skips the scenario explicitly.
+func NewHarness(tb testing.TB, cfg Config) *Harness {
 	tb.Helper()
 
 	if cfg.StartProcessor == nil {
-		tb.Skip("asynchronous production processor is not implemented; connect ScenarioConfig.StartProcessor")
+		tb.Skip("no processor configured; set Config.StartProcessor")
 	}
 
 	cfg = cfg.defaults()
 	if !cfg.valid() {
-		tb.Fatal("invalid performance scenario configuration")
+		tb.Fatal("invalid harness configuration")
 	}
 
 	ctx, cancel := context.WithCancel(tb.Context())
@@ -143,6 +183,7 @@ func (h *Harness) SubmitAndWait(ctx context.Context, inputs []Reading) ([]Result
 	stop := context.AfterFunc(h.ctx, cancel) //nolint:contextcheck // Intentionally merges runtime and caller lifetimes.
 	defer stop()
 
+	// submit
 	submissions := make([]Submission, len(inputs))
 	for i, input := range inputs {
 		if err := ctx.Err(); err != nil {
@@ -159,6 +200,7 @@ func (h *Harness) SubmitAndWait(ctx context.Context, inputs []Reading) ([]Result
 		}
 	}
 
+	// collect
 	results, err := WaitForResults(ctx, h.results, submissions, h.cfg.ResultPollInterval)
 	if err != nil {
 		h.cancel()

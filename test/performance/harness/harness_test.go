@@ -20,7 +20,7 @@ import (
 )
 
 // testProcessor exercises harness mechanics only; it is never a benchmark
-// substitute for the missing production processor.
+// substitute for the production processor.
 func testProcessor(
 	process func(harness.Submission, cache.Cache[harness.CachedResult]),
 ) harness.StartProcessor {
@@ -145,7 +145,7 @@ func TestHarnessCycles(t *testing.T) {
 					t.Error("processor workers still running after harness cleanup")
 				}
 			})
-			h := harness.NewHarness(t, harness.ScenarioConfig{
+			h := harness.NewHarness(t, harness.Config{
 				WorkerCount: tc.workers, QueueCapacity: tc.queueCapacity,
 				StartProcessor: func(
 					ctx context.Context, q <-chan harness.Submission,
@@ -248,7 +248,7 @@ func TestHarnessCycleFailures(t *testing.T) {
 				}
 			}
 
-			h := harness.NewHarness(t, harness.ScenarioConfig{
+			h := harness.NewHarness(t, harness.Config{
 				WorkerCount: 1, QueueCapacity: 1, CycleTimeout: 20 * time.Millisecond,
 				StartProcessor: start,
 			})
@@ -302,7 +302,7 @@ func TestHarnessRejectsOverlappingPDUs(t *testing.T) {
 
 			var signalOnce sync.Once
 
-			h := harness.NewHarness(t, harness.ScenarioConfig{
+			h := harness.NewHarness(t, harness.Config{
 				WorkerCount: 1, QueueCapacity: len(tc.inputs),
 				StartProcessor: testProcessor(func(s harness.Submission, c cache.Cache[harness.CachedResult]) {
 					signalOnce.Do(func() { received <- struct{}{} })
