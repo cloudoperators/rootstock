@@ -8,6 +8,13 @@ and this project adheres to
 
 <!-- git-cliff: end of header -->
 
+## 2026-11-17
+
+- (0.2.1 - 🐛) actions: Reactivate codeql
+  [#135](https://github.com/cloudoperators/rootstock/pull/135)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
+
 ## 2026-11-13
 
 - (0.2.0 - 🚀) tooling: Local kind deployment
