@@ -14,6 +14,9 @@
 # re-running main().
 set -euo pipefail
 
+# shellcheck source=../_helper.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../_helper.sh"
+
 # --- Configuration (all overridable) -----------------------------------------
 GREENHOUSE_REF="${GREENHOUSE_REF:-v0.18.0}"
 DEMO_ORG="demo"
@@ -31,12 +34,6 @@ workdir="${rootstock_root}/tmp/greenhouse/setup"
 greenhouse_dir="${workdir}/greenhouse"
 
 greenhouse_setup_targets="setup-manager setup-demo"
-
-# --- Logging helpers ----------------------------------------------------------
-log()  { printf '\033[1;34m==>\033[0m %s\n' "$*"; }
-ok()   { printf '\033[1;32m  OK\033[0m %s\n' "$*"; }
-warn() { printf '\033[1;33m  !!\033[0m %s\n' "$*" >&2; }
-die()  { printf '\033[1;31mERROR:\033[0m %s\n' "$*" >&2; exit 1; }
 
 # =============================================================================
 # main
@@ -98,12 +95,12 @@ cmd_delete() {
         esac
     done
 
-    log "teardown: removing kind clusters, registry, and workdir"
+    log_info "teardown: removing kind clusters, registry, and workdir"
     kind delete cluster --name "$admin_cluster" >/dev/null 2>&1 || true
     kind delete cluster --name "$remote_cluster" >/dev/null 2>&1 || true
     docker rm -f registry >/dev/null 2>&1 || true
     [[ -d "$workdir" ]] && rm -rf "$workdir"
-    ok "removed clusters, registry, and workdir"
+    log_info "removed clusters, registry, and workdir"
 }
 
 # Minimal tool check for standalone use.
@@ -115,7 +112,7 @@ preflight_tools() {
     done
     ((${#missing[@]})) && die "missing required tools: ${missing[*]}"
     docker info >/dev/null 2>&1 || die "docker daemon is not reachable (is Docker running?)"
-    ok "all tools present and docker daemon reachable"
+    log_info "all tools present and docker daemon reachable"
 }
 
 # Ensure host port 5000 is free for Greenhouse's local registry. Stale `registry`
@@ -126,7 +123,7 @@ check_registry_port() {
 
     # A leftover `registry` container is ours to remove.
     if docker inspect registry >/dev/null 2>&1; then
-        warn "removing stale 'registry' container from a previous run"
+        log_warn "removing stale 'registry' container from a previous run"
         docker rm -f registry >/dev/null 2>&1 || true
     fi
 
@@ -148,33 +145,32 @@ check_registry_port() {
 # Phase 1: fetch Greenhouse at the pinned ref
 # =============================================================================
 fetch_greenhouse() {
-    log "Phase 1: fetch Greenhouse @ ${GREENHOUSE_REF}"
+    log_info "Phase 1: fetch Greenhouse @ ${GREENHOUSE_REF}"
     mkdir -p "$workdir"
     if [[ -d "${greenhouse_dir}/.git" ]]; then
         local have
         have="$(git -C "$greenhouse_dir" describe --tags --always 2>/dev/null || echo unknown)"
         if [[ "$have" == "$GREENHOUSE_REF" ]]; then
-            ok "existing clone already at ${GREENHOUSE_REF}, reusing"
+            log_info "existing clone already at ${GREENHOUSE_REF}, reusing"
             return
         fi
-        warn "existing clone is at '${have}', re-cloning at ${GREENHOUSE_REF}"
+        log_warn "existing clone is at '${have}', re-cloning at ${GREENHOUSE_REF}"
         rm -rf "$greenhouse_dir"
     fi
-    git clone --depth 1 --branch "$GREENHOUSE_REF" "$greenhouse_repo" "$greenhouse_dir" \
-        || die "git clone of ${greenhouse_repo}@${GREENHOUSE_REF} failed"
-    ok "cloned Greenhouse into ${greenhouse_dir}"
+    _exec git clone --depth 1 --branch "$GREENHOUSE_REF" "$greenhouse_repo" "$greenhouse_dir"
+    log_info "cloned Greenhouse into ${greenhouse_dir}"
 }
 
 # =============================================================================
 # Phase 2: bring up Greenhouse
 # =============================================================================
 bring_up_greenhouse() {
-    log "Phase 2: bootstrap local Greenhouse (make setup) -- this is slow and can be flaky on first run"
+    log_info "Phase 2: bootstrap local Greenhouse (make setup) -- this is slow and can be flaky on first run"
     # Run only setup-manager + setup-demo by default, skipping setup-dashboard:
     # the dashboard step is flaky locally and not needed for PluginDefinition verification.
     # Override greenhouse_setup_targets for the full upstream flow.
     local setup_targets="${greenhouse_setup_targets:-setup-manager setup-demo}"
-    log "running: make ${setup_targets}"
+    log_info "running: make ${setup_targets}"
     (
         cd "$greenhouse_dir"
         # shellcheck disable=SC2086 # intentional word-splitting of target list
@@ -182,14 +178,12 @@ bring_up_greenhouse() {
     ) || die "Greenhouse 'make ${setup_targets}' failed (see output above)"
 
     # setup-demo switches the current context, but be explicit.
-    kubectl config get-contexts "$admin_context" >/dev/null 2>&1 \
-        || die "expected kube-context ${admin_context} not found after setup"
-    ok "Greenhouse is up (admin=${admin_context}, remote=${remote_context}, org ns=${DEMO_ORG})"
+    _exec "kubectl config get-contexts '$admin_context' >/dev/null 2>&1"
+    log_info "Greenhouse is up (admin=${admin_context}, remote=${remote_context}, org ns=${DEMO_ORG})"
 
     # Sanity: PluginDefinition CRD must exist or apply will fail cryptically.
-    kubectl --context "$admin_context" get crd plugindefinitions.greenhouse.sap >/dev/null 2>&1 \
-        || die "PluginDefinition CRD not present on admin cluster -- setup incomplete"
-    ok "PluginDefinition CRD present"
+    _exec "kubectl --context '$admin_context' get crd plugindefinitions.greenhouse.sap >/dev/null 2>&1"
+    log_info "PluginDefinition CRD present"
 }
 
 [[ "${BASH_SOURCE[0]}" == "$0" ]] && main "$@"

@@ -6,15 +6,18 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 
+# shellcheck source=../_helper.sh
+source "${REPO_ROOT}/hack/_helper.sh"
+
 # Defaults — mirror the Makefile variables
-KIND_CLUSTER="${KIND_CLUSTER:-rootstock-local}"
+KIND_CLUSTER="${KIND_CLUSTER:-rootstock}"
 CHART_DIR="${REPO_ROOT}/k8s_configuration/chart"
 # Lowercase ${USER}: the dev tag doubles as a Helm chart version, from which
 # Greenhouse derives RFC 1123 (lowercase-only) Kubernetes object names.
 USER_LC="$(printf '%s' "${USER}" | tr '[:upper:]' '[:lower:]')"
 IMAGE="${IMAGE:-ghcr.io/cloudoperators/rootstock:0.0.0-dev-${USER_LC}}"
-# Path to a local file whose contents become the redfish_password secret value.
-REDFISH_PASSWORD_FILE="${REDFISH_PASSWORD_FILE:-tmp/redfish_access.yaml}"
+# Optional additional Helm values file applied during deploy. Skipped if missing.
+VALUES_FILE="${VALUES_FILE:-${REPO_ROOT}/tmp/local_values.yaml}"
 
 # Split IMAGE into repo and tag (colon in the last path segment signals a tag)
 _image_last="${IMAGE##*/}"
@@ -33,8 +36,11 @@ CONTEXT="kind-${KIND_CLUSTER}"
 # ---------------------------------------------------------------------------
 
 main() {
-    CHART_NAMESPACE="$(_resolve_chart_namespace)"
-    CHART_RELEASE="$(_resolve_chart_release)"
+    local deployment
+
+    _exec_output deployment helm template "${CHART_DIR}" --show-only templates/serviceaccount.yaml
+    _exec_output CHART_NAMESPACE "echo '${deployment}' | yq -r '.metadata.namespace'"
+    _exec_output CHART_RELEASE "echo '${deployment}' | yq -r '.metadata.labels.\"app.kubernetes.io/instance\"'"
 
     local command="${1:-}"
     shift || true
@@ -44,17 +50,17 @@ main() {
         delete)   cmd_delete "$@" ;;
         prepare)  cmd_prepare ;;
         cleanup)  cmd_cleanup ;;
-        deploy)   cmd_deploy ;;
+        deploy)   cmd_deploy "$@" ;;
         validate) cmd_validate ;;
         help|--help|-h) usage ;;
         "")
-            err "No command specified."
+            log_error "No command specified."
             echo >&2
             usage >&2
             exit 1
             ;;
         *)
-            err "Unknown command: '${command}'"
+            log_error "Unknown command: '${command}'"
             echo >&2
             usage >&2
             exit 1
@@ -66,38 +72,6 @@ main() {
 # Helpers
 # ---------------------------------------------------------------------------
 
-log() { echo -e "\033[1;32m[+]\033[0m $*"; }
-err() { echo -e "\033[1;31m[!]\033[0m $*" >&2; }
-
-_resolve_chart_namespace() {
-    # Render the servicemonitor template (which embeds rootstock.namespace) and
-    # extract the metadata.namespace field. This mirrors the Helm helper:
-    #   {{- default .Release.Namespace .Values.namespace }}
-    local ns
-    ns="$(helm template "${CHART_DIR}" \
-        --set serviceMonitor.enabled=true \
-        --api-versions monitoring.coreos.com/v1/ServiceMonitor \
-        --show-only templates/servicemonitor.yaml \
-        2>/dev/null \
-        | awk '/^  namespace:/{print $2; exit}')"
-    echo "${ns}"
-}
-
-_resolve_chart_release() {
-    # Render the serviceaccount template and extract app.kubernetes.io/instance,
-    # which reflects the rootstock.releaseName helper:
-    #   {{- default .Release.Name .Values.releaseName }}
-    # Falls back to CHART_RELEASE if helm is unavailable or rendering fails.
-    local release
-    release="$(helm template "${CHART_DIR}" \
-        --namespace "${CHART_NAMESPACE}" \
-        --set redfish.existingSecret=placeholder \
-        --show-only templates/serviceaccount.yaml \
-        2>/dev/null \
-        | awk '/app\.kubernetes\.io\/instance:/{print $2; exit}')"
-    echo "${release:-${CHART_RELEASE}}"
-}
-
 usage() {
     cat <<EOF
 Usage: $(basename "${BASH_SOURCE[0]}") <command> [args]
@@ -108,13 +82,16 @@ Commands:
   prepare           Build/load mockup image, create namespace and credentials secret
   cleanup           Uninstall rootstock and delete all cluster resources
   deploy            Build/load rootstock image and install/upgrade the Helm chart
+                    [--values FILE]  Additional Helm values file
+                                     (default: ./tmp/local_values.yaml; skipped if missing)
   validate          Validate the running rootstock deployment via port-forward + probe
 
 Environment variables (override Makefile defaults):
   KIND_CLUSTER         Cluster name                          (default: rootstock-local)
-  REDFISH_PASSWORD_FILE Local file holding the redfish password (required for 'prepare')
   IMAGE                Container image
                        (default: ghcr.io/cloudoperators/rootstock:0.0.0-dev-\$USER)
+  VALUES_FILE          Additional Helm values file for 'deploy'
+                       (default: ./tmp/local_values.yaml; skipped if missing)
 EOF
 }
 
@@ -125,84 +102,89 @@ EOF
 cmd_create() {
     local name="${1:-${KIND_CLUSTER}}"
     if kind get clusters 2>/dev/null | grep -qx "${name}"; then
-        log "Kind cluster '${name}' already exists — skipping."
+        log_info "Kind cluster '${name}' already exists — skipping."
         return
     fi
-    log "Creating kind cluster '${name}'..."
-    kind create cluster --name "${name}"
-    log "Kind cluster '${name}' is ready."
+    log_info "Creating kind cluster '${name}'..."
+    _exec kind create cluster --name "${name}"
+    log_info "Kind cluster '${name}' is ready."
 }
 
 cmd_delete() {
     local name="${1:-${KIND_CLUSTER}}"
-    log "Deleting kind cluster '${name}'..."
-    kind delete cluster --name "${name}"
+    log_info "Deleting kind cluster '${name}'..."
+    _exec kind delete cluster --name "${name}"
 }
 
 cmd_prepare() {
-    log "Building redfish mockup image..."
-    docker build -t rootstock-mockup:latest \
+    log_info "Building redfish mockup image..."
+    _exec docker build -t rootstock-mockup:latest \
         -f "${SCRIPT_DIR}/Dockerfile.mockup" "${REPO_ROOT}"
 
-    log "Loading mockup image into kind cluster '${KIND_CLUSTER}'..."
-    kind load docker-image rootstock-mockup:latest --name "${KIND_CLUSTER}"
+    log_info "Loading mockup image into kind cluster '${KIND_CLUSTER}'..."
+    _exec kind load docker-image rootstock-mockup:latest --name "${KIND_CLUSTER}"
 
-    log "Ensuring namespace '${CHART_NAMESPACE}'..."
-    kubectl --context "${CONTEXT}" create namespace "${CHART_NAMESPACE}" \
-        --dry-run=client -o yaml | kubectl --context "${CONTEXT}" apply -f -
+    log_info "Ensuring namespace '${CHART_NAMESPACE}'..."
+    _exec "kubectl --context '${CONTEXT}' create namespace '${CHART_NAMESPACE}' \
+        --dry-run=client -o yaml | kubectl --context '${CONTEXT}' apply -f -"
 
-    log "Deploying redfish mockup..."
-    kubectl --context "${CONTEXT}" -n "${CHART_NAMESPACE}" \
+    log_info "Deploying redfish mockup..."
+    _exec kubectl --context "${CONTEXT}" -n "${CHART_NAMESPACE}" \
         apply -f "${SCRIPT_DIR}/redfish-mockup.yaml"
-    kubectl --context "${CONTEXT}" -n "${CHART_NAMESPACE}" \
+    _exec kubectl --context "${CONTEXT}" -n "${CHART_NAMESPACE}" \
         rollout status deploy/redfish-mockup --timeout=120s
 
-    if [[ ! -f "${REDFISH_PASSWORD_FILE}" ]]; then
-        err "REDFISH_PASSWORD_FILE '${REDFISH_PASSWORD_FILE}' does not exist or is not a file."
-        exit 1
-    fi
-
-    log "Creating redfish credentials secret from '${REDFISH_PASSWORD_FILE}'..."
-    kubectl --context "${CONTEXT}" -n "${CHART_NAMESPACE}" \
-        create secret generic "redfish-pdu-access" \
-          --from-file=redfish_pdus.yaml="${REDFISH_PASSWORD_FILE}" \
-          --dry-run=client -o yaml \
-        | kubectl --context "${CONTEXT}" apply -f -
-
-    log "Cluster prepared — run 'deploy' to install rootstock."
+    log_info "Cluster prepared — run 'deploy' to install rootstock."
 }
 
 cmd_cleanup() {
-    log "Uninstalling Helm release '${CHART_RELEASE}'..."
-    helm --kube-context "${CONTEXT}" uninstall "${CHART_RELEASE}" \
+    log_info "Uninstalling Helm release '${CHART_RELEASE}'..."
+    _exec helm --kube-context "${CONTEXT}" uninstall "${CHART_RELEASE}" \
         --namespace "${CHART_NAMESPACE}" 2>/dev/null || true
 
-    log "Deleting namespace '${CHART_NAMESPACE}'..."
-    kubectl --context "${CONTEXT}" delete namespace "${CHART_NAMESPACE}" \
+    log_info "Deleting namespace '${CHART_NAMESPACE}'..."
+    _exec kubectl --context "${CONTEXT}" delete namespace "${CHART_NAMESPACE}" \
         --ignore-not-found --wait
 
-    log "Cleanup complete."
+    log_info "Cleanup complete."
 }
 
 cmd_deploy() {
-    log "Loading '${IMAGE}' into kind cluster '${KIND_CLUSTER}'..."
-    kind load docker-image "${IMAGE}" --name "${KIND_CLUSTER}"
+    local values_file="${VALUES_FILE}"
 
-    log "Installing/upgrading Helm chart '${CHART_RELEASE}'..."
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --values) values_file="$2"; shift 2 ;;
+            *) log_error "Unknown deploy option: '$1'"; exit 1 ;;
+        esac
+    done
 
-    helm --kube-context "${CONTEXT}" upgrade --install "${CHART_RELEASE}" "${CHART_DIR}" \
+    log_info "Loading '${IMAGE}' into kind cluster '${KIND_CLUSTER}'..."
+    _exec kind load docker-image "${IMAGE}" --name "${KIND_CLUSTER}"
+
+    log_info "Installing/upgrading Helm chart '${CHART_RELEASE}'..."
+
+    local values_args=()
+    if [[ -f "${values_file}" ]]; then
+        log_info "Using additional values file '${values_file}'."
+        values_args=(--values "${values_file}")
+    else
+        log_info "Values file '${values_file}' not found — skipping --values."
+    fi
+
+    _exec helm --kube-context "${CONTEXT}" upgrade --install "${CHART_RELEASE}" "${CHART_DIR}" \
         --namespace "${CHART_NAMESPACE}" --create-namespace \
         --set image.repository="${IMAGE_REPO}" \
         --set image.tag="${IMAGE_TAG}" \
         --set image.pullPolicy=IfNotPresent \
-        --set rootstock.redfish.existingSecret="redfish-pdu-access" \
+        "${values_args[@]}" \
         --wait --timeout 30s
 
-    log "Rootstock deployed — run 'validate' to probe it."
+    log_info "Rootstock deployed — run 'validate' to probe it."
 }
 
 cmd_validate() {
-    "${SCRIPT_DIR}/verify.sh" "${KIND_CLUSTER}" "${CHART_NAMESPACE}" "${CHART_RELEASE}"
+    _exec "${SCRIPT_DIR}/verify.sh" "${KIND_CLUSTER}" "${CHART_NAMESPACE}" "${CHART_RELEASE}"
 }
 
 # ---------------------------------------------------------------------------

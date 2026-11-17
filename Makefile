@@ -125,7 +125,7 @@ lint-md: ## Run prettier for markdown files
 	npx --yes prettier --prose-wrap always --write "**/*.md"
 
 lint-shell: ## Run shellcheck on shell scripts
-	find . -name '*.sh' -not -path './.git/*' -print0 | xargs -r -0 shellcheck
+	find . -name '*.sh' -not -path './.git/*' -not -path './tmp/*' -print0 | xargs -r -0 shellcheck
 
 lint-helm: ## Lint the Helm chart
 	helm lint k8s_configuration/chart

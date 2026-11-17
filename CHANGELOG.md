@@ -14,6 +14,10 @@ and this project adheres to
   [#135](https://github.com/cloudoperators/rootstock/pull/135)
   ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
   by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.2.1 - ⚙️) tooling: Introduce shell helpers for logging and binary execution
+  [#136](https://github.com/cloudoperators/rootstock/pull/136)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
 
 ## 2026-11-13
 
