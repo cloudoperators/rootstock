@@ -368,7 +368,7 @@ ensure_oci_builder() {
         --driver-opt network=host \
         --buildkitd-flags '--allow-insecure-entitlement network.host' \
         >/dev/null 2>&1"
-    docker buildx inspect --bootstrap "${oci_builder}" >/dev/null 2>&1 \
+    _exec "docker buildx inspect --bootstrap '${oci_builder}' >/dev/null 2>&1" \
         || { docker buildx rm "${oci_builder}" >/dev/null 2>&1 || true; \
              die "failed to bootstrap buildx builder ${oci_builder}"; }
 }
@@ -402,7 +402,7 @@ push_local_image_oci() {
     mkdir -p "$layout"
 
     # `docker save` streams an OCI-layout tarball; extract it into $layout.
-    docker save "$local_image" | tar -x -C "$layout" \
+    _exec "docker save '$local_image' | tar -x -C '$layout'" \
         || { rm -rf "$ctx"; die "failed to export local image ${local_image} via docker save"; }
     [[ -f "${layout}/index.json" ]] || {
         rm -rf "$ctx"
@@ -413,7 +413,7 @@ push_local_image_oci() {
     # A throwaway `FROM base` Dockerfile whose base is the extracted OCI layout.
     printf 'FROM base\n' > "${ctx}/Dockerfile"
 
-    docker buildx --builder "${oci_builder}" build \
+    _exec docker buildx --builder "${oci_builder}" build \
         --platform "${BUILD_PLATFORM}" \
         --provenance=false \
         --build-context "base=oci-layout://${layout}" \
