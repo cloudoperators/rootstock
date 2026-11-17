@@ -8,32 +8,20 @@ on:
     - cron: '20 08 * * 1'
 
 jobs:
-  placeholder:
+  codeql:
     permissions:
       security-events: write
       actions: read
       contents: read
-    runs-on: 'ubuntu-slim'
-    steps:
-      - name: TODO enable CodeQL
-        shell: bash
-        run: |
-          echo "TODO: reanable CodeQL when the repository is open-source"
-      
-#   codeql:
-#     permissions:
-#       security-events: write
-#       actions: read
-#       contents: read
-#     uses: cloudoperators/common/.github/workflows/shared-codeql.yaml@main
-#     with:
-#       runs-on: "['ubuntu-latest']"
-#       language: "['go']"
-#       go-check: true
-#       go-version: "['1.26']"
-#       node-check: false
-#       # node-version : "['node']"
-#       # fail-fast: false  
-#       # timeout: 30
-#       autobuild: true
-#       # build_query: "make something"
+    uses: cloudoperators/common/.github/workflows/shared-codeql.yaml@main
+    with:
+      runs-on: "['ubuntu-latest']"
+      language: "['go']"
+      go-check: true
+      go-version: "['1.26']"
+      node-check: false
+      # node-version : "['node']"
+      # fail-fast: false
+      # timeout: 30
+      autobuild: true
+      # build_query: "make something"
