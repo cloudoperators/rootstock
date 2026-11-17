@@ -18,6 +18,10 @@ and this project adheres to
   [#136](https://github.com/cloudoperators/rootstock/pull/136)
   ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
   by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.2.1 - 🐛) chart: Config file location and consistent namespace behaviour
+  [#137](https://github.com/cloudoperators/rootstock/pull/137)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
 
 ## 2026-11-13
 
