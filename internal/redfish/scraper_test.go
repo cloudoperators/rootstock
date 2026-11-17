@@ -25,6 +25,7 @@ const (
 	pathRackPDUs    = "/redfish/v1/PowerEquipment/RackPDUs"
 	pathPowerRating = "/redfish/v1/PowerEquipment/RackPDUs/1"
 	pathEnergetics  = "/redfish/v1/PowerEquipment/RackPDUs/1/Metrics"
+	pathMains       = "/redfish/v1/PowerEquipment/RackPDUs/1/Mains"
 	pathMainCurrent = "/redfish/v1/PowerEquipment/RackPDUs/1/Mains/AC1"
 	pathOutlets     = "/redfish/v1/PowerEquipment/RackPDUs/1/Outlets"
 	pathOutletA1    = "/redfish/v1/PowerEquipment/RackPDUs/1/Outlets/A1"
@@ -50,10 +51,16 @@ func fullHandlers() map[string]http.HandlerFunc {
 		pathRackPDUs: jsonHandler(map[string]any{
 			"Members": []any{map[string]any{"@odata.id": pathPowerRating}},
 		}),
-		pathPowerRating: jsonHandler(map[string]any{"Id": "1", "PowerCapacityVA": 5000.0}),
+		pathPowerRating: jsonHandler(map[string]any{
+			"Id": "1", "PowerCapacityVA": 5000.0,
+			"Manufacturer": "PANDUIT", "Model": "XYZ",
+		}),
 		pathEnergetics: jsonHandler(map[string]any{
 			"PowerWatts": map[string]any{"Reading": 442.0, "ApparentVA": 444.0, "ReactiveVAR": 42.0, "PowerFactor": 0.99},
 			"EnergykWh":  map[string]any{"Reading": 1234.0},
+		}),
+		pathMains: jsonHandler(map[string]any{
+			"Members": []any{map[string]any{"@odata.id": pathMainCurrent}},
 		}),
 		pathMainCurrent: jsonHandler(map[string]any{
 			"PolyPhaseVoltage":     []any{map[string]any{"Line1ToNeutral": map[string]any{"Reading": 230.0}}},
@@ -78,6 +85,7 @@ func fullHandlers() map[string]http.HandlerFunc {
 		}),
 		pathBranchA: jsonHandler(map[string]any{
 			"RatedCurrentAmps":    32.0,
+			"CircuitType":         "Branch",
 			"CurrentAmps":         map[string]any{"Reading": 5.0},
 			"PolyPhaseVoltage":    map[string]any{"Line1": map[string]any{"Reading": 230.0}},
 			"PolyPhasePowerWatts": map[string]any{"Line1": map[string]any{"Reading": 442.0, "ApparentVA": 444.0}},
@@ -96,10 +104,10 @@ func setupTestTLSServer(t *testing.T, handlers map[string]http.HandlerFunc) *htt
 	return httptest.NewTLSServer(mux)
 }
 
-// findMetric returns the metric with the given unique name, or false if absent.
-func findMetric(metrics []rawdata.RawMetric, name string) (rawdata.RawMetric, bool) {
+// findMetric returns the first metric with the given key, or false if absent.
+func findMetric(metrics []rawdata.RawMetric, key string) (rawdata.RawMetric, bool) {
 	for _, m := range metrics {
-		if m.Name == name {
+		if m.Key == key {
 			return m, true
 		}
 	}
@@ -112,6 +120,7 @@ func TestScrape(t *testing.T) {
 
 	tests := []struct {
 		name       string
+		filter     redfish.Filter
 		breakPath  string // if set, this endpoint returns 500
 		noToken    bool   // if true, login omits the auth token
 		wantErr    bool
@@ -119,40 +128,42 @@ func TestScrape(t *testing.T) {
 		wantCount  int // expected number of metrics, checked only when wantErr is false
 	}{
 		{
-			name:       "happy path produces all metrics",
-			wantErr:    false,
+			name:       "empty filter passes every number and no metadata",
+			filter:     redfish.Filter{},
 			wantStatus: http.StatusOK,
 			wantCount:  21,
 		},
 		{
-			name:       "login failure",
+			name:       "default filter keeps readings plus metadata info metrics",
+			filter:     redfish.DefaultFilter(),
+			wantStatus: http.StatusOK,
+			wantCount:  14,
+		},
+		{
+			name:       "login failure is fatal",
 			noToken:    true,
 			wantErr:    true,
 			wantStatus: 0,
 		},
 		{
-			name:       "rack PDUs listing fails",
+			name:       "rack PDUs listing failure is fatal",
 			breakPath:  pathRackPDUs,
 			wantErr:    true,
 			wantStatus: 0,
 		},
 		{
-			name:       "energetics endpoint fails",
+			name:       "broken metrics document is skipped, not fatal",
+			filter:     redfish.Filter{},
 			breakPath:  pathEnergetics,
-			wantErr:    true,
-			wantStatus: 0,
+			wantStatus: http.StatusOK,
+			wantCount:  16, // 21 minus the 5 Metrics numbers
 		},
 		{
-			name:       "outlet electricals endpoint fails",
+			name:       "broken outlet document is skipped, not fatal",
+			filter:     redfish.Filter{},
 			breakPath:  pathOutletA1,
-			wantErr:    true,
-			wantStatus: 0,
-		},
-		{
-			name:       "branch current endpoint fails",
-			breakPath:  pathBranchA,
-			wantErr:    true,
-			wantStatus: 0,
+			wantStatus: http.StatusOK,
+			wantCount:  17, // 21 minus the 4 Outlet numbers
 		},
 	}
 
@@ -179,7 +190,7 @@ func TestScrape(t *testing.T) {
 			defer server.Close()
 
 			out := make(chan []rawdata.RawMetric, 1)
-			scrape := redfish.NewScraper(out, log.NewMockLogger(), 5*time.Second)
+			scrape := redfish.NewScraper(out, log.NewMockLogger(), 5*time.Second, tc.filter)
 
 			job := manager.ScrapeJob{
 				IP:       strings.TrimPrefix(server.URL, "https://"),
@@ -209,14 +220,146 @@ func TestScrape(t *testing.T) {
 				assert.False(t, m.Timestamp.IsZero())
 				assert.Equal(t, "1", m.Labels["pdu_id"])
 			}
-
-			capacity, ok := findMetric(metrics, "PowerCapacityVA")
-			require.True(t, ok)
-			assert.InDelta(t, 5000.0, capacity.Value, 1e-6)
-
-			energy, ok := findMetric(metrics, "EnergykWh.EnergykWh")
-			require.True(t, ok)
-			assert.InDelta(t, 1234.0, energy.Value, 1e-6)
 		})
 	}
+}
+
+func TestScrapeFilterEffects(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name        string
+		filter      redfish.Filter
+		key         string
+		wantPresent bool
+		checkValue  bool
+		wantValue   float64
+		wantLabels  map[string]string // subset-checked when non-nil
+	}{
+		{
+			name:        "empty filter keeps a top-level number",
+			filter:      redfish.Filter{},
+			key:         "PowerCapacityVA",
+			wantPresent: true,
+			checkValue:  true,
+			wantValue:   5000.0,
+		},
+		{
+			name:        "empty filter keeps a prefixed reading",
+			filter:      redfish.Filter{},
+			key:         "Metrics/EnergykWh/Reading",
+			wantPresent: true,
+			checkValue:  true,
+			wantValue:   1234.0,
+		},
+		{
+			name:        "empty filter keeps a secondary electrical field",
+			filter:      redfish.Filter{},
+			key:         "Metrics/PowerWatts/ApparentVA",
+			wantPresent: true,
+		},
+		{
+			name:        "empty filter keeps a nested poly-phase reading",
+			filter:      redfish.Filter{},
+			key:         "Mains/PolyPhaseVoltage/Line1ToNeutral/Reading",
+			wantPresent: true,
+		},
+		{
+			name:        "empty filter emits no info metric",
+			filter:      redfish.Filter{},
+			key:         "info",
+			wantPresent: false,
+		},
+		{
+			name:        "default filter keeps readings",
+			filter:      redfish.DefaultFilter(),
+			key:         "Metrics/EnergykWh/Reading",
+			wantPresent: true,
+		},
+		{
+			name:        "default filter drops a top-level config number",
+			filter:      redfish.DefaultFilter(),
+			key:         "PowerCapacityVA",
+			wantPresent: false,
+		},
+		{
+			name:        "default filter drops a secondary electrical field",
+			filter:      redfish.DefaultFilter(),
+			key:         "Metrics/PowerWatts/ApparentVA",
+			wantPresent: false,
+		},
+		{
+			name:        "default filter drops an outlet config number",
+			filter:      redfish.DefaultFilter(),
+			key:         "Outlets/RatedCurrentAmps",
+			wantPresent: false,
+		},
+		{
+			name:        "default filter emits a PDU info metric with identity labels",
+			filter:      redfish.DefaultFilter(),
+			key:         "info",
+			wantPresent: true,
+			checkValue:  true,
+			wantValue:   1.0,
+			wantLabels:  map[string]string{"pdu_id": "1", "Manufacturer": "PANDUIT", "Model": "XYZ"},
+		},
+		{
+			name:        "default filter emits a per-outlet info metric",
+			filter:      redfish.DefaultFilter(),
+			key:         "Outlets/info",
+			wantPresent: true,
+			wantLabels:  map[string]string{"outlet_id": "A1", "OutletType": "NEMA", "State": "Enabled"},
+		},
+		{
+			name:        "default filter emits a per-branch info metric",
+			filter:      redfish.DefaultFilter(),
+			key:         "Branches/info",
+			wantPresent: true,
+			wantLabels:  map[string]string{"branch_id": "A", "CircuitType": "Branch"},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			metric, ok := findMetric(runScrape(t, tc.filter), tc.key)
+			require.Equal(t, tc.wantPresent, ok)
+
+			if !tc.wantPresent {
+				return
+			}
+
+			if tc.checkValue {
+				assert.InDelta(t, tc.wantValue, metric.Value, 1e-6)
+			}
+
+			for label, want := range tc.wantLabels {
+				assert.Equal(t, want, metric.Labels[label])
+			}
+		})
+	}
+}
+
+func runScrape(t *testing.T, filter redfish.Filter) []rawdata.RawMetric {
+	t.Helper()
+
+	server := setupTestTLSServer(t, fullHandlers())
+	t.Cleanup(server.Close)
+
+	out := make(chan []rawdata.RawMetric, 1)
+	scrape := redfish.NewScraper(out, log.NewMockLogger(), 5*time.Second, filter)
+
+	job := manager.ScrapeJob{
+		IP:       strings.TrimPrefix(server.URL, "https://"),
+		Username: "user",
+		Password: "pass",
+		Protocol: "redfish",
+	}
+
+	status, err := scrape(context.Background(), job)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, status)
+
+	return <-out
 }

@@ -9,7 +9,7 @@ import "time"
 type RawMetric struct {
 	DeviceIP  string
 	Protocol  string
-	Name      string
+	Key       string
 	Value     float64
 	Labels    map[string]string
 	Timestamp time.Time
