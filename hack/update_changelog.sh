@@ -62,6 +62,14 @@ fi
 # Always bump: everything not behind a release tag belongs to the next release.
 cliff_args=(--bump)
 
+# Allow forcing a specific git-cliff config. In privileged CI the changelog is
+# generated against an untrusted (fork) checkout, so the config must be pinned
+# to a trusted copy rather than auto-discovered from the working tree (a
+# fork-controlled cliff.toml can run arbitrary commands via postprocessors).
+if [[ -n "${CLIFF_CONFIG:-}" ]]; then
+  cliff_args+=(--config "${CLIFF_CONFIG}")
+fi
+
 if $print_version; then
   cliff_args+=(--bumped-version)
 else

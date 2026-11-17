@@ -165,7 +165,11 @@ jobs:
       pr_body: ${{ needs.check-eligibility.outputs.pr_body }}
       pr_url: ${{ needs.check-eligibility.outputs.pr_url }}
       base_sha: ${{ needs.check-eligibility.outputs.base_sha }}
-    secrets: inherit
+    # Pass ONLY the push token, not `secrets: inherit`. This job checks out and
+    # operates on untrusted fork code, so it must never receive the GitHub App
+    # private key or other high-value organization/repository secrets.
+    secrets:
+      token: ${{ secrets.GITHUB_TOKEN }}
 
 
   merge:
