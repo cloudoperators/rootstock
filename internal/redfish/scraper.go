@@ -88,7 +88,8 @@ func resolvePattern(ctx context.Context, client Client, logger log.MinInterface,
 	rest := pattern[idx+2:]
 
 	var collection map[string]any
-	if err := client.Get(ctx, prefix, &collection); err != nil {
+	err := client.Get(ctx, prefix, &collection)
+	if err != nil {
 		return nil, fmt.Errorf("list collection at %q: %w", prefix, err)
 	}
 
