@@ -6,36 +6,24 @@ filters:
           .Reading:
             newKey: "power"                     # metrics final name
             labels:
-              add:
-                unit: .ReadingUnits                      # constant
-                uri: ."@odata.id"
-                id: .Id  # json reference
-                state: .Status.State
-                health: .Status.Health
+              unit: .ReadingUnits                      # constant
+              uri: ."@odata.id"
+              id: .Id  # json reference
+              state: .Status.State
+              health: .Status.Health
           .ApparentVA:
             newKey: "apparentVA"                     # metrics final name
             labels:
-              add:
-                unit: "VA"                      # constant
-                uri: ."@odata.id"
-                id: .Id  # json reference
-                state: .Status.State
-                health: .Status.Health
+              unit: "VA"                      # constant
+              uri: ."@odata.id"
+              id: .Id  # json reference
+              state: .Status.State
+              health: .Status.Health
           .ReactiveVAR:
             newKey: "reactiveVAR"                     # metrics final name
             labels:
-              add:
-                unit: "VAR"                      # constant
-                uri: ."@odata.id"
-                id: .Id  # json reference
-                state: .Status.State
-                health: .Status.Health
-  snmp:
-    keys:
-      hw_current:
-        newKey: current                     # metrics final name
-        labels:
-          add:
-            # as in the redfish case
-          remove:
-            # as in redfish case
+              unit: "VAR"                      # constant
+              uri: ."@odata.id"
+              id: .Id  # json reference
+              state: .Status.State
+              health: .Status.Health

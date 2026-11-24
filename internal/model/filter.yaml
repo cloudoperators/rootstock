@@ -1,0 +1,33 @@
+common:
+  labels:
+    pduPower: &pduPowerLabels
+      uri: ."@odata.id"
+      id: .Id  # json reference
+      state: .Status.State
+      health: .Status.Health
+
+filters:
+  redfish:
+    Panduit:
+      "/redfish/v1/PowerEquipment/RackPDUs/1/Sensors/PDUPower":
+       -  key: "power"
+          value: .Reading
+          type: gauge
+          help:
+          labels:
+            <<: *pduPowerLabels
+            unit: .ReadingUnits    # json reference (e.g. Watts)
+       -  key: "apparentVA"
+          value: .ApparentVA
+          type: gauge
+          help:
+          labels:
+            <<: *pduPowerLabels
+            unit: "V.A"            # constant: volt-amperes
+       -  key: "reactiveVAR"
+          value: .ReactiveVAR
+          type: gauge
+          help:
+          labels:
+            <<: *pduPowerLabels
+            unit: "V.A-Reactive"   # constant: volt-amperes reactive
