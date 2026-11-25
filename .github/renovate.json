@@ -22,7 +22,7 @@
         "/^\\.github/workflows/ci\\.ya?ml$/"
       ],
       "matchStrings": [
-        "version:\\s*v?(?<currentValue>(?:\\d+\\.){1,2}\\d+)"
+        "GOLANGCI_LINT_VERSION:\\s*v?(?<currentValue>(?:\\d+\\.){1,2}\\d+)"
       ],
       "datasourceTemplate": "github-tags",
       "depNameTemplate": "golangci/golangci-lint",
