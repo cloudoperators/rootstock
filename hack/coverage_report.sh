@@ -38,6 +38,11 @@ Options:
 EOF
 }
 
+# Script-global scratch directory. Declared here (not as a local in main) so the
+# EXIT trap can still reference it after main has returned, and so the helper
+# functions can use it without it going out of scope.
+workdir=""
+
 main() {
   local repo="${GH_REPO:-${GITHUB_REPOSITORY:-}}"
   local pr_number="${PR_NUMBER:-}"
@@ -74,9 +79,8 @@ main() {
 
   export GH_REPO="$repo"
 
-  local workdir
   workdir="$(mktemp -d)"
-  trap 'rm -rf "$workdir"' EXIT
+  trap 'if [[ -n "${workdir:-}" && -d "${workdir}" ]]; then rm -rf "${workdir}"; fi' EXIT
 
   install_cli "$cli_version"
 
