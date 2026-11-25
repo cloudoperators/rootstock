@@ -14,14 +14,21 @@ import (
 	"time"
 
 	"github.com/cloudoperators/rootstock/internal/manager"
+	"github.com/cloudoperators/rootstock/internal/model"
 	"github.com/cloudoperators/rootstock/pkg/log"
 )
 
+type ScrapeResult struct {
+	DeviceIP string
+	Metadata map[string]model.Metadata
+	Routes   map[string][]byte
+}
+
 // NewScraper returns a function that the manager calls for each scrape job.
-// TODO: add urlPatterns parameter once model and filter.yaml design is finalised.
 func NewScraper(
 	logger log.MinInterface,
 	timeout time.Duration,
+	metadataPattern string,
 	urlPatterns []string,
 ) func(ctx context.Context, job manager.ScrapeJob) (int, error) {
 	return func(ctx context.Context, job manager.ScrapeJob) (int, error) {
@@ -44,6 +51,11 @@ func NewScraper(
 			}
 		}()
 
+		metadatas, err := fetchMetadata(ctx, client, logger, metadataPattern)
+		if err != nil {
+			return 0, fmt.Errorf("fetch metadata for %s: %w", job.IP, err)
+		}
+
 		routes := make(map[string][]byte)
 		for _, pattern := range urlPatterns {
 			urls, err := resolvePattern(ctx, client, logger, pattern)
@@ -62,12 +74,39 @@ func NewScraper(
 			}
 		}
 
-		logger.Info("scraper routes", "ip", job.IP, "count", len(routes))
+		result := ScrapeResult{
+			DeviceIP: job.IP,
+			Metadata: metadatas,
+			Routes:   routes,
+		}
 
-		// TODO: pass routes to the model for metric construction.
+		logger.Info("scrape complete", "ip", job.IP, "metadata_count", len(result.Metadata), "route_count", len(result.Routes))
+
+		// TODO: pass result to NewRedfish for metric construction
 
 		return http.StatusOK, nil
 	}
+}
+
+// fetches PDU root documents and decodes them into typed structs.
+func fetchMetadata(ctx context.Context, client Client, logger log.MinInterface, metadataPattern string) (map[string]model.Metadata, error) {
+	urls, err := resolvePattern(ctx, client, logger, metadataPattern)
+	if err != nil {
+		return nil, fmt.Errorf("resolve metadata pattern %q: %w", metadataPattern, err)
+	}
+
+	metadatas := make(map[string]model.Metadata)
+	for _, u := range urls {
+		var m model.Metadata
+		if err := client.Get(ctx, u, &m); err != nil {
+			logger.Warn("skipping metadata URL", "url", u, log.KeyError, err)
+			continue
+		}
+		metadatas[u] = m
+	}
+
+	return metadatas, nil
+
 }
 
 // resolvePattern expands a single "#" wildcard in a URL pattern into concrete URLs.
