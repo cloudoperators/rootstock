@@ -45,7 +45,7 @@ jobs:
       # the changelog and the ref we ultimately commit/push to. We never execute
       # any script, Makefile target, or tool config that lives in this checkout.
       - name: Checkout PR branch (untrusted)
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 (v7)
         with:
           fetch-depth: 0
           ref: ${{ inputs.head_ref }}
@@ -56,13 +56,13 @@ jobs:
       # (hack/*.sh, cliff.toml) is run from here so a malicious fork cannot
       # inject code into this privileged job.
       - name: Checkout trusted tooling (base repo)
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 (v7)
         with:
           fetch-depth: 0
           ref: ${{ inputs.base_sha }}
           path: trusted
 
-      - uses: taiki-e/install-action@v2
+      - uses: taiki-e/install-action@fe3acb53a98b62c772db35de75ce0e4595e7ca8c # v2.90.8 (v2)
         with:
           tool: git-cliff
 
