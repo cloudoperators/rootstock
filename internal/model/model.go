@@ -4,8 +4,6 @@
 package model
 
 import (
-	"fmt"
-	"net/netip"
 	"time"
 )
 
@@ -17,39 +15,43 @@ const (
 )
 
 // RawKey captures exactly where a metric value came from, before any translation.
-type RawKey struct {
-	Route   string
-	JSONKey []string
-	Name    string
+// type RawKey struct {
+// 	Route   string
+// 	JSONKey []string
+// 	Name    string
+// }
+
+type Metadata struct {
+	DeviceIP        string   `json:"-"`
+	Protocol        Protocol `json:"-"`
+	EquipmentType   string   `json:"EquipmentType"`
+	Name            string   `json:"Name"`
+	FirmwareVersion string   `json:"FirmwareVersion"`
+	Manufacturer    string   `json:"Manufacturer"`
+	Model           string   `json:"Model"`
+	SerialNumber    string   `json:"SerialNumber"`
 }
 
+type MetricType string
+
+const (
+	Gauge   MetricType = "gauge"
+	Counter MetricType = "counter"
+)
+
 // Metric is the common output of any scraper before translation into Prometheus metrics.
-// After scraping: RawKey is populated, FinalKey is empty.
-// After translation: FinalKey holds the final Prometheus metric name.
 type Metric struct {
-	DeviceIP  netip.Addr
-	Protocol  Protocol
-	RawKey    RawKey
-	FinalKey  string
+	Name      string
 	Value     float64
-	Labels    map[string]any
+	Labels    map[string]string
+	Help      string
+	Type      MetricType
 	Timestamp time.Time
 }
 
-// NewRedfish is called once per key by the filter.yaml processor.
-// It decodes rawdata, extracts the value at key, applies the filter.yaml
-// rule for route+key, and returns one constructed Metric.
-func NewRedfish(rawIP, route, key string, rawdata []byte) (*Metric, error) {
-	ip, err := netip.ParseAddr(rawIP)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse IP %q: %w", rawIP, err)
-	}
-
-	// TODO (next PR): decode rawdata, extract value at key path,
-	// find filter.yaml rule for route+key,
-	// construct FinalKey and add translation labels.
-
-	return &Metric{
-		DeviceIP: ip,
-	}, nil
+func NewRedfish(route string, rawBytes []byte, metadata Metadata) (*Metric, error) {
+	// TODO: decode rawBytes, extract values at JSON key paths,
+	// apply filter.yaml rules for route+key,
+	// construct Metric with metadata fields as labels.
+	return nil, nil
 }
