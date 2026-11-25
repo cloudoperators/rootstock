@@ -8,6 +8,6 @@ jobs:
     permissions:
       packages: write
     steps:
-      - uses: dataaxiom/ghcr-cleanup-action@v1
+      - uses: dataaxiom/ghcr-cleanup-action@ac45a8c04b1eb4b27974ca79a0a74f344c93664b # v1.3.0 (v1)
         with:
           delete-tags: pr-${{ github.event.pull_request.number }}
