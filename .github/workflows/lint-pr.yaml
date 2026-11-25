@@ -15,20 +15,18 @@ jobs:
     permissions:
       pull-requests: read
     steps:
-      - uses: amannn/action-semantic-pull-request@66e72920af32222769c386d81f89656ebcb6d6d5 # v6.1.4 (v6)
+      # amannn/action-semantic-pull-request is not a verified Marketplace
+      # creator, so validate the PR title with a self-contained script instead.
+      #
+      # Allowed types:
+      #   fix   : all changes that address a failure of the current code base
+      #   feat  : all changes that add business functionality (features)
+      #   docs  : all changes to the documentation (internal and external)
+      #   chore : all other changes (e.g. to scripts, internal tooling)
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 (v7)
+      - name: Validate PR title
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          # Configure which types are allowed (newline-delimited).
-          # These are regex patterns auto-wrapped in `^ $`.
-          # Default: https://github.com/commitizen/conventional-commit-types
-          ##
-          # fix   : all changes that address a failure of the current code base must be prefixed with this
-          # feat  : all changes that add business functionality (features) to the current code base must be prefixed with this
-          # docs  : all changes to the documentation (internal and external) must be prefixed with this
-          # chore : all other changes (e.g. to scripts, internal tooling) must be prefixed with this
-          types: |
-            fix 
-            feat
-            docs
-            chore
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          hack/lint_pr_title.sh --types "fix feat docs chore"
