@@ -1,0 +1,92 @@
+metadata_pattern: /redfish/v1/PowerEquipment/RackPDUs/#
+
+url_patterns:
+  - /redfish/v1/PowerEquipment/RackPDUs/#/Metrics
+  - /redfish/v1/PowerEquipment/RackPDUs/#/Mains/#
+  - /redfish/v1/PowerEquipment/RackPDUs/#/Branches/#
+
+common:
+  labels:
+    route_labels: &routeLabels
+      uri: ."@odata.id"
+      id: .Id
+
+filters:
+  redfish:
+    Panduit:
+      /redfish/v1/PowerEquipment/RackPDUs/#/Metrics:
+        - key: power_watts
+          value: .PowerWatts.Reading
+          type: gauge
+          help: "Total PDU power consumption in watts"
+          labels:
+            <<: *routeLabels
+
+        - key: apparent_power_va
+          value: .PowerWatts.ApparentVA
+          type: gauge
+          help: "Total PDU apparent power in volt-amperes"
+          labels:
+            <<: *routeLabels
+
+        - key: reactive_power_var
+          value: .PowerWatts.ReactiveVAR
+          type: gauge
+          help: "Total PDU reactive power in volt-amperes reactive"
+          labels:
+            <<: *routeLabels
+
+        - key: power_factor
+          value: .PowerWatts.PowerFactor
+          type: gauge
+          help: "PDU power factor"
+          labels:
+            <<: *routeLabels
+
+        - key: energy_kwh
+          value: .EnergykWh.Reading
+          type: counter
+          help: "Total PDU energy consumption in kilowatt-hours"
+          labels:
+            <<: *routeLabels
+
+      /redfish/v1/PowerEquipment/RackPDUs/#/Mains/#:
+        - key: frequency_hz
+          value: .FrequencyHz.Reading
+          type: gauge
+          help: "Mains input frequency in hertz"
+          labels:
+            <<: *routeLabels
+            health: .Status.Health
+        # TODO: poly-phase voltage, current, power (array structure, next PR)
+
+      /redfish/v1/PowerEquipment/RackPDUs/#/Branches/#:
+        - key: current_amps
+          value: .CurrentAmps.Reading
+          type: gauge
+          help: "Branch circuit current in amperes"
+          labels:
+            <<: *routeLabels
+            health: .Status.Health
+            state: .Status.State
+
+        - key: voltage
+          value: .PolyPhaseVoltage.Line1ToNeutral.Reading
+          type: gauge
+          help: "Branch circuit voltage in volts"
+          labels:
+            <<: *routeLabels
+
+        - key: power_watts
+          value: .PolyPhasePowerWatts.Line1ToNeutral.Reading
+          type: gauge
+          help: "Branch circuit power consumption in watts"
+          labels:
+            <<: *routeLabels
+
+        - key: energy_kwh
+          value: .EnergykWh.Reading
+          type: counter
+          help: "Branch circuit energy consumption in kilowatt-hours"
+          labels:
+            <<: *routeLabels

@@ -126,7 +126,7 @@ func resolvePattern(ctx context.Context, client Client, logger log.MinInterface,
 	}
 
 	var result []string
-	for _, memberURL := range childURLs(collection) {
+	for _, memberURL := range extractMemberURLs(collection) {
 		memberID := path.Base(memberURL)
 		expanded := prefix + "/" + memberID + rest
 
@@ -141,10 +141,10 @@ func resolvePattern(ctx context.Context, client Client, logger log.MinInterface,
 	return result, nil
 }
 
-// childURLs returns the list of URLs a Redfish collection links to. A collection
+// extractMemberURLs returns the list of URLs a Redfish collection links to. A collection
 // stores them in an array of objects that each have an "@odata.id"; the array's
 // key name varies (Members, Outlets, Branch), so we match on that shape.
-func childURLs(doc map[string]any) []string {
+func extractMemberURLs(doc map[string]any) []string {
 	var urls []string
 
 	for _, value := range doc {
