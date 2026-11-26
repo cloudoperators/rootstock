@@ -5,7 +5,6 @@ package cache
 
 import (
 	"errors"
-	"fmt"
 	"sync"
 )
 
@@ -56,8 +55,4 @@ func (c *cache[T]) Set(key string, data T) {
 	defer c.mu.Unlock()
 
 	c.data[key] = data
-}
-
-func hello() {
-	fmt.Println("hello")
 }
