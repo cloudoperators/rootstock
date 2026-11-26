@@ -54,8 +54,8 @@ and this project adheres to
   [#148](https://github.com/cloudoperators/rootstock/pull/148)
   ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
   by [@blackhat-jan](https://github.com/blackhat-jan)
-- (0.2.1 - ⚙️) deps: Update golang docker tag to v1.27.3
-  [#150](https://github.com/cloudoperators/rootstock/pull/150)
+- (0.2.1 - ⚙️) config: Migrate Renovate config
+  [#165](https://github.com/cloudoperators/rootstock/pull/165)
   ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
   by [@renovate[bot]](https://github.com/renovate[bot])
 
