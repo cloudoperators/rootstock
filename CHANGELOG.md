@@ -54,8 +54,8 @@ and this project adheres to
   [#148](https://github.com/cloudoperators/rootstock/pull/148)
   ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
   by [@blackhat-jan](https://github.com/blackhat-jan)
-- (0.2.1 - 🐛) deps: Update module github.com/spf13/pflag to v1.1.0
-  [#161](https://github.com/cloudoperators/rootstock/pull/161)
+- (0.2.1 - ⚙️) deps: Update dependency prettier to v3.10.1
+  [#155](https://github.com/cloudoperators/rootstock/pull/155)
   ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
   by [@renovate[bot]](https://github.com/renovate[bot])
 
