@@ -52,14 +52,18 @@ jobs:
           token: ${{ secrets.token }}
           path: branch
 
-      # The base-repo checkout at base_sha is TRUSTED. All executable tooling
-      # (hack/*.sh, cliff.toml) is run from here so a malicious fork cannot
-      # inject code into this privileged job.
+      # This checkout is TRUSTED. All executable tooling (hack/*.sh, cliff.toml)
+      # is run from here so a malicious fork cannot inject code into this
+      # privileged job. We pin the ref to the HEAD of the default branch (main)
+      # rather than inputs.base_sha: base_sha is derived from PR data and, while
+      # it normally resolves to the base branch tip, anchoring explicitly to
+      # `main` guarantees the tooling is always the current trusted version on
+      # the default branch and never a stale or fork-influenced commit.
       - name: Checkout trusted tooling (base repo)
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 (v7)
         with:
           fetch-depth: 0
-          ref: ${{ inputs.base_sha }}
+          ref: main
           path: trusted
 
       # taiki-e/install-action is not a verified Marketplace creator, so install
@@ -99,7 +103,7 @@ jobs:
           # Absolute paths to the TRUSTED tooling checkout.
           TRUSTED_DIR: ${{ github.workspace }}/trusted
           # Pinned so the untrusted checkout cannot influence which prettier runs.
-          PRETTIER_VERSION: 3.6.2
+          PRETTIER_VERSION: 3.10.1
         run: |
           PR_AUTHOR=$(gh api "repos/${GITHUB_REPO}/pulls/${PR_NUMBER}" --jq '.user.login')
 
