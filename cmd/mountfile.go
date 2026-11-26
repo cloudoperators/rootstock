@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/google/uuid"
@@ -19,6 +20,14 @@ import (
 const (
 	logKeyFile = "file"
 	logKeyID   = "changeID"
+
+	// When a file is rewritten (e.g. via os.WriteFile), it is first truncated
+	// and then written. fsnotify can deliver a Write event while the file is
+	// momentarily empty. To avoid forwarding this transient empty state as a
+	// real change, an empty read is re-read a few times before being accepted.
+	// A genuinely empty file stays empty across all attempts and is forwarded.
+	emptyReadRetries  = 5
+	emptyReadInterval = 20 * time.Millisecond
 )
 
 // InitFileConfig registers a live-reloading configuration from the given filePath.
@@ -47,7 +56,7 @@ func InitFileConfig(
 	)
 
 	update := func() error {
-		content, err := os.ReadFile(filePath)
+		content, err := readConfigContent(filePath)
 		if err != nil {
 			return fmt.Errorf("failed to read config file %q - %w", filePath, err)
 		}
@@ -72,6 +81,29 @@ func InitFileConfig(
 	viperCfg.WatchConfig()
 
 	return update()
+}
+
+// readConfigContent reads the file at filePath. When a rewrite truncates the
+// file, a Write event can arrive while the file is momentarily empty. To avoid
+// treating that transient empty state as a real change, an empty read is
+// retried a few times; if content appears it is returned, otherwise the file
+// is accepted as genuinely empty.
+func readConfigContent(filePath string) ([]byte, error) {
+	content, err := os.ReadFile(filePath)
+	if err != nil {
+		return nil, err
+	}
+
+	for attempt := 0; len(content) == 0 && attempt < emptyReadRetries; attempt++ {
+		time.Sleep(emptyReadInterval)
+
+		content, err = os.ReadFile(filePath)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return content, nil
 }
 
 func onFileChange(onChange func() error) func(in fsnotify.Event) {
