@@ -21,7 +21,7 @@ const (
 	logKeyFile = "file"
 	logKeyID   = "changeID"
 
-	// When a file is rewritten (e.g. via os.WriteFile), it is first truncated
+	// When a file is rewritten (e.g. via [os.WriteFile]), it is first truncated
 	// and then written. fsnotify can deliver a Write event while the file is
 	// momentarily empty. To avoid forwarding this transient empty state as a
 	// real change, an empty read is re-read a few times before being accepted.
