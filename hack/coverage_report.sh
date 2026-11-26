@@ -16,7 +16,8 @@ This is a self-contained replacement for the fgrosse/go-coverage-report GitHub
 Action: it installs the go-coverage-report CLI via "go install", downloads the
 baseline coverage artifact of the latest successful baseline-workflow run on the
 target branch via the "gh" CLI, builds the list of changed Go files from the
-pull request, renders the Markdown report, and creates or updates the PR comment.
+pull request, renders the Markdown report, removes any coverage comments it
+posted on previous runs, and posts the report as a fresh PR comment.
 
 In GitHub Actions it relies on the current run having already uploaded its own
 coverage artifact (COVERAGE_ARTIFACT_NAME) and on the standard GitHub Actions
@@ -174,7 +175,7 @@ main() {
   fi
 
   [[ -n "$pr_number" ]] || die "missing --pr (or PR_NUMBER) but a comment was requested"
-  upsert_comment "$repo" "$pr_number" "$report"
+  post_comment "$repo" "$pr_number" "$report"
 }
 
 # install_cli installs the pinned go-coverage-report CLI into $(go env GOPATH)/bin
@@ -285,7 +286,8 @@ render_report() {
 }
 
 # prepend_marker inserts the hidden COMMENT_MARKER as the first line of the
-# report so that a later run can reliably find and update this exact comment.
+# report so that a later run can reliably find and delete its own previous
+# comments regardless of the report's visible text.
 prepend_marker() {
   local report="$1" tmp
   tmp="$(mktemp)"
@@ -296,34 +298,37 @@ prepend_marker() {
   mv "$tmp" "$report"
 }
 
-# upsert_comment updates the existing coverage comment on the pull request in
-# place, or creates a new one if none exists yet. Previous coverage comments are
-# identified by the author (github-actions[bot]) together with the hidden marker
-# that prepend_marker added, so re-running on a new push edits the same comment
-# instead of adding a duplicate.
-upsert_comment() {
+# post_comment removes every previous coverage comment posted by this script on
+# the pull request and then creates a single fresh comment, so each run ends up
+# with exactly one coverage comment (bumped to the bottom of the PR thread).
+post_comment() {
   local repo="$1" pr_number="$2" report="$3"
-  local comment_id
-  comment_id="$(find_existing_comment "$repo" "$pr_number")"
 
-  if [[ -n "$comment_id" ]]; then
-    log_info "Updating existing coverage comment ${comment_id}"
-    # Build the JSON payload with jq so the markdown body is encoded as a proper
-    # JSON string (correct escaping of quotes, newlines, backticks, etc.).
-    jq -n --rawfile body "$report" '{body: $body}' \
-      | _exec gh api --method PATCH "repos/${repo}/issues/comments/${comment_id}" --input -
-  else
-    log_info "Creating new coverage comment"
-    _exec gh pr comment "$pr_number" --body-file="$report"
-  fi
+  delete_previous_comments "$repo" "$pr_number"
+
+  log_info "Creating new coverage comment"
+  _exec gh pr comment "$pr_number" --body-file="$report"
 }
 
-# find_existing_comment prints the ID of the coverage comment posted by
-# github-actions[bot] on the pull request, or nothing if there is none. A
-# comment carrying the hidden marker is always preferred; comments created
-# before the marker existed are matched by the "Coverage Δ" table header (which
-# every report contains) only when no marker comment is found.
-find_existing_comment() {
+# delete_previous_comments deletes all coverage comments previously posted by
+# github-actions[bot] on the pull request (identified by the hidden marker, or
+# by the "Coverage Δ" table header for comments created before the marker
+# existed). Missing comments are ignored.
+delete_previous_comments() {
+  local repo="$1" pr_number="$2"
+  local id
+  while IFS= read -r id; do
+    [[ -n "$id" ]] || continue
+    log_info "Deleting previous coverage comment ${id}"
+    _exec gh api --method DELETE "repos/${repo}/issues/comments/${id}"
+  done < <(find_existing_comments "$repo" "$pr_number")
+}
+
+# find_existing_comments prints the IDs (one per line) of every coverage comment
+# posted by github-actions[bot] on the pull request. Comments carrying the
+# hidden marker are matched first; comments created before the marker existed
+# are matched by the "Coverage Δ" table header (which every report contains).
+find_existing_comments() {
   local repo="$1" pr_number="$2"
   # --paginate --slurp returns a JSON array whose elements are the per-page
   # arrays; `add` flattens them into a single list of comments before filtering.
@@ -333,8 +338,8 @@ find_existing_comment() {
        | [ .[] | select(.user.login == "github-actions[bot]") ] as $bot
        | ( [ $bot[] | select(.body | contains("'"$COMMENT_MARKER"'")) ]
            + [ $bot[] | select(.body | test("Coverage Δ")) ] )
-       | first
-       | .id // empty'
+       | unique_by(.id)
+       | .[].id'
 }
 
 main "$@"
