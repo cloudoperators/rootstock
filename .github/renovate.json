@@ -43,6 +43,18 @@
     },
     {
       "customType": "regex",
+      "description": "Bump prettier version in the changelog workflow",
+      "managerFilePatterns": [
+        "/^\\.github/workflows/changelog_version\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "PRETTIER_VERSION:\\s*v?(?<currentValue>(?:\\d+\\.){1,2}\\d+)"
+      ],
+      "datasourceTemplate": "npm",
+      "depNameTemplate": "prettier"
+    },
+    {
+      "customType": "regex",
       "description": "Update the go-coverage-report CLI version passed to hack/coverage_report.sh",
       "managerFilePatterns": [
         "/^Makefile$/"
@@ -100,6 +112,20 @@
       ],
       "matchDepNames": [
         "orhun/git-cliff"
+      ],
+      "minimumReleaseAge": "14 days"
+    },
+    {
+      "groupName": "prettier (changelog)",
+      "groupSlug": "prettier",
+      "matchManagers": [
+        "custom.regex"
+      ],
+      "matchDatasources": [
+        "npm"
+      ],
+      "matchDepNames": [
+        "prettier"
       ],
       "minimumReleaseAge": "14 days"
     },

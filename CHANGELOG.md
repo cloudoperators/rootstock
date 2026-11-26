@@ -42,6 +42,10 @@ and this project adheres to
   [#139](https://github.com/cloudoperators/rootstock/pull/139)
   ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
   by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.2.1 - 🐛) changelog: Harden against foreign code execution
+  [#146](https://github.com/cloudoperators/rootstock/pull/146)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
 
 ## 2026-11-13
 
