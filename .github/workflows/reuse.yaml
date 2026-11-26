@@ -12,4 +12,4 @@ jobs:
   reuse:
     permissions:
       contents: read
-    uses: cloudoperators/common/.github/workflows/shared-reuse.yaml@main
+    uses: cloudoperators/common/.github/workflows/shared-reuse.yaml@9cb36139de44212c098042fa6a9a0b3e811b2b63 # main
