@@ -54,52 +54,8 @@ and this project adheres to
   [#148](https://github.com/cloudoperators/rootstock/pull/148)
   ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
   by [@blackhat-jan](https://github.com/blackhat-jan)
-- (0.2.1 - ⚙️) deps: Update golang docker tag to v1.27.3
-  [#150](https://github.com/cloudoperators/rootstock/pull/150)
-  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
-  by [@renovate[bot]](https://github.com/renovate[bot])
-- (0.2.1 - ⚙️) config: Migrate Renovate config
-  [#165](https://github.com/cloudoperators/rootstock/pull/165)
-  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
-  by [@renovate[bot]](https://github.com/renovate[bot])
-- (0.2.1 - ⚙️) deps: Update github actions updates (major)
-  [#164](https://github.com/cloudoperators/rootstock/pull/164)
-  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
-  by [@renovate[bot]](https://github.com/renovate[bot])
-- (0.2.1 - 🐛) deps: Update module github.com/stretchr/testify to v1.12.1
-  [#162](https://github.com/cloudoperators/rootstock/pull/162)
-  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
-  by [@renovate[bot]](https://github.com/renovate[bot])
-- (0.2.1 - ⚙️) deps: Update dependency helm to v4
-  [#163](https://github.com/cloudoperators/rootstock/pull/163)
-  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
-  by [@renovate[bot]](https://github.com/renovate[bot])
-- (0.2.1 - ⚙️) deps: Update sigstore/cosign-installer action to v4.1.3
-  [#151](https://github.com/cloudoperators/rootstock/pull/151)
-  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
-  by [@renovate[bot]](https://github.com/renovate[bot])
-- (0.2.1 - 🐛) deps: Update module github.com/spf13/pflag to v1.1.0
-  [#161](https://github.com/cloudoperators/rootstock/pull/161)
-  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
-  by [@renovate[bot]](https://github.com/renovate[bot])
-- (0.2.1 - ⚙️) deps: Update dependency prettier to v3.10.1
-  [#155](https://github.com/cloudoperators/rootstock/pull/155)
-  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
-  by [@renovate[bot]](https://github.com/renovate[bot])
-- (0.2.1 - 🐛) changelog: Footer generation
-  [#167](https://github.com/cloudoperators/rootstock/pull/167)
-  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
-  by [@blackhat-jan](https://github.com/blackhat-jan)
-- (0.2.1 - ⚙️) security: Use tooling from HEAD of main for changlog generation
-  [#166](https://github.com/cloudoperators/rootstock/pull/166)
-  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
-  by [@blackhat-jan](https://github.com/blackhat-jan)
-- (0.2.1 - 🐛) deps: Update module github.com/go-chi/chi/v5 to v5.5.0
-  [#159](https://github.com/cloudoperators/rootstock/pull/159)
-  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
-  by [@renovate[bot]](https://github.com/renovate[bot])
-- (0.2.1 - ⚙️) deps: Update dependency golangci/golangci-lint to v2.15.0
-  [#153](https://github.com/cloudoperators/rootstock/pull/153)
+- (0.2.1 - ⚙️) deps: Update curlimages/curl docker tag to v8.23.0
+  [#152](https://github.com/cloudoperators/rootstock/pull/152)
   ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
   by [@renovate[bot]](https://github.com/renovate[bot])
 
