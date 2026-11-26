@@ -90,6 +90,10 @@ and this project adheres to
   [#167](https://github.com/cloudoperators/rootstock/pull/167)
   ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
   by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.2.1 - ⚙️) security: Use tooling from HEAD of main for changlog generation
+  [#166](https://github.com/cloudoperators/rootstock/pull/166)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
 
 ## 2026-11-13
 
