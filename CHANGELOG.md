@@ -8,7 +8,7 @@ and this project adheres to
 
 <!-- git-cliff: end of header -->
 
-## 2026-11-17
+## 2026-11-26
 
 - (0.2.1 - 🐛) actions: Reactivate codeql
   [#135](https://github.com/cloudoperators/rootstock/pull/135)
@@ -20,6 +20,26 @@ and this project adheres to
   by [@blackhat-jan](https://github.com/blackhat-jan)
 - (0.2.1 - 🐛) chart: Config file location and consistent namespace behaviour
   [#137](https://github.com/cloudoperators/rootstock/pull/137)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.2.1 - 🐛) actions: Harden against remote code execution
+  [#138](https://github.com/cloudoperators/rootstock/pull/138)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.2.1 - ⚙️) tooling: Add renovate.json
+  [#142](https://github.com/cloudoperators/rootstock/pull/142)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.2.1 - ⚙️) actions: Pin actions to shas
+  [#143](https://github.com/cloudoperators/rootstock/pull/143)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.2.1 - 🐛) actions: Use inline code instead of external actions
+  [#144](https://github.com/cloudoperators/rootstock/pull/144)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.2.1 - 🐛) actions: Restrict workflow permissions
+  [#139](https://github.com/cloudoperators/rootstock/pull/139)
   ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
   by [@blackhat-jan](https://github.com/blackhat-jan)
 
