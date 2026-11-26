@@ -20,7 +20,7 @@ make build              # compile static binary to bin/rootstock
 make docker-build       # build container image (auto-detects arch)
 
 # Test
-make test               # unit tests with race detection and coverage
+make test               # alias for test-unit (unit tests with race detection and coverage)
 make test-integration   # starts Redfish mockup container, runs integration tests, stops container
 make test-changelog     # run changelog generation test suite
 
@@ -28,10 +28,11 @@ make test-changelog     # run changelog generation test suite
 go test -tags=integration ./internal/redfish/... -run '^TestLogin$' -v
 
 # Lint (use the golangci-lint version selected in .github/workflows/ci.yaml)
-make lint               # runs golangci-lint --fix, prettier on markdown, go mod tidy
-make lint-go            # Go only
-make lint-md            # markdown only
-make lint-shell         # shell scripts only
+make lint               # lint-go + lint-md + lint-shell + lint-helm, then go mod tidy
+make lint-go            # golangci-lint run --fix
+make lint-md            # prettier on markdown
+make lint-shell         # shellcheck on shell scripts
+make lint-helm          # helm lint on the chart
 
 # Run locally (after 1-time setup in docs/local_development.md)
 cat > ./tmp/redfish_pdus.yaml <<'EOF'
@@ -81,6 +82,7 @@ cmd/                                 Cobra CLI wiring
   new.go                             root command, viper config, logger setup
   run.go                             `run` subcommand; watches redfish_pdus.yaml; owns server lifecycle
   mountfile.go                       live-reloading file watcher (fsnotify) used for credentials
+  utils.go                           CLI parameter helper (flag/env/config binding via viper)
 internal/
   communication/rest/server.go       chi HTTP server; /probe, /metrics, /healthz, /ready
   collectors/prometheus/collector.go prometheus.Collector implementation; calls redfish.Client
@@ -127,8 +129,14 @@ linted with `//nolint:gosec`.
 
 ## CI / release pipeline
 
-- **CI** runs on every PR: Go tests, golangci-lint, and REUSE compliance. The
-  CodeQL workflow currently runs only a placeholder; scanning is not enabled.
+- **CI** runs on every PR: Go tests, golangci-lint, and REUSE compliance.
+- **CodeQL** ([.github/workflows/codeql.yaml](.github/workflows/codeql.yaml))
+  runs real Go security scanning via the shared reusable workflow
+  `cloudoperators/common/.github/workflows/shared-codeql.yaml@main` (with
+  `autobuild: true`, Go 1.27). It triggers on push to `main`, on PRs
+  (opened/synchronize/reopened), and on a weekly schedule (Mondays 08:20 UTC).
+  Code scanning alerts auto-close once a post-merge analysis on `main` no longer
+  detects the issue.
 - **Automerge**
   ([.github/workflows/automerge.yaml](.github/workflows/automerge.yaml))
   triggers when CI + CodeQL + REUSE all pass **and** a PR has an approved
