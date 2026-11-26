@@ -4,7 +4,7 @@
 ##########################################################################################
 # Builder image
 ##########################################################################################
-FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:1.27.1 AS builder
+FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:1.27.3 AS builder
 
 ARG GOCACHE="/root/.cache/go-build"
 ARG GOMODCACHE="/go/pkg/mod"
