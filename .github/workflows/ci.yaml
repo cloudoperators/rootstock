@@ -124,6 +124,7 @@ jobs:
     permissions:
       actions: read
       contents: read
+      issues: write
       pull-requests: write
 
   build:
