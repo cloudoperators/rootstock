@@ -4,6 +4,8 @@ on:
   issues:
     types: [opened, edited]
 
+permissions: {}
+
 jobs:
   label-priority:
     runs-on: ubuntu-slim
