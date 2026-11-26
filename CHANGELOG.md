@@ -94,8 +94,8 @@ and this project adheres to
   [#166](https://github.com/cloudoperators/rootstock/pull/166)
   ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
   by [@blackhat-jan](https://github.com/blackhat-jan)
-- (0.2.1 - 🐛) deps: Update module github.com/go-chi/chi/v5 to v5.5.0
-  [#159](https://github.com/cloudoperators/rootstock/pull/159)
+- (0.2.1 - 🐛) deps: Update module github.com/prometheus/client_golang to
+  v1.25.0 [#160](https://github.com/cloudoperators/rootstock/pull/160)
   ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
   by [@renovate[bot]](https://github.com/renovate[bot])
 
