@@ -120,12 +120,7 @@ jobs:
           GH_REPO: ${{ github.repository }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          hack/coverage_report.sh \
-            --root-package github.com/cloudoperators/rootstock \
-            --baseline-workflow main.yaml \
-            --target-branch main \
-            --artifact-name code-coverage \
-            --coverage-file coverage.out
+          make coverage-report
     permissions:
       actions: read
       contents: read

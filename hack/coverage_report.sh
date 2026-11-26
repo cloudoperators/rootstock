@@ -18,17 +18,24 @@ baseline coverage artifact of the latest successful baseline-workflow run on the
 target branch via the "gh" CLI, builds the list of changed Go files from the
 pull request, renders the Markdown report, and creates or updates the PR comment.
 
-It must run inside GitHub Actions: it relies on the current run having already
-uploaded its own coverage artifact (COVERAGE_ARTIFACT_NAME) and on the standard
-GitHub Actions environment variables plus a GH_TOKEN with "pull-requests: write"
-and "actions: read" permissions.
+In GitHub Actions it relies on the current run having already uploaded its own
+coverage artifact (COVERAGE_ARTIFACT_NAME) and on the standard GitHub Actions
+environment variables plus a GH_TOKEN with "pull-requests: write" and
+"actions: read" permissions.
+
+When run locally (outside GitHub Actions) it detects the absence of
+GITHUB_ACTIONS and instead: reads the current coverage profile from disk
+(--coverage-file, default coverage.out; generate it with "make test-unit"
+first), derives the changed Go files from "git diff" against the target branch,
+and prints the rendered report to stdout rather than commenting on a PR. No
+--run-id is required in this mode.
 
 Options:
-  --repo VALUE               owner/repo slug         (env: GH_REPO, default: \$GITHUB_REPOSITORY)
+  --repo VALUE               owner/repo slug         (env: GH_REPO/GITHUB_REPOSITORY, default: cloudoperators/rootstock)
   --pr VALUE                 pull request number     (env: PR_NUMBER)
   --run-id VALUE             current workflow run id (env: GITHUB_RUN_ID)
-  --root-package VALUE       Go import path prefix    (env: ROOT_PACKAGE)
-  --baseline-workflow VALUE  baseline workflow file  (env: BASELINE_WORKFLOW, default: ci.yaml)
+  --root-package VALUE       Go import path prefix    (env: ROOT_PACKAGE, default: github.com/cloudoperators/rootstock)
+  --baseline-workflow VALUE  baseline workflow file  (env: BASELINE_WORKFLOW, default: main.yaml)
   --target-branch VALUE      branch to compare with  (env: TARGET_BRANCH, default: main)
   --artifact-name VALUE      coverage artifact name  (env: COVERAGE_ARTIFACT_NAME, default: code-coverage)
   --coverage-file VALUE      coverage file name      (env: COVERAGE_FILE_NAME, default: coverage.out)
@@ -49,11 +56,11 @@ workdir=""
 COMMENT_MARKER="<!-- rootstock-coverage-report -->"
 
 main() {
-  local repo="${GH_REPO:-${GITHUB_REPOSITORY:-}}"
+  local repo="${GH_REPO:-${GITHUB_REPOSITORY:-cloudoperators/rootstock}}"
   local pr_number="${PR_NUMBER:-}"
   local run_id="${GITHUB_RUN_ID:-}"
-  local root_package="${ROOT_PACKAGE:-}"
-  local baseline_workflow="${BASELINE_WORKFLOW:-ci.yaml}"
+  local root_package="${ROOT_PACKAGE:-github.com/cloudoperators/rootstock}"
+  local baseline_workflow="${BASELINE_WORKFLOW:-main.yaml}"
   local target_branch="${TARGET_BRANCH:-main}"
   local artifact_name="${COVERAGE_ARTIFACT_NAME:-code-coverage}"
   local coverage_file="${COVERAGE_FILE_NAME:-coverage.out}"
@@ -77,8 +84,24 @@ main() {
     esac
   done
 
-  [[ -n "$repo" ]]   || die "missing --repo (or GH_REPO/GITHUB_REPOSITORY)"
-  [[ -n "$run_id" ]] || die "missing --run-id (or GITHUB_RUN_ID)"
+  # Determine whether to use the on-disk coverage profile (local runs) or to
+  # download it from the current workflow run's artifact (CI runs). Locally
+  # there is no workflow run to download from, so the profile must already
+  # exist on disk; generate it with "make test-unit" first.
+  local use_local_coverage="false"
+  if [[ -z "${GITHUB_ACTIONS:-}" ]]; then
+    [[ -f "$coverage_file" ]] || die "${coverage_file} not found - run 'make test-unit' first to generate it"
+    use_local_coverage="true"
+    # Local runs have no PR to comment on; render the report to stdout instead.
+    skip_comment="true"
+  fi
+
+  [[ -n "$repo" ]] || die "missing --repo (or GH_REPO/GITHUB_REPOSITORY)"
+  # A workflow run id is only needed when the current coverage is downloaded
+  # from that run's artifact (CI). Local runs use the on-disk profile instead.
+  if [[ "$use_local_coverage" != "true" ]]; then
+    [[ -n "$run_id" ]] || die "missing --run-id (or GITHUB_RUN_ID)"
+  fi
   command -v gh >/dev/null 2>&1 || die 'this script requires the "gh" CLI'
   command -v go >/dev/null 2>&1 || die 'this script requires the "go" toolchain'
 
@@ -94,7 +117,12 @@ main() {
   local changed_files="$workdir/changed-files.json"
   local report="$workdir/coverage-comment.md"
 
-  download_current_coverage "$run_id" "$artifact_name" "$coverage_file" "$new_cov"
+  if [[ "$use_local_coverage" == "true" ]]; then
+    log_info "Using local coverage profile '${coverage_file}'"
+    cp "$coverage_file" "$new_cov"
+  else
+    download_current_coverage "$run_id" "$artifact_name" "$coverage_file" "$new_cov"
+  fi
 
   local baseline_run_id="" baseline_sha="" baseline_run_url=""
   if find_baseline_run "$baseline_workflow" "$target_branch"; then
@@ -110,7 +138,7 @@ main() {
     : > "$old_cov"
   fi
 
-  build_changed_files "$pr_number" "$changed_files"
+  build_changed_files "$pr_number" "$target_branch" "$changed_files"
 
   render_report "$root_package" "$old_cov" "$new_cov" "$changed_files" \
     "$baseline_sha" "$baseline_run_id" "$baseline_run_url" "$report"
@@ -193,19 +221,29 @@ download_baseline_coverage() {
   mv "$dir/$coverage_file" "$dest"
 }
 
-# build_changed_files writes the list of changed *.go files of the pull request
-# (excluding vendored files) as a JSON string array, which is the format the
-# go-coverage-report CLI expects. Without a PR number, an empty array is written.
+# build_changed_files writes the list of changed *.go files (excluding vendored
+# files) as a JSON string array, which is the format the go-coverage-report CLI
+# expects. With a PR number the list comes from the pull request; otherwise
+# (local runs) it is derived from "git diff" against the target branch.
 build_changed_files() {
-  local pr_number="$1" dest="$2"
-  if [[ -z "$pr_number" ]]; then
-    printf '[]' > "$dest"
+  local pr_number="$1" target_branch="$2" dest="$3"
+  if [[ -n "$pr_number" ]]; then
+    log_info "Collecting changed Go files of PR #${pr_number}"
+    gh pr view "$pr_number" --json files \
+      --jq '[.files[].path | select(endswith(".go")) | select(startswith("vendor/") | not)]' \
+      > "$dest"
     return 0
   fi
-  log_info "Collecting changed Go files of PR #${pr_number}"
-  gh pr view "$pr_number" --json files \
-    --jq '[.files[].path | select(endswith(".go")) | select(startswith("vendor/") | not)]' \
-    > "$dest"
+  log_info "Collecting changed Go files from 'git diff' against ${target_branch}"
+  # grep exits non-zero when nothing matches; that is not an error here, so the
+  # pipeline is guarded to always succeed and emit a valid (possibly empty) JSON
+  # array for the go-coverage-report CLI.
+  {
+    git diff --name-only --diff-filter=d "${target_branch}...HEAD" 2>/dev/null \
+      | { grep -E '\.go$' || true; } \
+      | { grep -v '^vendor/' || true; } \
+      | jq -R -s -c 'split("\n") | map(select(length > 0))'
+  } > "$dest"
 }
 
 # render_report runs the go-coverage-report CLI to produce the Markdown comment.
