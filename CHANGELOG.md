@@ -74,6 +74,22 @@ and this project adheres to
   [#163](https://github.com/cloudoperators/rootstock/pull/163)
   ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
   by [@renovate[bot]](https://github.com/renovate[bot])
+- (0.2.1 - ⚙️) deps: Update sigstore/cosign-installer action to v4.1.3
+  [#151](https://github.com/cloudoperators/rootstock/pull/151)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
+  by [@renovate[bot]](https://github.com/renovate[bot])
+- (0.2.1 - 🐛) deps: Update module github.com/spf13/pflag to v1.1.0
+  [#161](https://github.com/cloudoperators/rootstock/pull/161)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
+  by [@renovate[bot]](https://github.com/renovate[bot])
+- (0.2.1 - ⚙️) deps: Update dependency prettier to v3.10.1
+  [#155](https://github.com/cloudoperators/rootstock/pull/155)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
+  by [@renovate[bot]](https://github.com/renovate[bot])
+- (0.2.1 - 🐛) changelog: Footer generation
+  [#167](https://github.com/cloudoperators/rootstock/pull/167)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
 
 ## 2026-11-13
 
