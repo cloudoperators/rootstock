@@ -22,11 +22,34 @@
         "/^\\.github/workflows/ci\\.ya?ml$/"
       ],
       "matchStrings": [
-        "version:\\s*v?(?<currentValue>(?:\\d+\\.){1,2}\\d+)"
+        "GOLANGCI_LINT_VERSION:\\s*v?(?<currentValue>(?:\\d+\\.){1,2}\\d+)"
       ],
       "datasourceTemplate": "github-tags",
       "depNameTemplate": "golangci/golangci-lint",
       "extractVersionTemplate": "^v(?<version>.*)$"
+    },
+    {
+      "customType": "regex",
+      "description": "Bump git-cliff version in the changelog workflow",
+      "managerFilePatterns": [
+        "/^\\.github/workflows/changelog_version\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "GIT_CLIFF_VERSION:\\s*v?(?<currentValue>(?:\\d+\\.){1,2}\\d+)"
+      ],
+      "datasourceTemplate": "github-tags",
+      "depNameTemplate": "orhun/git-cliff",
+      "extractVersionTemplate": "^v(?<version>.*)$"
+    },
+    {
+      "customType": "regex",
+      "description": "Update the go-coverage-report CLI version passed to hack/coverage_report.sh",
+      "managerFilePatterns": [
+        "/^Makefile$/"
+      ],
+      "matchStrings": [
+        "--cli-version\\s+(?<currentValue>\\S+)\\s+#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)"
+      ]
     }
   ],
   "packageRules": [
@@ -63,6 +86,34 @@
       ],
       "matchDepNames": [
         "golangci/golangci-lint"
+      ],
+      "minimumReleaseAge": "14 days"
+    },
+    {
+      "groupName": "git-cliff (changelog)",
+      "groupSlug": "git-cliff",
+      "matchManagers": [
+        "custom.regex"
+      ],
+      "matchDatasources": [
+        "github-tags"
+      ],
+      "matchDepNames": [
+        "orhun/git-cliff"
+      ],
+      "minimumReleaseAge": "14 days"
+    },
+    {
+      "groupName": "go-coverage-report (CI)",
+      "groupSlug": "go-coverage-report",
+      "matchManagers": [
+        "custom.regex"
+      ],
+      "matchDatasources": [
+        "github-releases"
+      ],
+      "matchDepNames": [
+        "fgrosse/go-coverage-report"
       ],
       "minimumReleaseAge": "14 days"
     },
