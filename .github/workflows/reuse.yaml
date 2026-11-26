@@ -6,6 +6,8 @@ name: REUSE Compliance Check
 
 on: [pull_request]
 
+permissions: {}
+
 jobs:
   reuse:
     permissions:

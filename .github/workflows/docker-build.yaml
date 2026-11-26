@@ -41,6 +41,8 @@ on:
 env:
   REGISTRY: ghcr.io
 
+permissions: {}
+
 jobs:
   docker-build:
     name: Build
