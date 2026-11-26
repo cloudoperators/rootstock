@@ -27,8 +27,8 @@ When run locally (outside GitHub Actions) it detects the absence of
 GITHUB_ACTIONS and instead: reads the current coverage profile from disk
 (--coverage-file, default coverage.out; generate it with "make test-unit"
 first), derives the changed Go files from "git diff" against the target branch,
-and prints the rendered report to stdout rather than commenting on a PR. No
---run-id is required in this mode.
+and writes the rendered report to coverage-report.md rather than commenting on a
+PR. No --run-id is required in this mode.
 
 Options:
   --repo VALUE               owner/repo slug         (env: GH_REPO/GITHUB_REPOSITORY, default: cloudoperators/rootstock)
@@ -54,6 +54,9 @@ workdir=""
 # later run reliably find and update its own previous comment regardless of the
 # report's visible text.
 COMMENT_MARKER="<!-- rootstock-coverage-report -->"
+
+# Filename the rendered report is written to on local (non-CI) runs.
+LOCAL_REPORT_FILE="coverage-report.md"
 
 main() {
   local repo="${GH_REPO:-${GITHUB_REPOSITORY:-cloudoperators/rootstock}}"
@@ -89,11 +92,14 @@ main() {
   # there is no workflow run to download from, so the profile must already
   # exist on disk; generate it with "make test-unit" first.
   local use_local_coverage="false"
+  local report_file=""
   if [[ -z "${GITHUB_ACTIONS:-}" ]]; then
     [[ -f "$coverage_file" ]] || die "${coverage_file} not found - run 'make test-unit' first to generate it"
     use_local_coverage="true"
-    # Local runs have no PR to comment on; render the report to stdout instead.
+    # Local runs have no PR to comment on; write the rendered report to
+    # LOCAL_REPORT_FILE instead of commenting.
     skip_comment="true"
+    report_file="$LOCAL_REPORT_FILE"
   fi
 
   [[ -n "$repo" ]] || die "missing --repo (or GH_REPO/GITHUB_REPOSITORY)"
@@ -145,14 +151,25 @@ main() {
 
   if [[ ! -s "$report" ]]; then
     log_info "No coverage report generated (no changed Go files); nothing to comment"
+    if [[ -n "$report_file" ]]; then
+      : > "$report_file"
+      log_info "Wrote empty coverage report to ${report_file}"
+    fi
     return 0
   fi
 
   prepend_marker "$report"
 
+  if [[ -n "$report_file" ]]; then
+    cp "$report" "$report_file"
+    log_info "Wrote coverage report to ${report_file}"
+  fi
+
   if [[ "$skip_comment" == "true" ]]; then
     log_info "SKIP_COMMENT=true; rendered report but not commenting"
-    cat "$report"
+    if [[ -z "$report_file" ]]; then
+      cat "$report"
+    fi
     return 0
   fi
 
@@ -235,11 +252,8 @@ build_changed_files() {
     return 0
   fi
   log_info "Collecting changed Go files from 'git diff' against ${target_branch}"
-  # grep exits non-zero when nothing matches; that is not an error here, so the
-  # pipeline is guarded to always succeed and emit a valid (possibly empty) JSON
-  # array for the go-coverage-report CLI.
   {
-    git diff --name-only --diff-filter=d "${target_branch}...HEAD" 2>/dev/null \
+    git diff --name-only "${target_branch}...HEAD" 2>/dev/null \
       | { grep -E '\.go$' || true; } \
       | { grep -v '^vendor/' || true; } \
       | jq -R -s -c 'split("\n") | map(select(length > 0))'
