@@ -54,8 +54,24 @@ and this project adheres to
   [#148](https://github.com/cloudoperators/rootstock/pull/148)
   ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
   by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.2.1 - ⚙️) deps: Update golang docker tag to v1.27.3
+  [#150](https://github.com/cloudoperators/rootstock/pull/150)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
+  by [@renovate[bot]](https://github.com/renovate[bot])
 - (0.2.1 - ⚙️) config: Migrate Renovate config
   [#165](https://github.com/cloudoperators/rootstock/pull/165)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
+  by [@renovate[bot]](https://github.com/renovate[bot])
+- (0.2.1 - ⚙️) deps: Update github actions updates (major)
+  [#164](https://github.com/cloudoperators/rootstock/pull/164)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
+  by [@renovate[bot]](https://github.com/renovate[bot])
+- (0.2.1 - 🐛) deps: Update module github.com/stretchr/testify to v1.12.1
+  [#162](https://github.com/cloudoperators/rootstock/pull/162)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
+  by [@renovate[bot]](https://github.com/renovate[bot])
+- (0.2.1 - ⚙️) deps: Update dependency helm to v4
+  [#163](https://github.com/cloudoperators/rootstock/pull/163)
   ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
   by [@renovate[bot]](https://github.com/renovate[bot])
 
