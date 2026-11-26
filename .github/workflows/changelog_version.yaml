@@ -98,6 +98,8 @@ jobs:
           BASE_SHA: ${{ inputs.base_sha }}
           # Absolute paths to the TRUSTED tooling checkout.
           TRUSTED_DIR: ${{ github.workspace }}/trusted
+          # Pinned so the untrusted checkout cannot influence which prettier runs.
+          PRETTIER_VERSION: 3.6.2
         run: |
           PR_AUTHOR=$(gh api "repos/${GITHUB_REPO}/pulls/${PR_NUMBER}" --jq '.user.login')
 
@@ -119,9 +121,22 @@ jobs:
           "${TRUSTED_DIR}/hack/update_changelog.sh"
           "${TRUSTED_DIR}/hack/update_version.sh"
 
-          # Format only the generated changelog using prettier with fixed flags
-          # (no fork config/plugins involved).
-          npx --yes prettier --prose-wrap always --write CHANGELOG.md
+          # Format only the generated changelog using prettier. We must not let
+          # the untrusted PR checkout influence which prettier (or which
+          # plugins/config) runs, so we:
+          #   * pin an exact prettier version (no fork-controlled range),
+          #   * invoke npx from the TRUSTED dir so a fork-supplied
+          #     node_modules/package.json cannot shadow the install,
+          #   * disable config discovery (--no-config) so no fork .prettierrc
+          #     can load plugins or alter behavior (Prettier 3 only loads
+          #     plugins when a config or --plugin asks for them),
+          #   * pass the CHANGELOG by absolute path and pin all flags.
+          changelog_path="$(pwd)/CHANGELOG.md"
+          ( cd "${TRUSTED_DIR}" \
+            && npx --yes "prettier@${PRETTIER_VERSION}" \
+                 --no-config \
+                 --prose-wrap always \
+                 --write "${changelog_path}" )
 
       - name: Commit changelog
         working-directory: branch
