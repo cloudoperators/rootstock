@@ -39,7 +39,7 @@ jobs:
     outputs:
       proceed: ${{ steps.check.outputs.proceed }}
     steps:
-      - uses: actions/create-github-app-token@v2
+      - uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2.2.2 (v2)
         id: app-token
         with:
           app-id: ${{ secrets.CLOUDOPERATOR_APP_ID }}
@@ -99,10 +99,10 @@ jobs:
       head_ref: ${{ steps.check.outputs.head_ref }}
       base_sha: ${{ steps.check.outputs.base_sha }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 (v7)
         with:
           ref: ${{ env.TARGET_BRANCH }}
-      - uses: actions/create-github-app-token@v2
+      - uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2.2.2 (v2)
         id: app-token
         with:
           app-id: ${{ secrets.CLOUDOPERATOR_APP_ID }}
@@ -165,7 +165,11 @@ jobs:
       pr_body: ${{ needs.check-eligibility.outputs.pr_body }}
       pr_url: ${{ needs.check-eligibility.outputs.pr_url }}
       base_sha: ${{ needs.check-eligibility.outputs.base_sha }}
-    secrets: inherit
+    # Pass ONLY the push token, not `secrets: inherit`. This job checks out and
+    # operates on untrusted fork code, so it must never receive the GitHub App
+    # private key or other high-value organization/repository secrets.
+    secrets:
+      token: ${{ secrets.GITHUB_TOKEN }}
 
 
   merge:
@@ -173,7 +177,7 @@ jobs:
     if: needs.check-eligibility.outputs.eligible == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/create-github-app-token@v2
+      - uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2.2.2 (v2)
         id: app-token
         with:
           app-id: ${{ secrets.CLOUDOPERATOR_APP_ID }}
@@ -193,7 +197,7 @@ jobs:
     if: needs.check-eligibility.outputs.eligible == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/create-github-app-token@v2
+      - uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2.2.2 (v2)
         id: app-token
         with:
           app-id: ${{ secrets.CLOUDOPERATOR_APP_ID }}

@@ -23,7 +23,7 @@ jobs:
       version: ${{ steps.version.outputs.version }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 (v7)
       - name: Get version from VERSION.yaml
         id: version
         run: |
@@ -37,26 +37,30 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/create-github-app-token@v2
+      - uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2.2.2 (v2)
         id: app-token
         with:
           app-id: ${{ secrets.CLOUDOPERATOR_APP_ID }}
           private-key: ${{ secrets.CLOUDOPERATOR_APP_PRIVATE_KEY }}
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 (v7)
         with:
           ref: ${{ github.event.pull_request.head.repo.full_name == github.repository && github.head_ref || github.ref }}
           token: ${{ steps.app-token.outputs.token }}
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0 (v5)
         with:
           go-version-file: go.mod
           cache: true
       - name: Install golangci-lint
-        uses: golangci/golangci-lint-action@v9
-        with:
-          install-only: true
-          version: v2.14
+        env:
+          GOLANGCI_LINT_VERSION: v2.14.0
+        run: |
+          # The golangci/golangci-lint-action is not a verified Marketplace
+          # creator, so install the binary directly via the official script.
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh \
+            | sh -s -- -b "$(go env GOPATH)/bin" "$GOLANGCI_LINT_VERSION"
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
 
       - name: Run lint-go
         run: make lint-go
@@ -96,19 +100,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 (v7)
         with:
           persist-credentials: true
-      - name: Post coverage report
-        uses: fgrosse/go-coverage-report@c4bf7e78d1379325814b4dd42d80e526082e788b # v1.5.0
+      - name: Set up Go
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0 (v5)
         with:
-          coverage-artifact-name: code-coverage
-          coverage-file-name: coverage.out
-          root-package: github.com/cloudoperators/rootstock
-          github-baseline-workflow-ref: main.yaml
+          go-version-file: go.mod
+          cache: true
+      - name: Post coverage report
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          make coverage-report
     permissions:
       actions: read
       contents: read
+      issues: write
       pull-requests: write
 
   build:
@@ -132,9 +142,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 (v7)
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0 (v5)
         with:
           go-version-file: go.mod
       - name: Run contract tests
@@ -147,9 +157,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 (v7)
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0 (v5)
         with:
           go-version-file: go.mod
       - name: Run file generation

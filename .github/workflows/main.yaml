@@ -42,7 +42,7 @@ jobs:
       major_tag: ${{ steps.version.outputs.major_tag }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 (v7)
         with:
           fetch-depth: 0
           ref: ${{ github.sha }}
@@ -108,26 +108,8 @@ jobs:
       upload-coverage: true
       coverage-artifact-name: code-coverage
       coverage-path: coverage.out
-  code_coverage:
-    name: Code coverage report
-    needs: [unit-tests]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-          fetch-depth: 2
-      - name: Post coverage report
-        uses: fgrosse/go-coverage-report@c4bf7e78d1379325814b4dd42d80e526082e788b # v1.5.0
-        with:
-          coverage-artifact-name: code-coverage
-          coverage-file-name: coverage.out
-          root-package: github.com/cloudoperators/rootstock
-          skip-comment: true
-    permissions:
-      actions: read
-      contents: read
+    # The uploaded "code-coverage" artifact serves as the baseline that the CI
+    # workflow compares pull request coverage against (see hack/coverage_report.sh).
 
   helm-release:
     needs: [gate]
@@ -148,7 +130,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 (v7)
         with:
           fetch-depth: 0
           ref: ${{ github.sha }}

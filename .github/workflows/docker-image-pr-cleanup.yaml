@@ -8,6 +8,15 @@ jobs:
     permissions:
       packages: write
     steps:
-      - uses: dataaxiom/ghcr-cleanup-action@v1
-        with:
-          delete-tags: pr-${{ github.event.pull_request.number }}
+      # dataaxiom/ghcr-cleanup-action is not a verified Marketplace creator, so
+      # the cleanup is driven directly via the GitHub REST API (gh) instead.
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 (v7)
+      - name: Delete PR image
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          hack/ghcr_cleanup.sh \
+            --owner cloudoperators \
+            --package rootstock \
+            --delete-tag 'pr-${{ github.event.pull_request.number }}'
