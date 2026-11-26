@@ -70,6 +70,10 @@ and this project adheres to
   [#162](https://github.com/cloudoperators/rootstock/pull/162)
   ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
   by [@renovate[bot]](https://github.com/renovate[bot])
+- (0.2.1 - ⚙️) deps: Update dependency helm to v4
+  [#163](https://github.com/cloudoperators/rootstock/pull/163)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
+  by [@renovate[bot]](https://github.com/renovate[bot])
 
 ## 2026-11-13
 
