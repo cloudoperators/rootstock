@@ -1,0 +1,88 @@
+common:
+  labels:
+    commonIDs: &commonIDs
+      uri: ."@odata.id"
+      id: .Id
+
+filters:
+  redfish:
+    Panduit:
+      metadata: /redfish/v1/PowerEquipment/RackPDUs/#
+      rules:
+        /redfish/v1/PowerEquipment/RackPDUs/#/Metrics:
+          - key: power_watts
+            value: .PowerWatts.Reading
+            type: gauge
+            help: "Total PDU power consumption in watts"
+            labels:
+              <<: *commonIDs
+
+          - key: apparent_power_va
+            value: .PowerWatts.ApparentVA
+            type: gauge
+            help: "Total PDU apparent power in volt-amperes"
+            labels:
+              <<: *commonIDs
+
+          - key: reactive_power_var
+            value: .PowerWatts.ReactiveVAR
+            type: gauge
+            help: "Total PDU reactive power in volt-amperes reactive"
+            labels:
+              <<: *commonIDs
+
+          - key: power_factor
+            value: .PowerWatts.PowerFactor
+            type: gauge
+            help: "PDU power factor"
+            labels:
+              <<: *commonIDs
+
+          - key: energy_kwh
+            value: .EnergykWh.Reading
+            type: counter
+            help: "Total PDU energy consumption in kilowatt-hours"
+            labels:
+              <<: *commonIDs
+
+        /redfish/v1/PowerEquipment/RackPDUs/#/Mains/#:
+          - key: frequency_hz
+            value: .FrequencyHz.Reading
+            type: gauge
+            help: "Mains input frequency in hertz"
+            labels:
+              <<: *commonIDs
+              health: .Status.Health
+          # TODO: poly-phase voltage, current, power (array structure, next PR)
+
+        /redfish/v1/PowerEquipment/RackPDUs/#/Branches/#:
+          - key: current_amps
+            value: .CurrentAmps.Reading
+            type: gauge
+            help: "Branch circuit current in amperes"
+            labels:
+              <<: *commonIDs
+              health: .Status.Health
+              state: .Status.State
+
+          - key: voltage
+            value: .PolyPhaseVoltage.Line1ToNeutral.Reading
+            type: gauge
+            help: "Branch circuit voltage in volts"
+            labels:
+              <<: *commonIDs
+
+          - key: power_watts
+            value: .PolyPhasePowerWatts.Line1ToNeutral.Reading
+            type: gauge
+            help: "Branch circuit power consumption in watts"
+            labels:
+              <<: *commonIDs
+
+          - key: energy_kwh
+            value: .EnergykWh.Reading
+            type: counter
+            help: "Branch circuit energy consumption in kilowatt-hours"
+            labels:
+              <<: *commonIDs
+
