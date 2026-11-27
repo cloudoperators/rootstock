@@ -1,0 +1,396 @@
+# SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Greenhouse contributors
+# SPDX-License-Identifier: Apache-2.0
+
+# snmp_exporter generator configuration
+#
+# This is the human-authored input to the snmp_exporter `generator` tool. It is the
+# snmp_exporter rewrite of the dc-observability-operator's Telegraf SNMP polling.
+#
+# Source operator: /Users/I503834/src/github.tools.sap/dc-observability-operator/
+#   Telegraf [[inputs.snmp]] templates:
+#     roles/agent/templates/telegraf-templates/devices/<family>/input.toml.j2
+#   Auth defaults:  roles/agent/defaults/main.yml:70-80
+#   Families/match: roles/agent/defaults/main.yml:36-60
+#
+# Generate the runtime snmp.yml with:
+#   ./generator generate -m <mibdir> -g generator.yml -o snmp.yml
+#
+# You MUST supply these 7 MIBs in <mibdir> (none are bundled in either repo; source them
+# from the vendors / the Telegraf image):
+#   RFC1213-MIB, SNMPv2-MIB, HAWK-I2-MIB, PANDUIT-MIB, PowerNet-MIB, STE2-PLUS-MIB, SPAGENT-MIB
+#
+# NOTE: The generator uses STRICT YAML. Only these module fields are valid:
+#   walk, lookups, overrides, filters, max_repetitions, retries, timeout,
+#   allow_nonincreasing_oids, use_unconnected_udp_socket.
+# There is NO `get` and NO `use_mib` field in generator module config.
+
+auths:
+  # -------------------------------------------------------------------------
+  # v2c auths. Operator default (roles/agent/defaults/main.yml:71): community "public".
+  # The snmp_exporter built-in default auth is `public_v2`; redefined here for clarity.
+  # The per-community auths below correspond to the 7 test hosts in test-inventory.yaml.
+  # In production these communities come from NetBox config_context.dcm.observability.snmp.community
+  # (possibly Ansible-Vault encrypted) — map one auth per distinct community.
+  # -------------------------------------------------------------------------
+  public_v2:
+    version: 2
+    community: public
+
+  panduit-gen3:
+    version: 2
+    community: panduit-gen3
+  panduit-gen3-gen6pdu:
+    version: 2
+    community: panduit-gen3-gen6pdu
+  panduit-gen5:
+    version: 2
+    community: panduit-gen5
+  panduit-gen6:
+    version: 2
+    community: panduit-gen6
+  hwgroup-ste2plus:
+    version: 2
+    community: hwgroup-ste2plus
+  apc-netbotz:
+    version: 2
+    community: apc-netbotz
+  akcp-sensorprobe2pro:
+    version: 2
+    community: akcp-sensorprobe2pro
+
+  # -------------------------------------------------------------------------
+  # SNMPv3 template. The operator supports v3 (roles/agent/defaults/main.yml:74-80,
+  # rendered in input-snmp-agent-configuration.toml.j2), though all 7 test hosts are v2c.
+  # Field mapping operator -> snmp_exporter auth:
+  #   config_context.dcm.observability.snmp.username     -> username      (operator sec_name)
+  #   ....snmp.security                                  -> security_level (authNoPriv default)
+  #   ....snmp.authProtocol                              -> auth_protocol  (SHA/MD5/...)
+  #   ....snmp.authPassword                              -> password
+  #   ....snmp.privProtocol                              -> priv_protocol  (AES/DES/...)
+  #   ....snmp.privPassword                              -> priv_password
+  #   ....snmp.contextName                               -> context_name
+  # Prefer environment-variable secrets in production
+  # (run exporter with --config.expand-environment-variables).
+  # -------------------------------------------------------------------------
+  # dcm_v3:
+  #   version: 3
+  #   username: ${DCM_SNMP_USERNAME}
+  #   security_level: authPriv
+  #   password: ${DCM_SNMP_AUTH_PASSWORD}
+  #   auth_protocol: SHA
+  #   priv_protocol: AES
+  #   priv_password: ${DCM_SNMP_PRIV_PASSWORD}
+  #   context_name: ""
+
+modules:
+  # =========================================================================
+  # panduit-epa126
+  # Operator source: roles/agent/templates/telegraf-templates/devices/panduit-epa126/input.toml.j2
+  # Match rule (defaults/main.yml): device_type equalto "panduit-epa126"
+  # MIBs: RFC1213-MIB, SNMPv2-MIB, HAWK-I2-MIB
+  # max_repetitions: operator uses 50 (breakers) and 100 (outlets); we take the family
+  # maximum 100. retries/timeout mirror operator defaults (retries 1, timeout 5s).
+  # =========================================================================
+  panduit-epa126:
+    walk:
+      # --- scalars (Block 1/2) ---
+      - RFC1213-MIB::sysUpTime          # -> system_uptime (metric)
+      - SNMPv2-MIB::sysName             # -> host/hw_name/hw_parent (tags)
+      - SNMPv2-MIB::sysLocation         # -> hw_id (tag)
+      - HAWK-I2-MIB::platModelName      # -> model (tag)
+      - HAWK-I2-MIB::invSerialNum       # -> serial_number (tag)
+      - HAWK-I2-MIB::platFwRev          # -> firmware_revision (tag)
+      # --- Block 1 tables: PDU inventory ---
+      - HAWK-I2-MIB::pduTable
+      - HAWK-I2-MIB::pduMonTable
+      - HAWK-I2-MIB::pduMon3PhTable
+      # --- Block 2 tables: environmental sensors ---
+      - HAWK-I2-MIB::ipTHATable         # analog temp/humidity
+      - HAWK-I2-MIB::ipContTable        # contact sensors
+      - HAWK-I2-MIB::idmTable           # intelligent door modules
+      # --- Block 3 table: breakers (operator max_repetitions=50) ---
+      - HAWK-I2-MIB::pduP2BrCctMonitorTable
+      # --- Block 4 table: outlets (operator max_repetitions=100) ---
+      - HAWK-I2-MIB::pduOutTable
+    max_repetitions: 100
+    retries: 1
+    timeout: 5s
+    lookups:
+      # pduTable rows -> human name/id labels
+      - source_indexes: [pduIndex]
+        lookup: HAWK-I2-MIB::pduName
+        drop_source_indexes: false
+      - source_indexes: [pduIndex]
+        lookup: HAWK-I2-MIB::pduNumber
+      # environmental sensor rows
+      - source_indexes: [ipTHAIndex]
+        lookup: HAWK-I2-MIB::ipTHAName
+      - source_indexes: [ipContIndex]
+        lookup: HAWK-I2-MIB::ipContName
+      # outlet rows
+      - source_indexes: [pduOutIndex]
+        lookup: HAWK-I2-MIB::pduOutName
+    overrides:
+      sysUpTime:            { name: system_uptime, type: gauge }
+      sysName:              { type: DisplayString }
+      sysLocation:          { type: DisplayString }
+      platModelName:        { name: model, type: DisplayString }
+      invSerialNum:         { name: serial_number, type: DisplayString }
+      platFwRev:            { name: firmware_revision, type: DisplayString }
+      # pduTable columns
+      pduName:              { name: hw_name, type: DisplayString }
+      pduMode:              { type: DisplayString }
+      pduFwVersCPU:         { name: pdu_firmware_revision, type: DisplayString }
+      pduFwVersMeter:       { name: pdu_meter_firmware_revision, type: DisplayString }
+      pduCommsFail:         { name: hw_status, type: EnumAsInfo }
+      pduType:              { type: DisplayString }
+      pduMeanKVAUCL:        { type: gauge }
+      # environmental sensor label columns
+      ipTHAName:            { name: hw_name, type: DisplayString }
+      ipTHAType:            { name: hw_type, type: EnumAsInfo }
+      ipContName:           { name: hw_name, type: DisplayString }
+      idmVersion:           { name: idm_firmware_revision, type: DisplayString }
+      # breaker label columns
+      pduP2BrCktMonBrCctID:            { name: hw_name, type: DisplayString }
+      pduP2BrCktMonBrCctPhases:        { name: hw_phase_name, type: DisplayString }
+      pduP2BrCktMonBrCctBreakerOutletMap: { type: DisplayString }
+      # outlet label columns
+      pduOutName:           { name: hw_name, type: DisplayString }
+      pduOutOn:             { name: hw_status, type: EnumAsInfo }
+
+  # =========================================================================
+  # panduit-g5
+  # Operator source: devices/panduit-g5/input.toml.j2
+  # Match rule: device_type search "panduit-p"  (e.g. panduit-p48fe04, panduit-p36f50g-32a3wye)
+  # MIBs: RFC1213-MIB, SNMPv2-MIB, PANDUIT-MIB
+  # max_repetitions: operator 50 (breakers & outlets).
+  # =========================================================================
+  panduit-g5:
+    walk:
+      - RFC1213-MIB::sysUpTime
+      - SNMPv2-MIB::sysName
+      - SNMPv2-MIB::sysLocation
+      # PANDUIT-MIB scalars (operator polls .1 instances; generator emits the walk)
+      - PANDUIT-MIB::pdug5Manufacturer     # -> vendor
+      - PANDUIT-MIB::pdug5PartNumber        # -> model
+      - PANDUIT-MIB::pdug5SerialNumber      # -> serial_number
+      - PANDUIT-MIB::pdug5FirmwareVersion   # -> firmware_revision
+      # tables
+      - PANDUIT-MIB::pdug5IdentTable
+      - PANDUIT-MIB::pdug5InputTable
+      - PANDUIT-MIB::pdug5InputPhaseTable
+      - PANDUIT-MIB::pdug5TemperatureTable
+      - PANDUIT-MIB::pdug5HumidityTable
+      - PANDUIT-MIB::pdug5GroupTable        # breakers (op max_repetitions=50)
+      - PANDUIT-MIB::pdug5OutletTable       # outlets  (op max_repetitions=50)
+    max_repetitions: 50
+    retries: 1
+    timeout: 5s
+    lookups:
+      - source_indexes: [pdug5IdentIndex]
+        lookup: PANDUIT-MIB::pdug5Name
+      - source_indexes: [pdug5TemperatureIndex]
+        lookup: PANDUIT-MIB::pdug5TemperatureName
+      - source_indexes: [pdug5HumidityIndex]
+        lookup: PANDUIT-MIB::pdug5HumidityName
+      - source_indexes: [pdug5GroupIndex]
+        lookup: PANDUIT-MIB::pdug5GroupName
+      - source_indexes: [pdug5OutletIndex]
+        lookup: PANDUIT-MIB::pdug5OutletName
+    overrides:
+      sysUpTime:                 { name: system_uptime, type: gauge }
+      sysName:                   { type: DisplayString }
+      sysLocation:               { type: DisplayString }
+      pdug5Manufacturer:         { name: vendor, type: DisplayString }
+      pdug5PartNumber:           { name: model, type: DisplayString }
+      pdug5SerialNumber:         { name: serial_number, type: DisplayString }
+      pdug5FirmwareVersion:      { name: firmware_revision, type: DisplayString }
+      # ident table
+      pdug5Name:                 { name: hw_name, type: DisplayString }
+      pdug5Status:               { name: hw_status, type: EnumAsInfo }
+      pdug5Model:                { type: DisplayString }
+      # input / phase
+      pdug5InputType:            { name: phase_mode, type: EnumAsInfo }
+      # temperature / humidity
+      pdug5TemperatureName:      { name: hw_name, type: DisplayString }
+      pdug5TemperatureProbeStatus: { name: hw_status, type: EnumAsInfo }
+      pdug5HumidityName:         { name: hw_name, type: DisplayString }
+      pdug5HumidityProbeStatus:  { name: hw_status, type: EnumAsInfo }
+      # group (breaker)
+      pdug5GroupName:            { name: hw_name, type: DisplayString }
+      pdug5GroupVoltageMeasType: { name: hw_phase_name, type: EnumAsInfo }
+      pdug5GroupBreakerStatus:   { name: hw_status, type: EnumAsInfo }
+      # outlet
+      pdug5OutletName:           { name: hw_name, type: DisplayString }
+      pdug5OutletBranch:         { name: breaker_id, type: DisplayString }
+
+  # =========================================================================
+  # apc-netshelter
+  # Operator source: devices/apc-netshelter/input.toml.j2
+  # Match rule: device_type search "apc-apdu"  (NOTE: no test host exercises this family)
+  # MIBs: RFC1213-MIB, SNMPv2-MIB, PowerNet-MIB
+  # max_repetitions: operator 50 (breakers & outlets).
+  # =========================================================================
+  apc-netshelter:
+    walk:
+      - RFC1213-MIB::sysUpTime
+      - SNMPv2-MIB::sysName
+      - SNMPv2-MIB::sysLocation
+      - PowerNet-MIB::pduNamePlatePartNumber        # -> model
+      - PowerNet-MIB::pduNamePlateSerialNumber      # -> serial_number
+      - PowerNet-MIB::pduNamePlateFirmwareVersion   # -> firmware_revision
+      # tables
+      - PowerNet-MIB::pduNamePlateTable
+      - PowerNet-MIB::pduUnitStatusTable
+      - PowerNet-MIB::pduInputPhaseStatusTable
+      - PowerNet-MIB::pduExternalSensorTable
+      - PowerNet-MIB::pduCircuitBreakerTable        # breakers (op max_repetitions=50)
+      - PowerNet-MIB::pduOutletMeteredTable         # outlets  (op max_repetitions=50)
+    max_repetitions: 50
+    retries: 1
+    timeout: 5s
+    lookups:
+      - source_indexes: [pduNamePlateIndex]
+        lookup: PowerNet-MIB::pduNamePlateName
+      - source_indexes: [pduInputPhaseStatusIndex]
+        lookup: PowerNet-MIB::pduInputPhaseStatusIndex
+      - source_indexes: [pduCircuitBreakerConfigIndex]
+        lookup: PowerNet-MIB::pduCircuitBreakerName
+      - source_indexes: [pduOutletMeteredPropertiesNumber]
+        lookup: PowerNet-MIB::pduOutletMeteredPropertiesName
+    overrides:
+      sysUpTime:                            { name: system_uptime, type: gauge }
+      sysName:                              { type: DisplayString }
+      sysLocation:                          { type: DisplayString }
+      pduNamePlatePartNumber:               { name: model, type: DisplayString }
+      pduNamePlateSerialNumber:             { name: serial_number, type: DisplayString }
+      pduNamePlateFirmwareVersion:          { name: firmware_revision, type: DisplayString }
+      # nameplate table
+      pduNamePlateName:                     { name: hw_name, type: DisplayString }
+      pduNamePlateType:                     { name: phase_mode, type: EnumAsInfo }
+      pduUnitPropertiesOutletCount:         { name: hw_pdu_outlets, type: gauge }
+      pduUnitPropertiesRatedPower:          { name: hw_power_rating, type: gauge }
+      # unit status
+      pduUnitStatusName:                    { name: hw_name, type: DisplayString }
+      # external sensors
+      pduExternalSensorStatusValue:         { type: gauge }
+      pduExternalSensorNamePlateType:       { name: hw_type, type: EnumAsInfo }
+      pduExternalSensorNamePlateName:       { name: hw_name, type: DisplayString }
+      pduExternalSensorNamePlateLocation:   { name: sensor_location, type: DisplayString }
+      pduExternalSensorNamePlateProductCode: { name: model, type: DisplayString }
+      pduExternalSensorStatusCommStatus:    { name: hw_status, type: EnumAsInfo }
+      # breakers
+      pduCircuitBreakerName:                { name: hw_name, type: DisplayString }
+      pduCircuitBreakerStatusCurrent:       { name: hw_current, type: gauge }
+      pduCircuitBreakerPropertiesCurrentRating: { name: hw_current_rating, type: gauge }
+      # metered outlets
+      pduOutletMeteredPropertiesName:       { name: hw_name, type: DisplayString }
+      pduOutletMeteredPropertiesCircuitBreaker: { name: breaker_id, type: DisplayString }
+      pduOutletMeteredPropertiesCurrentRating:  { name: hw_current_rating, type: gauge }
+      pduOutletMeteredStatusCurrent:        { name: hw_current, type: gauge }
+      pduOutletMeteredStatusPowerFactor:    { type: gauge }
+      pduOutletMeteredStatusActivePower:    { name: hw_power, type: gauge }
+      pduOutletMeteredPropertiesPowerRating: { name: hw_power_rating, type: gauge }
+      pduOutletMeteredStatusResettableEnergy: { name: hw_energy, type: gauge }
+
+  # =========================================================================
+  # apc-netbotz
+  # Operator source: devices/apc-netbotz/input.toml.j2
+  # Match rule: device_type search "apc-netbotz"
+  # MIBs: RFC1213-MIB, SNMPv2-MIB, PowerNet-MIB
+  # =========================================================================
+  apc-netbotz:
+    walk:
+      - RFC1213-MIB::sysUpTime
+      - SNMPv2-MIB::sysName
+      - SNMPv2-MIB::sysLocation
+      - PowerNet-MIB::memModulesStatusModelNumber    # -> model
+      - PowerNet-MIB::memModulesStatusSerialNumber   # -> serial_number
+      - PowerNet-MIB::memModulesStatusFirmwareRev    # -> firmware_revision
+      - PowerNet-MIB::wirelessSensorStatusTable
+    retries: 1
+    timeout: 5s
+    lookups:
+      - source_indexes: [wirelessSensorStatusIndex]
+        lookup: PowerNet-MIB::wirelessSensorStatusName
+    overrides:
+      sysUpTime:                        { name: system_uptime, type: gauge }
+      sysName:                          { type: DisplayString }
+      sysLocation:                      { type: DisplayString }
+      memModulesStatusModelNumber:      { name: model, type: DisplayString }
+      memModulesStatusSerialNumber:     { name: serial_number, type: DisplayString }
+      memModulesStatusFirmwareRev:      { name: firmware_revision, type: DisplayString }
+      wirelessSensorStatusExtAddr:      { name: hw_id, type: DisplayString }
+      wirelessSensorStatusName:         { name: hw_name, type: DisplayString }
+      wirelessSensorStatusLocation:     { name: location, type: DisplayString }
+      wirelessSensorStatusCommStatus:   { name: hw_status, type: EnumAsInfo }
+
+  # =========================================================================
+  # hwgroup-ste2plus
+  # Operator source: devices/hwgroup-ste2plus/input.toml.j2
+  # Match rule: device_type search "hwgroup-ste2plus"
+  # MIBs: RFC1213-MIB, SNMPv2-MIB, STE2-PLUS-MIB
+  # =========================================================================
+  hwgroup-ste2plus:
+    walk:
+      - RFC1213-MIB::sysUpTime
+      - SNMPv2-MIB::sysName
+      - SNMPv2-MIB::sysLocation
+      - SNMPv2-MIB::sysDescr        # -> model
+      - STE2-PLUS-MIB::sensTable
+      # NOTE: the operator template polls sensID/sensName/sensState/sensUnit only (all tags)
+      # and relied on Starlark post-processing for the numeric reading. We ADD the value
+      # column so snmp_exporter emits the actual sensor value as a metric:
+      - STE2-PLUS-MIB::sensValue
+    retries: 1
+    timeout: 5s
+    lookups:
+      - source_indexes: [sensID]
+        lookup: STE2-PLUS-MIB::sensName
+    overrides:
+      sysUpTime:   { name: system_uptime, type: gauge }
+      sysName:     { type: DisplayString }
+      sysLocation: { type: DisplayString }
+      sysDescr:    { name: model, type: DisplayString }
+      sensName:    { name: hw_name, type: DisplayString }
+      sensState:   { name: hw_status, type: EnumAsInfo }
+      sensUnit:    { name: hw_type, type: EnumAsInfo }
+      sensValue:   { type: gauge }
+
+  # =========================================================================
+  # akcp-sensorprobe2pro
+  # Operator source: devices/akcp-sensorprobe2pro/input.toml.j2
+  # Match rule: device_type search "akcp-sensor"
+  # MIBs: RFC1213-MIB, SNMPv2-MIB, SPAGENT-MIB
+  # =========================================================================
+  akcp-sensorprobe2pro:
+    walk:
+      - RFC1213-MIB::sysUpTime
+      - SNMPv2-MIB::sysName
+      - SNMPv2-MIB::sysLocation
+      - SPAGENT-MIB::cfgSystemDescription    # -> model (scalar .0)
+      - SPAGENT-MIB::temperatureTable
+      - SPAGENT-MIB::humidityTable
+      # NOTE: operator template polls only Id/Description/Type/Status (tags) and derived the
+      # numeric readings via Starlark. We ADD the value columns so snmp_exporter emits them:
+      - SPAGENT-MIB::temperatureDegree
+      - SPAGENT-MIB::humidityPercent
+    retries: 1
+    timeout: 5s
+    lookups:
+      - source_indexes: [temperatureIndex]
+        lookup: SPAGENT-MIB::temperatureDescription
+      - source_indexes: [humidityIndex]
+        lookup: SPAGENT-MIB::humidityDescription
+    overrides:
+      sysUpTime:               { name: system_uptime, type: gauge }
+      sysName:                 { type: DisplayString }
+      sysLocation:             { type: DisplayString }
+      cfgSystemDescription:    { name: model, type: DisplayString }
+      temperatureDescription:  { name: hw_name, type: DisplayString }
+      temperatureType:         { name: hw_type, type: EnumAsInfo }
+      temperatureStatus:       { name: hw_status, type: EnumAsInfo }
+      temperatureDegree:       { type: gauge }
+      humidityDescription:     { name: hw_name, type: DisplayString }
+      humidityStatus:          { name: hw_status, type: EnumAsInfo }
+      humidityPercent:         { type: gauge }

@@ -1,0 +1,185 @@
+# SPDX-FileCopyrightText: 2024 SAP SE or an SAP affiliate company and Greenhouse contributors
+# SPDX-License-Identifier: Apache-2.0
+
+# Prometheus scrape configuration for snmp_exporter — dc-observability-operator rewrite.
+#
+# This replaces the operator's Telegraf polling. Instead of the operator rendering
+# [[inputs.snmp]] blocks and deploying Telegraf pods, Prometheus scrapes the snmp_exporter,
+# which polls each device over SNMP using the module + auth selected here.
+#
+# Mapping from the operator:
+#   Telegraf agents=<hostnames>        -> scrape target (prefer NetBox oob_ip / device IP)
+#   Telegraf [[inputs.snmp]] per family -> params.module (one snmp_exporter module per family)
+#   agent_snmp_community / v3 params    -> params.auth (auths defined in generator.yml/snmp.yml)
+#   NetBox nb_inventory dynamic discovery -> Prometheus http_sd/file_sd (see bottom of file)
+#
+# The snmp_exporter runs at 127.0.0.1:9116 (adjust to your deployment).
+#
+# Operator poll port is UDP/161 (Telegraf default; never overridden). The operator's
+# SNMP trap receiver on UDP/1162 has NO snmp_exporter equivalent (out of scope).
+
+scrape_configs:
+
+  # ---- panduit-epa126 (device_type equalto "panduit-epa126") ----
+  - job_name: snmp-panduit-epa126
+    scrape_interval: 10m          # operator agent_interval default = 10 min
+    metrics_path: /snmp
+    params:
+      module: [panduit-epa126]
+    static_configs:
+      # test-inventory.yaml DC-ROOM-ROW-01 (community panduit-gen3)
+      - targets: [127.0.0.1]
+        labels: { __param_auth: panduit-gen3, host: DC-ROOM-ROW-01 }
+      # test-inventory.yaml DC-ROOM-ROW-02 (community panduit-gen3-gen6pdu)
+      - targets: [127.0.0.1]
+        labels: { __param_auth: panduit-gen3-gen6pdu, host: DC-ROOM-ROW-02 }
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - source_labels: [__param_auth]
+        target_label: __param_auth
+      - target_label: __address__
+        replacement: 127.0.0.1:9116     # snmp_exporter address
+
+  # ---- panduit-g5 (device_type search "panduit-p") ----
+  - job_name: snmp-panduit-g5
+    scrape_interval: 10m
+    metrics_path: /snmp
+    params:
+      module: [panduit-g5]
+    static_configs:
+      # DC-ROOM-ROW-03 panduit-p48fe04 (community panduit-gen5)
+      - targets: [127.0.0.1]
+        labels: { __param_auth: panduit-gen5, host: DC-ROOM-ROW-03 }
+      # DC-ROOM-ROW-04 panduit-p36f50g-32a3wye (community panduit-gen6)
+      - targets: [127.0.0.1]
+        labels: { __param_auth: panduit-gen6, host: DC-ROOM-ROW-04 }
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - source_labels: [__param_auth]
+        target_label: __param_auth
+      - target_label: __address__
+        replacement: 127.0.0.1:9116
+
+  # ---- apc-netshelter (device_type search "apc-apdu") ----
+  # No test host exercises this family; shown for completeness.
+  - job_name: snmp-apc-netshelter
+    scrape_interval: 10m
+    metrics_path: /snmp
+    params:
+      module: [apc-netshelter]
+      auth: [public_v2]
+    static_configs:
+      - targets: []                      # populated from NetBox in production
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: 127.0.0.1:9116
+
+  # ---- apc-netbotz (device_type search "apc-netbotz") ----
+  - job_name: snmp-apc-netbotz
+    scrape_interval: 10m
+    metrics_path: /snmp
+    params:
+      module: [apc-netbotz]
+    static_configs:
+      # DC-ROOM-ROW-06 (community apc-netbotz)
+      - targets: [127.0.0.1]
+        labels: { __param_auth: apc-netbotz, host: DC-ROOM-ROW-06 }
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - source_labels: [__param_auth]
+        target_label: __param_auth
+      - target_label: __address__
+        replacement: 127.0.0.1:9116
+
+  # ---- hwgroup-ste2plus (device_type search "hwgroup-ste2plus") ----
+  - job_name: snmp-hwgroup-ste2plus
+    scrape_interval: 10m
+    metrics_path: /snmp
+    params:
+      module: [hwgroup-ste2plus]
+    static_configs:
+      # DC-ROOM-ROW-05 (community hwgroup-ste2plus)
+      - targets: [127.0.0.1]
+        labels: { __param_auth: hwgroup-ste2plus, host: DC-ROOM-ROW-05 }
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - source_labels: [__param_auth]
+        target_label: __param_auth
+      - target_label: __address__
+        replacement: 127.0.0.1:9116
+
+  # ---- akcp-sensorprobe2pro (device_type search "akcp-sensor") ----
+  - job_name: snmp-akcp-sensorprobe2pro
+    scrape_interval: 10m
+    metrics_path: /snmp
+    params:
+      module: [akcp-sensorprobe2pro]
+    static_configs:
+      # DC-ROOM-ROW-07 (community akcp-sensorprobe2pro)
+      - targets: [127.0.0.1]
+        labels: { __param_auth: akcp-sensorprobe2pro, host: DC-ROOM-ROW-07 }
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - source_labels: [__param_auth]
+        target_label: __param_auth
+      - target_label: __address__
+        replacement: 127.0.0.1:9116
+
+# ==========================================================================
+# Production: replace static_configs with dynamic discovery equivalent to the
+# operator's NetBox nb_inventory (config/manager/ansible-inventory.yaml).
+#
+# Option A — http_sd from a small adapter that queries NetBox and emits targets with
+# labels for module + auth derived from device_type + config_context.snmp.*:
+#
+#   - job_name: snmp-netbox
+#     metrics_path: /snmp
+#     http_sd_configs:
+#       - url: http://netbox-sd-adapter:8080/targets    # returns [{targets:[ip], labels:{__param_module, __param_auth, ...}}]
+#     relabel_configs:
+#       - source_labels: [__address__]
+#         target_label: __param_target
+#       - source_labels: [__param_target]
+#         target_label: instance
+#       - source_labels: [__meta_module]
+#         target_label: __param_module
+#       - source_labels: [__meta_auth]
+#         target_label: __param_auth
+#       - target_label: __address__
+#         replacement: 127.0.0.1:9116
+#
+# The adapter reproduces the operator's device selection & module mapping:
+#   NetBox query_filters: role in {pdu-gateway, pdu-red, pdu-yellow}
+#   device_query_filters: has_oob_ip=true, NOT tag dcm-observability-disabled, status=active
+#   target address        = device oob_ip  (oob_ip_as_primary_ip: true)
+#   module (from device_type, operator match rules):
+#     equalto  panduit-epa126           -> panduit-epa126
+#     search   panduit-p                -> panduit-g5
+#     search   apc-apdu                 -> apc-netshelter
+#     search   apc-netbotz              -> apc-netbotz
+#     search   hwgroup-ste2plus         -> hwgroup-ste2plus
+#     search   akcp-sensor              -> akcp-sensorprobe2pro
+#   auth (from config_context.dcm.observability.snmp): version 2 -> community auth;
+#                                                       version 3 -> v3 auth (see generator.yml dcm_v3)
+#
+# Option B — file_sd_configs pointing at JSON/YAML files the adapter writes periodically.
+# ==========================================================================
