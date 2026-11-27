@@ -65,7 +65,7 @@ redfish:
 testConnection:
   image:
     repository: curlimages/curl
-    tag: "8.11.1"
+    tag: "8.23.0"
     pullPolicy: IfNotPresent
 
 imagePullSecrets: []
@@ -162,7 +162,7 @@ snmpExporter:
   # Image configuration
   image:
     repository: quay.io/prometheus/snmp-exporter
-    tag: v0.26.0
+    tag: v0.31.0
     pullPolicy: IfNotPresent
 
   # Resources for the sidecar container

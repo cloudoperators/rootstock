@@ -38,10 +38,10 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2.2.2 (v2)
+      - uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0 (v2)
         id: app-token
         with:
-          app-id: ${{ secrets.CLOUDOPERATOR_APP_ID }}
+          client-id: ${{ secrets.CLOUDOPERATOR_APP_ID }}
           private-key: ${{ secrets.CLOUDOPERATOR_APP_PRIVATE_KEY }}
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 (v7)
@@ -49,13 +49,13 @@ jobs:
           ref: ${{ github.event.pull_request.head.repo.full_name == github.repository && github.head_ref || github.ref }}
           token: ${{ steps.app-token.outputs.token }}
       - name: Set up Go
-        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0 (v5)
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0 (v5)
         with:
           go-version-file: go.mod
           cache: true
       - name: Install golangci-lint
         env:
-          GOLANGCI_LINT_VERSION: v2.14.0
+          GOLANGCI_LINT_VERSION: v2.15.0
         run: |
           # The golangci/golangci-lint-action is not a verified Marketplace
           # creator, so install the binary directly via the official script.
@@ -105,7 +105,7 @@ jobs:
         with:
           persist-credentials: true
       - name: Set up Go
-        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0 (v5)
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0 (v5)
         with:
           go-version-file: go.mod
           cache: true
@@ -145,7 +145,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 (v7)
       - name: Set up Go
-        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0 (v5)
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0 (v5)
         with:
           go-version-file: go.mod
       - name: Run contract tests
@@ -160,7 +160,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 (v7)
       - name: Set up Go
-        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0 (v5)
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0 (v5)
         with:
           go-version-file: go.mod
       - name: Run file generation
