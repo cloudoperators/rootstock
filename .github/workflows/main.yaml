@@ -102,7 +102,7 @@ jobs:
 
   unit-tests:
     name: Unit Tests
-    uses: cloudoperators/common/.github/workflows/shared-go-test.yaml@main
+    uses: cloudoperators/common/.github/workflows/shared-go-test.yaml@9cb36139de44212c098042fa6a9a0b3e811b2b63 # main
     with:
       test-target: test-unit
       upload-coverage: true
