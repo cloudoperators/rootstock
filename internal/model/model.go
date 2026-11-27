@@ -49,9 +49,8 @@ type Metric struct {
 	Timestamp time.Time
 }
 
-func NewRedfish(route string, rawBytes []byte, metadata Metadata) (*Metric, error) {
-	// TODO: decode rawBytes, extract values at JSON key paths,
-	// apply filter.yaml rules for route+key,
-	// construct Metric with metadata fields as labels.
+func NewRedfish(route string, rawBytes []byte, metadata Metadata) (*Metric, error) { //nolint:nilnil // stub: not yet implemented
+	_, _ = route, rawBytes
+	_ = metadata
 	return nil, nil
 }

@@ -58,7 +58,7 @@ func NewScraper(
 
 		routes := make(map[string][]byte)
 		for _, pattern := range urlPatterns {
-			urls, err := resolvePattern(ctx, client, logger, pattern)
+			urls, err := resolveWildcard(ctx, client, logger, pattern)
 			if err != nil {
 				return 0, fmt.Errorf("resolve pattern %q: %w", pattern, err)
 			}
@@ -90,7 +90,7 @@ func NewScraper(
 
 // fetches PDU root documents and decodes them into typed structs.
 func fetchMetadata(ctx context.Context, client Client, logger log.MinInterface, metadataPattern string) (map[string]model.Metadata, error) {
-	urls, err := resolvePattern(ctx, client, logger, metadataPattern)
+	urls, err := resolveWildcard(ctx, client, logger, metadataPattern)
 	if err != nil {
 		return nil, fmt.Errorf("resolve metadata pattern %q: %w", metadataPattern, err)
 	}
@@ -109,8 +109,8 @@ func fetchMetadata(ctx context.Context, client Client, logger log.MinInterface, 
 
 }
 
-// resolvePattern expands a single "#" wildcard in a URL pattern into concrete URLs.
-func resolvePattern(ctx context.Context, client Client, logger log.MinInterface, pattern string) ([]string, error) {
+// resolveWildcard expands a single "#" wildcard in a URL pattern into concrete URLs.
+func resolveWildcard(ctx context.Context, client Client, logger log.MinInterface, pattern string) ([]string, error) {
 	idx := strings.Index(pattern, "/#")
 	if idx == -1 {
 		return []string{pattern}, nil
@@ -130,7 +130,7 @@ func resolvePattern(ctx context.Context, client Client, logger log.MinInterface,
 		memberID := path.Base(memberURL)
 		expanded := prefix + "/" + memberID + rest
 
-		sub, err := resolvePattern(ctx, client, logger, expanded)
+		sub, err := resolveWildcard(ctx, client, logger, expanded)
 		if err != nil {
 			logger.Warn("skipping member", "url", memberURL, log.KeyError, err)
 			continue
@@ -170,4 +170,15 @@ func extractMemberURLs(doc map[string]any) []string {
 	}
 
 	return urls
+}
+
+type branchMembers struct {
+	Members []odataid `json:"Branch"`
+}
+
+type odataid struct {
+	Id string `json:"@odata.id"`
+}
+type rackPDUMembers struct {
+	Members []odataid `json:"Members"`
 }
