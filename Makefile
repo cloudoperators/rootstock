@@ -33,6 +33,7 @@ MOCKUP_CONTAINER := redfish-mockup
 
 .PHONY: build test test-unit test-integration test-contract test-performance \
 				mockup-start mockup-stop \
+				coverage-report \
 				lint lint-go lint-md lint-shell lint-helm \
 				scan \
 				docker-build \
@@ -89,6 +90,14 @@ test-unit: ## Run unit tests with race detection and coverage
 
 test: test-unit ## Alias for test-unit
 
+COVERAGE_FILE ?= coverage.out
+
+coverage-report: ## Render the coverage report via hack/coverage_report.sh (requires coverage.out)
+	@hack/coverage_report.sh \
+		--target-branch main \
+		--coverage-file $(COVERAGE_FILE) \
+		--cli-version v1.5.0 # renovate: datasource=github-releases depName=fgrosse/go-coverage-report
+
 test-integration: mockup-start ## Start mockup server, run integration tests, stop server
 	@echo "$(green) integration testing$(reset)"
 	go test ./... -tags=integration -parallel=10 -timeout=10m -v; STATUS=$$?; \
@@ -132,10 +141,6 @@ lint-helm: ## Lint the Helm chart
 
 lint: lint-go lint-md lint-shell lint-helm ## Run all linters (alias)
 	go mod tidy
-
-scan: ## Run security vulnerability scan
-	@echo "TODO: CodeQL scanning runs in CI via GitHub Actions shared-codeql workflow"
-	@echo "TODO: add local scanning tool here?"
 
 # Release
 generate: ## run general all file generation

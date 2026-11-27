@@ -8,7 +8,7 @@ and this project adheres to
 
 <!-- git-cliff: end of header -->
 
-## 2026-11-17
+## 2026-11-27
 
 - (0.2.1 - 🐛) actions: Reactivate codeql
   [#135](https://github.com/cloudoperators/rootstock/pull/135)
@@ -22,6 +22,110 @@ and this project adheres to
   [#137](https://github.com/cloudoperators/rootstock/pull/137)
   ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
   by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.2.1 - 🐛) actions: Harden against remote code execution
+  [#138](https://github.com/cloudoperators/rootstock/pull/138)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.2.1 - ⚙️) tooling: Add renovate.json
+  [#142](https://github.com/cloudoperators/rootstock/pull/142)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.2.1 - ⚙️) actions: Pin actions to shas
+  [#143](https://github.com/cloudoperators/rootstock/pull/143)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.2.1 - 🐛) actions: Use inline code instead of external actions
+  [#144](https://github.com/cloudoperators/rootstock/pull/144)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.2.1 - 🐛) actions: Restrict workflow permissions
+  [#139](https://github.com/cloudoperators/rootstock/pull/139)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.2.1 - 🐛) changelog: Harden against foreign code execution
+  [#146](https://github.com/cloudoperators/rootstock/pull/146)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.2.1 - 🐛) actions: Restrict default GITHUB_TOKEN permissions
+  [#147](https://github.com/cloudoperators/rootstock/pull/147)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.2.1 - 🐛) security: Include actions into the codeql scans
+  [#148](https://github.com/cloudoperators/rootstock/pull/148)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.2.1 - ⚙️) deps: Update golang docker tag to v1.27.3
+  [#150](https://github.com/cloudoperators/rootstock/pull/150)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
+  by [@renovate[bot]](https://github.com/renovate[bot])
+- (0.2.1 - ⚙️) config: Migrate Renovate config
+  [#165](https://github.com/cloudoperators/rootstock/pull/165)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
+  by [@renovate[bot]](https://github.com/renovate[bot])
+- (0.2.1 - ⚙️) deps: Update github actions updates (major)
+  [#164](https://github.com/cloudoperators/rootstock/pull/164)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
+  by [@renovate[bot]](https://github.com/renovate[bot])
+- (0.2.1 - 🐛) deps: Update module github.com/stretchr/testify to v1.12.1
+  [#162](https://github.com/cloudoperators/rootstock/pull/162)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
+  by [@renovate[bot]](https://github.com/renovate[bot])
+- (0.2.1 - ⚙️) deps: Update dependency helm to v4
+  [#163](https://github.com/cloudoperators/rootstock/pull/163)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
+  by [@renovate[bot]](https://github.com/renovate[bot])
+- (0.2.1 - ⚙️) deps: Update sigstore/cosign-installer action to v4.1.3
+  [#151](https://github.com/cloudoperators/rootstock/pull/151)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
+  by [@renovate[bot]](https://github.com/renovate[bot])
+- (0.2.1 - 🐛) deps: Update module github.com/spf13/pflag to v1.1.0
+  [#161](https://github.com/cloudoperators/rootstock/pull/161)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
+  by [@renovate[bot]](https://github.com/renovate[bot])
+- (0.2.1 - ⚙️) deps: Update dependency prettier to v3.10.1
+  [#155](https://github.com/cloudoperators/rootstock/pull/155)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
+  by [@renovate[bot]](https://github.com/renovate[bot])
+- (0.2.1 - 🐛) changelog: Footer generation
+  [#167](https://github.com/cloudoperators/rootstock/pull/167)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.2.1 - ⚙️) security: Use tooling from HEAD of main for changlog generation
+  [#166](https://github.com/cloudoperators/rootstock/pull/166)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.2.1 - 🐛) deps: Update module github.com/go-chi/chi/v5 to v5.5.0
+  [#159](https://github.com/cloudoperators/rootstock/pull/159)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
+  by [@renovate[bot]](https://github.com/renovate[bot])
+- (0.2.1 - 🐛) deps: Update module github.com/prometheus/client_golang to
+  v1.25.0 [#160](https://github.com/cloudoperators/rootstock/pull/160)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
+  by [@renovate[bot]](https://github.com/renovate[bot])
+- (0.2.1 - ⚙️) deps: Update quay.io/prometheus/snmp-exporter docker tag to
+  v0.31.0 [#157](https://github.com/cloudoperators/rootstock/pull/157)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
+  by [@renovate[bot]](https://github.com/renovate[bot])
+- (0.2.1 - ⚙️) deps: Update dependency golangci/golangci-lint to v2.15.0
+  [#153](https://github.com/cloudoperators/rootstock/pull/153)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
+  by [@renovate[bot]](https://github.com/renovate[bot])
+- (0.2.1 - ⚙️) deps: Update curlimages/curl docker tag to v8.23.0
+  [#152](https://github.com/cloudoperators/rootstock/pull/152)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
+  by [@renovate[bot]](https://github.com/renovate[bot])
+- (0.2.1 - 🐛) automerge: Ensure only changelog and version file are updated
+  [#168](https://github.com/cloudoperators/rootstock/pull/168)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
+  by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.2.1 - ⚙️) deps: Update github actions updates (minor)
+  [#156](https://github.com/cloudoperators/rootstock/pull/156)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
+  by [@renovate[bot]](https://github.com/renovate[bot])
+- (0.2.1 - ⚙️) deps: Update dependency helm to v3.22.1 - abandoned
+  [#154](https://github.com/cloudoperators/rootstock/pull/154)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
+  by [@renovate[bot]](https://github.com/renovate[bot])
 
 ## 2026-11-13
 
