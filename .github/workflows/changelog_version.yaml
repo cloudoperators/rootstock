@@ -45,10 +45,36 @@ jobs:
   changelog:
     runs-on: ubuntu-latest
     steps:
-      # The PR branch checkout is UNTRUSTED. It holds the content we describe in
-      # the changelog and the ref we ultimately commit/push to. We never execute
+      # 1) TRUSTED TOOLING — always from the HEAD of the default branch (main).
+      # Every executable we run (hack/*.sh, cliff.toml, prettier invocation) is
+      # taken ONLY from here, so a malicious fork can never inject code into
+      # this privileged job. We deliberately pin to `main` rather than
+      # inputs.base_sha: base_sha is PR-derived and, while it normally resolves
+      # to the base-branch tip, anchoring to `main` guarantees we always use the
+      # current trusted tooling on the default branch.
+      - name: Checkout tools from HEAD of main (trusted)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 (v7)
+        with:
+          fetch-depth: 0
+          ref: main
+          path: main-tools
+
+      # 2a) REPO BASE — the base_sha checkout. This is the repository state the
+      # changelog/version are constructed FROM (git history + the CHANGELOG.md /
+      # VERSION.yaml / Chart.yaml base files). base_sha is a commit on main's
+      # history, but we still never execute anything out of this checkout; it is
+      # only read as git history and overwritten with regenerated files.
+      - name: Checkout base_sha (repo base to construct from)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 (v7)
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.base_sha }}
+          path: base
+
+      # 2b) PR BRANCH — the UNTRUSTED head_ref checkout. This is the ref we
+      # ultimately commit/push the two generated files onto. We never execute
       # any script, Makefile target, or tool config that lives in this checkout.
-      - name: Checkout PR branch (untrusted)
+      - name: Checkout head_ref (PR branch to commit to, untrusted)
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 (v7)
         with:
           fetch-depth: 0
@@ -56,21 +82,11 @@ jobs:
           token: ${{ secrets.token }}
           path: branch
 
-      # The base-repo checkout at base_sha is TRUSTED. All executable tooling
-      # (hack/*.sh, cliff.toml) is run from here so a malicious fork cannot
-      # inject code into this privileged job.
-      - name: Checkout trusted tooling (base repo)
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 (v7)
-        with:
-          fetch-depth: 0
-          ref: ${{ inputs.base_sha }}
-          path: trusted
-
       # taiki-e/install-action is not a verified Marketplace creator, so install
       # git-cliff directly from its official GitHub binary release instead,
       # following https://git-cliff.org/docs/installation/binary-releases.
-      # The download comes from the pinned upstream release, not from the
-      # untrusted fork checkout.
+      # The download comes from the pinned upstream release, not from any
+      # checkout in this job.
       - name: Install git-cliff
         env:
           GIT_CLIFF_VERSION: 2.14.2
@@ -82,27 +98,12 @@ jobs:
           cd "git-cliff-${version}"
           sudo mv git-cliff /usr/local/bin/
 
-      # Merge the latest main into the PR branch BEFORE regenerating the
-      # changelog. The changelog is fully regenerated from scratch and the new
-      # entry is interleaved with every other unreleased entry; if the branch
-      # does not reflect main's current tip, two in-flight PRs end up rewriting
-      # the same region of CHANGELOG.md and the one that merges second conflicts
-      # (see PRs that fail with CHANGELOG.md merge markers). Merging main here
-      # keeps the branch consistent with main so the regenerated changelog lines
-      # up and the final squash-merge stays conflict-free.
-      - name: Merge main into the PR branch
-        working-directory: branch
-        run: |
-          git fetch origin main
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          # Remote PR-branch tip before we merge main in. This is the parent the
-          # pushed changelog commit must sit on top of.
-          echo "PR_BRANCH_TIP=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
-          git pull --no-rebase origin main
-
-      - name: Generate changelog entry from PR
-        working-directory: branch
+      # 3) + 4) Construct CHANGELOG.md and VERSION.yaml using the TOOLS FROM MAIN
+      # against the BASE_SHA repo. The generated files are written INTO the base
+      # checkout (via --repo-dir); the PR itself is injected as a virtual commit
+      # so the not-yet-existing squash-merge is reflected, and base_sha is the
+      # git-cliff range endpoint.
+      - name: Construct CHANGELOG.md and VERSION.yaml (main tools, base_sha repo)
         env:
           PR_TITLE: ${{ inputs.pr_title }}
           PR_BODY: ${{ inputs.pr_body }}
@@ -111,11 +112,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.token }}
           GITHUB_REPO: ${{ github.repository }}
           BASE_SHA: ${{ inputs.base_sha }}
-          # Absolute paths to the TRUSTED tooling checkout.
-          TRUSTED_DIR: ${{ github.workspace }}/trusted
-          # Pinned so the untrusted checkout cannot influence which prettier runs.
+          # Absolute paths resolved from the workflow workspace.
+          TOOLS_DIR: ${{ github.workspace }}/main-tools
+          BASE_DIR: ${{ github.workspace }}/base
+          # Pinned so no checkout can influence which prettier runs.
           PRETTIER_VERSION: 3.10.1
         run: |
+          set -euo pipefail
+
           PR_AUTHOR=$(gh api "repos/${GITHUB_REPO}/pulls/${PR_NUMBER}" --jq '.user.login')
 
           if [ -n "$PR_BODY" ]; then
@@ -124,43 +128,67 @@ jobs:
             commit_msg=$(printf '%s\n\nPR-Number: %s\nPR-Url: %s\nPR-Author: %s' "$PR_TITLE" "$PR_NUMBER" "$PR_URL" "$PR_AUTHOR")
           fi
 
-          export COMMIT_MSG="${commit_msg}"
-          export BASE_COMMIT="${BASE_SHA}"
-          # Pin git-cliff to the trusted config so a fork-supplied cliff.toml
-          # (which can run arbitrary commands via postprocessors) is ignored.
-          export CLIFF_CONFIG="${TRUSTED_DIR}/cliff.toml"
+          # Pin git-cliff to the trusted config from main so a fork-supplied
+          # cliff.toml (which can run arbitrary commands via postprocessors) is
+          # never used.
+          cliff_config="${TOOLS_DIR}/cliff.toml"
 
-          # Run ONLY trusted scripts from the base checkout, with cwd set to the
-          # PR branch so CHANGELOG.md / VERSION.yaml are written there. We call
-          # the scripts directly and never `make`, so no fork Makefile executes.
-          "${TRUSTED_DIR}/hack/update_changelog.sh"
-          "${TRUSTED_DIR}/hack/update_version.sh"
+          # CHANGELOG.md — generated into the base_sha checkout. The scripts are
+          # the ones from main (TOOLS_DIR); --repo-dir points them at the base
+          # repo so history is read there and CHANGELOG.md is written there.
+          COMMIT_MSG="${commit_msg}" \
+          "${TOOLS_DIR}/hack/update_changelog.sh" \
+            --repo-dir "${BASE_DIR}" \
+            --config "${cliff_config}" \
+            --base-commit "${BASE_SHA}"
+
+          # VERSION.yaml (and the chart version) — same tools, same base repo,
+          # same range endpoint, and the SAME injected PR virtual commit
+          # (COMMIT_MSG) so the version bump reflects the incoming PR too
+          # (feat -> minor, breaking -> major) and stays consistent with the
+          # changelog entry generated above.
+          COMMIT_MSG="${commit_msg}" \
+          "${TOOLS_DIR}/hack/update_version.sh" \
+            --repo-dir "${BASE_DIR}" \
+            --config "${cliff_config}" \
+            --base-commit "${BASE_SHA}"
 
           # Format only the generated changelog using prettier. We must not let
-          # the untrusted PR checkout influence which prettier (or which
-          # plugins/config) runs, so we:
-          #   * pin an exact prettier version (no fork-controlled range),
-          #   * invoke npx from the TRUSTED dir so a fork-supplied
+          # any checkout influence which prettier (or which plugins/config)
+          # runs, so we:
+          #   * pin an exact prettier version (no checkout-controlled range),
+          #   * invoke npx from the TOOLS dir so a fork-supplied
           #     node_modules/package.json cannot shadow the install,
           #   * disable config discovery (--no-config) so no fork .prettierrc
           #     can load plugins or alter behavior (Prettier 3 only loads
           #     plugins when a config or --plugin asks for them),
           #   * pass the CHANGELOG by absolute path and pin all flags.
-          changelog_path="$(pwd)/CHANGELOG.md"
-          ( cd "${TRUSTED_DIR}" \
+          ( cd "${TOOLS_DIR}" \
             && npx --yes "prettier@${PRETTIER_VERSION}" \
                  --no-config \
                  --prose-wrap always \
-                 --write "${changelog_path}" )
+                 --write "${BASE_DIR}/CHANGELOG.md" )
 
-      - name: Commit changelog
+      # 5) Commit the generated CHANGELOG.md and VERSION.yaml to the PR branch.
+      # We copy ONLY those two files from the base checkout into the untrusted
+      # PR-branch checkout and commit them there. This guarantees the pushed
+      # delta is exactly the two files on top of the PR-branch tip — no base
+      # tree, no merge commit, nothing under .github/workflows/** — so the
+      # default GITHUB_TOKEN (which cannot push workflow-file changes) suffices.
+      - name: Commit CHANGELOG.md and VERSION.yaml to the PR branch
         working-directory: branch
         env:
+          BASE_DIR: ${{ github.workspace }}/base
           GITHUB_HEAD_REF_LOCAL: ${{ inputs.head_ref }}
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Overlay ONLY the two generated files from the base checkout onto the
+          # PR branch working tree.
+          cp "${BASE_DIR}/CHANGELOG.md" CHANGELOG.md
+          cp "${BASE_DIR}/VERSION.yaml" VERSION.yaml
 
           # Stage ONLY the two files this workflow is ever allowed to change.
           git add CHANGELOG.md VERSION.yaml
@@ -187,46 +215,10 @@ jobs:
           # Nothing staged means nothing changed — that is fine, just skip.
           git diff --cached --quiet && exit 0
 
-          # We merged main into the branch so the regenerated changelog is
-          # consistent with main's current tip (preventing cross-PR CHANGELOG.md
-          # conflicts). That merge, however, pulled main's entire tree into the
-          # working branch. We must NOT push the merge commit or any of main's
-          # other file changes — only CHANGELOG.md / VERSION.yaml.
-          #
-          # So instead of committing on top of the merged HEAD, we rebuild a
-          # single commit whose parent is the ORIGINAL remote PR-branch tip
-          # (PR_BRANCH_TIP, captured before the merge) and whose tree is that
-          # tip's tree with ONLY CHANGELOG.md / VERSION.yaml overlaid. The
-          # pushed delta is therefore exactly the changelog change — no merge
-          # commit, no workflow-file changes — so the default GITHUB_TOKEN can
-          # push it and the earlier staged-file guard's intent is preserved.
-          base_tree=$(git rev-parse "${PR_BRANCH_TIP}^{tree}")
-          changelog_blob=$(git rev-parse ":CHANGELOG.md")
-          version_blob=$(git rev-parse ":VERSION.yaml")
+          git commit --signoff -m "chore: update CHANGELOG.md and VERSION.yaml [skip ci]"
 
-          # Build the overlaid tree deterministically via a throwaway index:
-          # start from the original PR-branch tip tree, then apply only the two
-          # blobs on top of it.
-          GIT_INDEX_FILE="$(mktemp)"
-          export GIT_INDEX_FILE
-          git read-tree "$base_tree"
-          git update-index --add --cacheinfo "100644,${changelog_blob},CHANGELOG.md"
-          git update-index --add --cacheinfo "100644,${version_blob},VERSION.yaml"
-          new_tree=$(git write-tree)
-          rm -f "$GIT_INDEX_FILE"
-          unset GIT_INDEX_FILE
-
-          commit=$(
-            GIT_AUTHOR_NAME="github-actions[bot]" \
-            GIT_AUTHOR_EMAIL="github-actions[bot]@users.noreply.github.com" \
-            GIT_COMMITTER_NAME="github-actions[bot]" \
-            GIT_COMMITTER_EMAIL="github-actions[bot]@users.noreply.github.com" \
-            git commit-tree "$new_tree" -p "${PR_BRANCH_TIP}" \
-              -m "chore: update CHANGELOG.md and VERSION.yaml [skip ci]" \
-              -m "Signed-off-by: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
-          )
-
-          # Fast-forward-safe push of exactly this one commit onto the remote
-          # PR branch. Its only parent is the remote tip we read above, so this
-          # is a clean fast-forward that carries just the changelog change.
-          git push origin "${commit}:${GITHUB_HEAD_REF_LOCAL}"
+          # Push exactly this one commit onto the remote PR branch. The local
+          # branch differs from the remote only by this single changelog/version
+          # commit (we never merged anything in), so pushing the ref explicitly
+          # carries exactly that delta.
+          git push origin "HEAD:${GITHUB_HEAD_REF_LOCAL}"
