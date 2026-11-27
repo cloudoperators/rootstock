@@ -20,6 +20,7 @@ linters:
     - noinlineerr
     - testpackage
     - wsl
+    - wsl_v5
     - nlreturn
     - err113
     - exhaustruct
