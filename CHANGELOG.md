@@ -94,10 +94,34 @@ and this project adheres to
   [#166](https://github.com/cloudoperators/rootstock/pull/166)
   ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
   by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.2.1 - 🐛) deps: Update module github.com/go-chi/chi/v5 to v5.5.0
+  [#159](https://github.com/cloudoperators/rootstock/pull/159)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
+  by [@renovate[bot]](https://github.com/renovate[bot])
+- (0.2.1 - 🐛) deps: Update module github.com/prometheus/client_golang to
+  v1.25.0 [#160](https://github.com/cloudoperators/rootstock/pull/160)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
+  by [@renovate[bot]](https://github.com/renovate[bot])
+- (0.2.1 - ⚙️) deps: Update quay.io/prometheus/snmp-exporter docker tag to
+  v0.31.0 [#157](https://github.com/cloudoperators/rootstock/pull/157)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
+  by [@renovate[bot]](https://github.com/renovate[bot])
+- (0.2.1 - ⚙️) deps: Update dependency golangci/golangci-lint to v2.15.0
+  [#153](https://github.com/cloudoperators/rootstock/pull/153)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
+  by [@renovate[bot]](https://github.com/renovate[bot])
+- (0.2.1 - ⚙️) deps: Update curlimages/curl docker tag to v8.23.0
+  [#152](https://github.com/cloudoperators/rootstock/pull/152)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
+  by [@renovate[bot]](https://github.com/renovate[bot])
 - (0.2.1 - 🐛) automerge: Ensure only changelog and version file are updated
   [#168](https://github.com/cloudoperators/rootstock/pull/168)
   ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
   by [@blackhat-jan](https://github.com/blackhat-jan)
+- (0.2.1 - ⚙️) deps: Update github actions updates (minor)
+  [#156](https://github.com/cloudoperators/rootstock/pull/156)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
+  by [@renovate[bot]](https://github.com/renovate[bot])
 
 ## 2026-11-13
 
