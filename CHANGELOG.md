@@ -122,6 +122,10 @@ and this project adheres to
   [#156](https://github.com/cloudoperators/rootstock/pull/156)
   ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
   by [@renovate[bot]](https://github.com/renovate[bot])
+- (0.2.1 - 🐛) deps: Update module github.com/fsnotify/fsnotify to v1.10.1
+  [#158](https://github.com/cloudoperators/rootstock/pull/158)
+  ([diff](https://github.com/cloudoperators/rootstock/compare/v0.2.0...v0.2.1))
+  by [@renovate[bot]](https://github.com/renovate[bot])
 
 ## 2026-11-13
 
