@@ -30,7 +30,7 @@ jobs:
   helm-release:
     runs-on: [ ubuntu-latest ]
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3 (v6)
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 (v6)
         with:
             fetch-depth: 0
             token: ${{ github.token }}
@@ -43,7 +43,7 @@ jobs:
       - name: Set up Helm
         uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1 (v5)
         with:
-          version: "v3.22.1"
+          version: "v4.3.2"
 
       - name: Log into registry ${{ env.REGISTRY }}
         uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0 (v4)
